@@ -72,14 +72,14 @@ export function AppShell() {
               {code === "not_member" ? (
                 <Button
                   className="w-full"
-                  onClick={() => window.EnnioAuth?.requestAccess?.()}
+                  onClick={() => window.EnnioAuth?.open?.()}
                 >
                   Zugang anfragen
                 </Button>
               ) : (
                 <Button
                   className="w-full"
-                  onClick={() => window.EnnioAuth?.login?.()}
+                  onClick={() => window.EnnioAuth?.open?.()}
                 >
                   Anmelden
                 </Button>

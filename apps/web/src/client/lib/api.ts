@@ -15,7 +15,8 @@ type EnnioAuth = {
   user?: { name?: string; email?: string } | null;
   hasAccess?: boolean;
   logout?: () => void | Promise<void>;
-  login?: () => void | Promise<void>;
+  login?: (email?: string, password?: string) => void | Promise<unknown>;
+  open?: () => void;
   requestAccess?: () => void | Promise<void>;
 };
 
