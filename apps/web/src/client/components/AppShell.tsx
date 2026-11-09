@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   Bell,
@@ -15,8 +15,9 @@ import {
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useMe } from "../lib/session";
-import { logout, setDevToken, devToken as currentDevToken } from "../lib/api";
-import { Avatar, Button, Input } from "./ui";
+import { logout } from "../lib/api";
+import { Avatar, Button } from "./ui";
+import { AuthGate, LoadingScreen } from "./AuthGate";
 
 const NAV = [
   { to: "/", label: "Meine Rezepte", icon: BookOpen, end: true },
@@ -37,81 +38,13 @@ const BOTTOM = [
 export function AppShell() {
   const { data: me, isError, error, refetch, isLoading } = useMe();
   const location = useLocation();
-  const [dev, setDev] = useState(currentDevToken());
-  const [showDev, setShowDev] = useState(false);
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-dvh items-center justify-center">
-        <div className="flex items-center gap-3 text-ink-soft">
-          <ChefHat className="size-6 animate-pulse text-brand" />
-          <span className="text-sm">Kochen wird geladen …</span>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <LoadingScreen />;
 
   if (isError || !me) {
     const code = (error as { code?: string } | null)?.code;
     if (code === "unauthenticated" || code === "not_member") {
-      return (
-        <div className="paper-grain flex min-h-dvh items-center justify-center px-4 py-16">
-          <div className="w-full max-w-md">
-            <div className="mb-8 text-center">
-              <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-brand text-white shadow-lg shadow-brand/20">
-                <ChefHat className="size-7" />
-              </span>
-              <h1 className="text-3xl">Kochen</h1>
-              <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-                {code === "not_member"
-                  ? "Dein Konto ist angemeldet, hat aber noch keinen Zugang. Stelle eine Anfrage – der Betreiber gibt sie frei."
-                  : "Bitte melde dich mit deinem ennio.vip-Konto an."}
-              </p>
-            </div>
-            <div className="rounded-[var(--radius-card)] border border-line bg-white/80 p-5 shadow-sm">
-              {code === "not_member" ? (
-                <Button
-                  className="w-full"
-                  onClick={() => window.EnnioAuth?.open?.()}
-                >
-                  Zugang anfragen
-                </Button>
-              ) : (
-                <Button
-                  className="w-full"
-                  onClick={() => window.EnnioAuth?.open?.()}
-                >
-                  Anmelden
-                </Button>
-              )}
-              <button
-                className="mt-4 w-full text-center text-xs text-ink-soft underline-offset-4 hover:underline"
-                onClick={() => setShowDev((value) => !value)}
-              >
-                Lokale Entwicklung?
-              </button>
-              {showDev && (
-                <div className="mt-3 space-y-2">
-                  <Input value={dev} onChange={(event) => setDev(event.target.value)} placeholder="dev:sub:email:Name" />
-                  <Button
-                    variant="secondary"
-                    className="w-full"
-                    onClick={() => {
-                      setDevToken(dev);
-                      void refetch();
-                    }}
-                  >
-                    Mit Dev-Token laden
-                  </Button>
-                </div>
-              )}
-            </div>
-            <p className="mt-6 text-center text-xs text-ink-soft">
-              Zugang nur für freigegebene Konten. Keine öffentliche Seite.
-            </p>
-          </div>
-        </div>
-      );
+      return <AuthGate code={code} onRetry={() => void refetch()} />;
     }
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-3 px-6 text-center">

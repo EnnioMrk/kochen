@@ -10,21 +10,7 @@ export class ApiError extends Error {
   }
 }
 
-type EnnioAuth = {
-  token?: (project: string) => Promise<string>;
-  user?: { name?: string; email?: string } | null;
-  hasAccess?: boolean;
-  logout?: () => void | Promise<void>;
-  login?: (email?: string, password?: string) => void | Promise<unknown>;
-  open?: () => void;
-  requestAccess?: () => void | Promise<void>;
-};
-
-declare global {
-  interface Window {
-    EnnioAuth?: EnnioAuth;
-  }
-}
+import { clearToken, logout as platformLogout, PlatformError, platformToken } from "./platform";
 
 const DEV_TOKEN_KEY = "kochen.devToken";
 
@@ -36,34 +22,25 @@ export function setDevToken(value: string): void {
   localStorage.setItem(DEV_TOKEN_KEY, value);
 }
 
-let cached: { token: string; at: number; project: string } | null = null;
-
 export async function authToken(force = false): Promise<string> {
-  const project = "kochen";
-  if (cached && !force && cached.project === project && Date.now() - cached.at < 4 * 60 * 1000) {
-    return cached.token;
+  if (import.meta.env.DEV) {
+    const dev = localStorage.getItem(DEV_TOKEN_KEY);
+    if (dev) return dev;
   }
-  if (window.EnnioAuth?.token) {
-    try {
-      const token = await window.EnnioAuth.token(project);
-      if (token) {
-        cached = { token, at: Date.now(), project };
-        return token;
-      }
-    } catch {
-      // fall through to the dev token so local work still runs
+  try {
+    return await platformToken(force);
+  } catch (error) {
+    if (error instanceof PlatformError) {
+      const code = error.status === 401 || error.status === 403 || error.status === 0 ? "unauthenticated" : "internal";
+      throw new ApiError(code, error.message, error.status || 503);
     }
+    throw error;
   }
-  return devToken();
-}
-
-export function currentUser(): { name?: string; email?: string } | null {
-  return window.EnnioAuth?.user ?? null;
 }
 
 export async function logout(): Promise<void> {
-  cached = null;
-  await window.EnnioAuth?.logout?.();
+  clearToken();
+  await platformLogout().catch(() => undefined);
 }
 
 type ApiOptions = Omit<RequestInit, "body"> & {
@@ -101,7 +78,7 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   });
 
   if (response.status === 401 && !options.retry) {
-    cached = null;
+    clearToken();
     return api<T>(path, { ...options, retry: true });
   }
 
