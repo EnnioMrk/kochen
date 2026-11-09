@@ -1,0 +1,12 @@
+{
+  "name": "@kochen/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@kochen/contracts": "workspace:*",
+    "fraction.js": "^5.2.0",
+    "zod": "^3.24.1"
+  }
+}

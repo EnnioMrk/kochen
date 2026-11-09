@@ -1,0 +1,156 @@
+# Kochen
+
+A private German recipe PWA for a family and their friends. Members capture
+recipes from photos, links, video or text, cook them with timers, keep
+variations, rate what they cooked, and build a shopping list.
+
+The app has no public page. Only approved `ennio.vip` accounts reach it.
+
+## What is inside
+
+| Area | Behaviour |
+| --- | --- |
+| Access | Platform session + 5-minute Ed25519 project JWT. Server verifies offline and checks the `kochen` grant. |
+| Recipes | Title, description, servings, ingredients, steps, tags, categories, images, source. Raw text and transcript stay readable. |
+| Capture | Photo, PDF, link, video, audio, text. Worker queue with visible position. JSON-LD first, Readability fallback. German draft, member confirms before save. |
+| Cooking | Step-by-step or full page. Screen wake lock. One timer per step, running after reload. Servings scale with practical rounding (`4 ½` eggs, never `1 ⅓`). |
+| Cook state | Per person: untested, count, last cooked. A rating needs a cook event. Half stars. One rating per person and recipe. |
+| Variations | Fork keeps `lineage_key` per line. Unlimited chain. Side-by-side diff. Predecessor drift banner. |
+| Social | QR friend invite with two-sided confirmation. Profiles, friend list visibility, comments with one reply level, private links (login required, read and comment only). |
+| Search | One natural-language field. The model emits a strict filter DSL. Code compiles it to parameterized SQL. No keyword fallback. |
+| Shopping | Several recipes and servings. The member's own latest variation supplies the amounts. Equal units merge; teaspoon and tablespoon stay apart. |
+| Notifications | Web Push + bell list. Comment, reply, friend request, accepted request, new variation, timer end. No email. |
+| Print and export | A4 print route, Chromium PDF in the worker, Markdown export. |
+| Hardening | `noindex` on every response, `robots.txt` disallow, one visibility policy, soft delete, German only. |
+
+## Stack
+
+- TypeScript everywhere.
+- `apps/web`: Bun + Hono for API and SPA, React 19, Vite, TanStack Query, Tailwind v4.
+- `apps/worker`: Node 22, sharp, ffmpeg, pdftoppm, yt-dlp, Chromium, web-push.
+- PostgreSQL 17. Plain SQL migrations. `postgres.js` for queries (Drizzle was dropped in favour of explicit SQL so the recursive rating rule and the filter compiler stay in one place).
+- `packages/contracts` (Zod), `packages/core` (rules with tests), `packages/db` (client + migrations), `packages/ai` (provider adapter).
+
+```
+phone / tablet / laptop
+  React PWA  ──Bearer JWT──►  rezepte.ennio.vip  (Bun + Hono)
+      │                          │        │
+      │                          │        └── Postgres
+      │                          └──────────► R2 or a mounted media volume
+      └── auth.js overlay ──► api.ennio.vip
+
+  worker (Node 22) ──► Postgres jobs ──► AI, ffmpeg, yt-dlp, sharp, web-push, Chromium
+```
+
+## Local development
+
+Prerequisites: Bun 1.4+, PostgreSQL 17, Node 22 for the worker.
+
+```bash
+bun install
+createdb kochen
+
+export DATABASE_URL=postgres://kochen:kochen@localhost:5432/kochen
+bun run scripts/migrate.ts
+
+# API on :3000, dev auth enabled
+DEV_AUTH=true PORT=3000 bun run apps/web/src/server/index.ts
+
+# SPA on :5173 (proxy to :3000)
+bun run --cwd apps/web dev
+
+# Worker
+bun run apps/worker/src/index.ts
+```
+
+A dev bearer token has the form `dev:<sub>:<email>:<name>`.
+`DEV_AUTH=true` is ignored when `NODE_ENV=production`.
+
+Set `GEMINI_API_KEY` for capture, AI answers, tag suggestions and search.
+Without it, only the AI surfaces fail with `ai_unavailable`; every other
+function keeps working.
+
+### Tests
+
+```bash
+bun run test       # core rules: units, ratings, visibility, diff, filter, shopping, normalizer
+bun run typecheck  # tsc over all workspaces
+```
+
+API smoke test: start the API with a real database and use the endpoints in
+`apps/web/src/server/routes/`.
+
+## Environment
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `APP_ORIGIN` | Canonical origin, `https://rezepte.ennio.vip` |
+| `CANONICAL_HOST` | `rezepte.ennio.vip`; every other host answers 301 |
+| `ENNIO_JWKS_URL` | Platform JWKS |
+| `ENNIO_AUD` | `kochen` |
+| `DEV_AUTH` | Local only; `true` enables `dev:` tokens |
+| `R2_ENDPOINT`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_REGION` | Cloudflare R2 |
+| `MEDIA_DIR`, `MEDIA_SECRET` | Local media volume when R2 is absent |
+| `GEMINI_API_KEY`, `AI_PROVIDER`, `AI_EXTRACTION_MODEL`, `AI_TEXT_MODEL` | AI |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Web Push |
+| `CHROMIUM_PATH` | Worker PDF render |
+| `PORT` | Web port, default 3000 |
+
+Generate VAPID keys:
+
+```bash
+cd apps/worker && node -e "console.log(require('web-push').generateVAPIDKeys())"
+```
+
+## Deploy
+
+One image, two targets: `web` and `worker`.
+
+```bash
+docker build --target web -t kochen-web .
+docker build --target worker -t kochen-worker .
+```
+
+Dokploy (Ennio, `84.247.128.111`):
+
+- Project `Kochen`.
+- `PostgreSQL` service with a volume and a daily backup.
+- Application `web`: Git source, Dockerfile target `web`, port 3000, domains
+  `rezepte.ennio.vip` and `kochen.ennio.vip`, health check `/healthz`.
+  The container applies SQL migrations at boot, then serves API and SPA.
+- Application `worker`: same repository, Dockerfile target `worker`, no domain.
+  One replica. Chromium and ffmpeg need memory.
+- Mount one named volume at `/data/media` in both apps when R2 is not used.
+- DNS: proxied A records for both hosts to `84.247.128.111`. The wildcard still
+  points at the old server, so both records are explicit.
+- `kochen.ennio.vip` answers a 301 to `rezepte.ennio.vip` inside the app, so
+  both hosts share one deployment and one session.
+
+## Security notes
+
+- One `accessFor` policy decides visibility. Routes never filter on their own.
+- A private recipe never opens for a non-owner, not by link, search or count.
+- Private links store only a SHA-256 hash, never expire, and are revocable.
+- Comments and imported text render as plain text. No HTML.
+- Link import has an SSRF guard: scheme allowlist, DNS check against private
+  ranges, redirect and size caps.
+- Prompt injection defense: untrusted text sits in a data fence, the model has
+  no tools, and output is limited to the recipe schema or the filter DSL.
+- Uploads: magic-byte check, size caps, EXIF strip, pixel limit.
+- No secrets in the client bundle. Only the VAPID public key is public.
+
+## Known limits
+
+- Without `GEMINI_API_KEY` the AI surfaces are unavailable by design.
+- PDF export renders a worker-side A4 template, not the SPA print route. The
+  two layouts share the same rules but can drift; the print route remains the
+  preview for browser print.
+- YouTube, Instagram and TikTok can block `yt-dlp`. The app then asks for a
+  screenshot; it never cuts a video.
+- Uploaded originals are kept. Use an R2 lifecycle rule or an operator decision
+  to remove old originals.
+
+## License
+
+Private. All rights reserved.

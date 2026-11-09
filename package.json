@@ -1,0 +1,20 @@
+{
+  "name": "kochen",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "dev": "bun run --cwd apps/web dev",
+    "build": "bun run --cwd apps/web build",
+    "start": "bun run apps/web/src/server/index.ts",
+    "worker": "bun run apps/worker/src/index.ts",
+    "typecheck": "tsc -b --pretty false",
+    "test": "vitest run",
+    "db:generate": "bun run scripts/migrate.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "@types/node": "^22.10.2"
+  }
+}

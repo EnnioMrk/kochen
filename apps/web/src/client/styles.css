@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #faf7f2;
+  --color-paper-2: #f3ede3;
+  --color-ink: #211c16;
+  --color-ink-soft: #5c5346;
+  --color-line: #e3d9ca;
+  --color-brand: #b4552d;
+  --color-brand-dark: #8f3f1e;
+  --color-sage: #6f7d5c;
+  --color-sage-soft: #e8ecdf;
+  --color-danger: #a83232;
+  --color-gold: #c98a2b;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Fraunces", ui-serif, Georgia, "Times New Roman", serif;
+
+  --radius-card: 18px;
+}
+
+:root {
+  color-scheme: light;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html,
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-brand) 22%, transparent);
+}
+
+h1, h2, h3, .display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* Sticky hover only where a real pointer exists. */
+@media (hover: hover) {
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px -18px rgba(60, 40, 20, 0.4);
+  }
+}
+
+.hover-lift {
+  transition: transform 180ms cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 180ms ease;
+}
+
+.paper-grain {
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(180, 85, 45, 0.05), transparent 45%),
+    radial-gradient(circle at 82% 6%, rgba(111, 125, 92, 0.07), transparent 40%);
+}
+
+.tap {
+  touch-action: manipulation;
+}
+
+/* Cooking mode: keep the screen awake visually calm. */
+.cook-step-enter {
+  animation: step-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes step-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print: one clean A4 layout from the same route. */
+@media print {
+  @page { size: A4; margin: 18mm; }
+  body { background: #fff; color: #000; }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  .print-avoid-break { break-inside: avoid; }
+  a { color: #000; text-decoration: none; }
+  .print-page { max-width: none !important; padding: 0 !important; }
+}

@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@kochen/contracts": ["packages/contracts/src/index.ts"],
+      "@kochen/core": ["packages/core/src/index.ts"],
+      "@kochen/db": ["packages/db/src/index.ts"],
+      "@kochen/ai": ["packages/ai/src/index.ts"]
+    }
+  },
+  "include": ["packages/*/src/**/*", "apps/*/src/**/*", "scripts/**/*", "*.config.ts"]
+}
