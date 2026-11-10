@@ -279,25 +279,9 @@ async function convertAudio(
     throw new JobFailure("extraction_failed", "Die Tonspur des Videos konnte nicht umgewandelt werden.");
   }
 
-  let bytes = await readFile(wavPath);
-  if (bytes.byteLength <= MAX_INLINE_AUDIO_BYTES) {
-    return { data: bytes.toString("base64"), mime: "audio/wav" };
-  }
-
-  const mp3Path = join(dir, "audio.mp3");
-  try {
-    await runOrFail(
-      "ffmpeg",
-      ["-y", "-i", wavPath, "-ac", "1", "-ar", "16000", "-b:a", "64k", mp3Path],
-      MISSING_FFMPEG,
-      { timeoutMs: 5 * 60_000, maxBuffer: 8 * MB },
-    );
-    bytes = await readFile(mp3Path);
-  } catch {
-    // Keep the wav when compression fails; the provider may still accept it.
-  }
-  warnings.push("Die Tonspur des Videos wurde für die Analyse komprimiert.");
-  return { data: bytes.toString("base64"), mime: "audio/mpeg" };
+  // Keep the canonical 16 kHz mono PCM WAV. Parakeet TDT rejects other rates.
+  const bytes = await readFile(wavPath);
+  return { data: bytes.toString("base64"), mime: "audio/wav" };
 }
 
 async function downloadVideo(

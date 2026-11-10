@@ -240,19 +240,13 @@ export async function prepareAudio(keys: string[], limits: Limits): Promise<Prep
       warnings.push("Die Länge der Audiodatei konnte nicht geprüft werden.");
     }
 
-    if (bytes.byteLength <= MAX_INLINE_AUDIO_BYTES) {
-      return {
-        audio: { data: Buffer.from(bytes).toString("base64"), mime: info.mime },
-        sourceKeys: [key],
-        warnings,
-      };
-    }
-
-    const mp3Path = join(dir, "audio.mp3");
+    // Parakeet TDT needs 16 kHz mono PCM WAV. One canonical form for every
+    // provider; the ASR service rejects other sample rates.
+    const wavPath = join(dir, "audio.wav");
     try {
       await runOrFail(
         "ffmpeg",
-        ["-y", "-i", inputPath, "-vn", "-ac", "1", "-ar", "16000", "-b:a", "64k", mp3Path],
+        ["-y", "-i", inputPath, "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", wavPath],
         "Audio-Import ist nicht verfügbar: ffmpeg fehlt auf dem Server.",
         { timeoutMs: 300_000, maxBuffer: 8 * MB },
       );
@@ -260,10 +254,9 @@ export async function prepareAudio(keys: string[], limits: Limits): Promise<Prep
       if (error instanceof JobFailure) throw error;
       throw new JobFailure("extraction_failed", "Die Audiodatei konnte nicht verarbeitet werden.");
     }
-    const compressed = await readFile(mp3Path);
-    warnings.push("Die Audiodatei wurde für die Analyse komprimiert.");
+    const wav = await readFile(wavPath);
     return {
-      audio: { data: compressed.toString("base64"), mime: "audio/mpeg" },
+      audio: { data: wav.toString("base64"), mime: "audio/wav" },
       sourceKeys: [key],
       warnings,
     };
