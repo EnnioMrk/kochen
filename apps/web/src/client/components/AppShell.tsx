@@ -5,6 +5,7 @@ import {
   BookOpen,
   Camera,
   Compass,
+  KeyRound,
   LogOut,
   Search,
   Settings,
@@ -60,6 +61,9 @@ export function AppShell() {
   const onPrint = /\/drucken$/.test(location.pathname);
   if (onCooking || onPrint) return <Outlet />;
 
+  const isAdmin = me.role === "admin" || me.role === "owner";
+  const nav = isAdmin ? [...NAV, { to: "/verwaltung", label: "Zugänge", icon: KeyRound }] : NAV;
+
   return (
     <div className="min-h-dvh pb-24 md:pb-10">
       <header
@@ -72,7 +76,7 @@ export function AppShell() {
             <span className="display hidden text-xl tracking-tight sm:block" aria-hidden>Kochen</span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
-            {NAV.map((item) => (
+            {nav.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}

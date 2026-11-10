@@ -117,4 +117,5 @@ export const qk = {
   job: (id: string) => ["job", id] as const,
   importJob: (id: string) => ["import-job", id] as const,
   search: (q: string) => ["search", q] as const,
+  platformCredentials: ["admin", "platforms"] as const,
 };

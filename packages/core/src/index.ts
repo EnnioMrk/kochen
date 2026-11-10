@@ -6,3 +6,4 @@ export * from "./filter";
 export * from "./shopping";
 export * from "./normalize";
 export * from "./import-quality";
+export * from "./secrets";

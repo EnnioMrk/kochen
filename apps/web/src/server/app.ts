@@ -14,6 +14,7 @@ import { social } from "./routes/social";
 import { shopping } from "./routes/shopping";
 import { notifications } from "./routes/notifications";
 import { settings } from "./routes/settings";
+import { admin } from "./routes/admin";
 import { mediaRoutes } from "./routes/media";
 import { serveStatic } from "hono/bun";
 
@@ -92,6 +93,7 @@ app.route("/api", social);
 app.route("/api/shopping", shopping);
 app.route("/api", notifications);
 app.route("/api/settings", settings);
+app.route("/api/admin", admin);
 
 app.all("/api/*", () => {
   throw notFound();

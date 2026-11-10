@@ -190,8 +190,10 @@ Dokploy (Ennio, `84.247.128.111`):
 - PDF export renders a worker-side A4 template, not the SPA print route. The
   two layouts share the same rules but can drift; the print route remains the
   preview for browser print.
-- YouTube, Instagram and TikTok can block `yt-dlp`. The app then asks for a
-  screenshot; it never cuts a video.
+- YouTube, Instagram and TikTok can block `yt-dlp`. The owner stores a login per
+  platform under *Einstellungen → Zugänge*; the worker passes it to `yt-dlp` as
+  a cookies file and as a username/password pair. Without a login the app asks
+  for a screenshot; it never cuts a video.
 - Chrome cannot decode HEIC. On such a browser the photo list shows a file tile
   with the name, not a preview. The import still converts the photo in the
   worker.

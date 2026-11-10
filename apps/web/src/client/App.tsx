@@ -15,6 +15,7 @@ import { FriendsPage } from "./pages/FriendsPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { AdminPage } from "./pages/AdminPage";
 import { InvitePage } from "./pages/InvitePage";
 
 const queryClient = new QueryClient({
@@ -51,6 +52,7 @@ export function App() {
               <Route path="profil/:id" element={<ProfilePage />} />
               <Route path="benachrichtigungen" element={<NotificationsPage />} />
               <Route path="einstellungen" element={<SettingsPage />} />
+              <Route path="verwaltung" element={<AdminPage />} />
               <Route path="f/:token" element={<InvitePage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>

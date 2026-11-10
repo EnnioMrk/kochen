@@ -7,6 +7,7 @@ import { JobFailure } from "../errors";
 import { getObject, mediaKey, putObject } from "../media";
 import { sniffAudio } from "../media-inspect";
 import { formatMinutes, probeDuration } from "./media-prepare";
+import { loginArgs } from "./platform-login";
 import { run, runOrFail } from "../tools";
 
 const MB = 1024 * 1024;
@@ -36,7 +37,8 @@ const MISSING_FFMPEG = "Video-Import ist nicht verfügbar: ffmpeg fehlt auf dem 
 export async function prepareVideo(url: string, limits: Limits): Promise<VideoMaterial> {
   const dir = await mkdtemp(join(env.tmpRoot, "kochen-video-"));
   try {
-    const meta = await fetchMetadata(url, dir);
+    const auth = await loginArgs(url, dir);
+    const meta = await fetchMetadata(url, dir, auth);
     const durationS = typeof meta.duration === "number" && meta.duration > 0 ? meta.duration : null;
     assertDuration(durationS, limits);
 
@@ -47,10 +49,10 @@ export async function prepareVideo(url: string, limits: Limits): Promise<VideoMa
       typeof meta.description === "string" ? meta.description.trim().slice(0, 8000) : null;
     const title = typeof meta.title === "string" ? meta.title.slice(0, 200) : null;
 
-    const captions = await fetchCaptions(url, dir, warnings);
-    const audioInput = await downloadAudio(url, dir);
+    const captions = await fetchCaptions(url, dir, warnings, auth);
+    const audioInput = await downloadAudio(url, dir, auth);
     const audio = await convertAudio(audioInput, dir, warnings);
-    const videoInput = await downloadVideo(url, dir, warnings);
+    const videoInput = await downloadVideo(url, dir, warnings, auth);
     const frames = videoInput ? await extractFrames(videoInput, dir, warnings) : [];
     const coverKey = await saveCover(frames, warnings);
 
@@ -148,12 +150,20 @@ async function saveCover(frames: Buffer[], warnings: string[]): Promise<string |
   }
 }
 
-async function fetchMetadata(url: string, dir: string): Promise<Record<string, unknown>> {
+async function fetchMetadata(url: string, dir: string, auth: string[]): Promise<Record<string, unknown>> {
   let stdout: string;
   try {
     const result = await runOrFail(
       "yt-dlp",
-      ["--dump-single-json", "--no-playlist", "--no-warnings", "-o", join(dir, "meta.%(ext)s"), url],
+      [
+        "--dump-single-json",
+        "--no-playlist",
+        "--no-warnings",
+        ...auth,
+        "-o",
+        join(dir, "meta.%(ext)s"),
+        url,
+      ],
       MISSING_YTDLP,
       { timeoutMs: 120_000, maxBuffer: 64 * MB },
     );
@@ -174,7 +184,7 @@ async function fetchMetadata(url: string, dir: string): Promise<Record<string, u
   }
 }
 
-async function fetchCaptions(url: string, dir: string, warnings: string[]): Promise<string | null> {
+async function fetchCaptions(url: string, dir: string, warnings: string[], auth: string[]): Promise<string | null> {
   try {
     await run(
       "yt-dlp",
@@ -188,6 +198,7 @@ async function fetchCaptions(url: string, dir: string, warnings: string[]): Prom
         "vtt",
         "--no-playlist",
         "--no-warnings",
+        ...auth,
         "-o",
         join(dir, "subs.%(ext)s"),
         url,
@@ -237,11 +248,11 @@ function cleanVtt(raw: string): string {
     .trim();
 }
 
-async function downloadAudio(url: string, dir: string): Promise<string> {
+async function downloadAudio(url: string, dir: string, auth: string[]): Promise<string> {
   try {
     await runOrFail(
       "yt-dlp",
-      ["-f", "bestaudio", "--no-playlist", "--no-warnings", "-o", join(dir, "audio.%(ext)s"), url],
+      ["-f", "bestaudio", "--no-playlist", "--no-warnings", ...auth, "-o", join(dir, "audio.%(ext)s"), url],
       MISSING_YTDLP,
       { timeoutMs: 10 * 60_000, maxBuffer: 8 * MB },
     );
@@ -288,6 +299,7 @@ async function downloadVideo(
   url: string,
   dir: string,
   warnings: string[],
+  auth: string[],
 ): Promise<string | null> {
   try {
     await run(
@@ -299,6 +311,7 @@ async function downloadVideo(
         "--no-warnings",
         "--max-filesize",
         "400M",
+        ...auth,
         "-o",
         join(dir, "video.%(ext)s"),
         url,

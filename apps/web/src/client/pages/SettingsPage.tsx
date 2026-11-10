@@ -266,6 +266,15 @@ export function SettingsPage() {
             Diese Werte gelten für alle neuen Importe. Sie ändern keine laufenden Aufträge.
           </p>
 
+          <p className="mt-2 text-sm">
+            <Link
+              to="/verwaltung"
+              className="tap-target inline-flex min-h-11 items-center font-medium text-brand underline-offset-4 hover:underline"
+            >
+              Zugänge für YouTube, Instagram und TikTok
+            </Link>
+          </p>
+
           {settingsQuery.isPending && <Skeleton className="mt-3 h-40 w-full" />}
 
           {settingsQuery.isError && (

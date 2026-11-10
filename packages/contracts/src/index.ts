@@ -31,6 +31,30 @@ export type ErrorCode = (typeof ERROR_CODES)[number];
 export const Role = z.enum(["member", "admin", "owner"]);
 export type Role = z.infer<typeof Role>;
 
+/** Platforms that block the server without a login. */
+export const PLATFORMS = ["youtube", "instagram", "tiktok"] as const;
+export const PlatformName = z.enum(PLATFORMS);
+export type PlatformName = z.infer<typeof PlatformName>;
+
+/** What the admin sees. Secrets never leave the server. */
+export const PlatformCredential = z.object({
+  platform: PlatformName,
+  username: z.string().nullable(),
+  hasPassword: z.boolean(),
+  hasCookies: z.boolean(),
+  updatedAt: z.string(),
+  updatedByName: z.string().nullable(),
+});
+export type PlatformCredential = z.infer<typeof PlatformCredential>;
+
+/** Omitted field keeps the stored value. Empty string or null clears it. */
+export const PlatformCredentialInput = z.object({
+  username: z.string().max(200).nullable().optional(),
+  password: z.string().max(500).nullable().optional(),
+  cookies: z.string().max(200_000).nullable().optional(),
+});
+export type PlatformCredentialInput = z.infer<typeof PlatformCredentialInput>;
+
 export const Visibility = z.enum(["private", "friends", "members"]);
 export type Visibility = z.infer<typeof Visibility>;
 

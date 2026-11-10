@@ -55,7 +55,7 @@ function failedMessage(job: ImportJob): string {
     case "source_unavailable":
       return "Die Quelle ist nicht erreichbar. Bitte prüfe den Link oder versuche es später erneut.";
     case "source_blocked":
-      return "Die Seite lässt den Import nicht zu. Bitte lade einen Screenshot des Rezepts hoch.";
+      return "Die Seite lässt keinen Abruf vom Server zu.";
     case "media_unavailable":
       return "Der Medienspeicher ist nicht erreichbar oder die Datei fehlt dort. Bitte melde das dem Betreiber.";
     case "tool_missing":
@@ -67,7 +67,7 @@ function failedMessage(job: ImportJob): string {
   }
 }
 
-function ScreenshotPanel({ onStarted }: { onStarted: (id: string) => void }) {
+function ScreenshotPanel({ reason, onStarted }: { reason: string; onStarted: (id: string) => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [percent, setPercent] = useState(0);
@@ -102,7 +102,7 @@ function ScreenshotPanel({ onStarted }: { onStarted: (id: string) => void }) {
         Screenshot nachreichen
       </h2>
       <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-        Die Quelle ließ sich nicht vollständig lesen. Lade einen Screenshot des Rezepts hoch. Daraus startet ein neuer
+        {reason} Lade einen Screenshot des Rezepts hoch. Daraus startet ein neuer
         Import.
       </p>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -303,7 +303,7 @@ export function ImportReviewPage() {
       {job.state === "needs_review" && job.draft && (
         <div className="space-y-4">
           {job.draftMeta?.asksForScreenshot && (
-            <ScreenshotPanel onStarted={(newId) => navigate(`/import/${newId}`)} />
+            <ScreenshotPanel reason={failedMessage(job)} onStarted={(newId) => navigate(`/import/${newId}`)} />
           )}
           <DraftForm
             draft={job.draft}
@@ -385,7 +385,7 @@ export function ImportReviewPage() {
 
       {job.state === "failed" && SCREENSHOT_HELPS.has(job.errorCode ?? "") && (
         <div className="mt-4">
-          <ScreenshotPanel onStarted={(newId) => navigate(`/import/${newId}`)} />
+          <ScreenshotPanel reason={failedMessage(job)} onStarted={(newId) => navigate(`/import/${newId}`)} />
         </div>
       )}
 
