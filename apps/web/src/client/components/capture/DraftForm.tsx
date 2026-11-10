@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import type { RecipeInput, UnitKey } from "@kochen/contracts";
-import { AlertTriangle, Plus, Trash2 } from "lucide-react";
-import { Button, Card, Field, IconButton, Input, Select, Textarea } from "../ui";
+import { AlertTriangle, ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
+import { Badge, Button, Card, Field, IconButton, Input, Select, Textarea } from "../ui";
 
 const UNITS: Array<{ value: UnitKey; label: string }> = [
   { value: "g", label: "g" },
@@ -22,15 +22,33 @@ const UNITS: Array<{ value: UnitKey; label: string }> = [
 ];
 
 type IngredientForm = { amount: string; unit: UnitKey | ""; name: string; note: string };
+/** A row carries its own id so reordering and deleting never target a stale index. */
+type IngredientRow = IngredientForm & { id: string };
 type StepForm = { text: string; minutes: string };
 type FormState = {
   title: string;
   description: string;
   servings: string;
-  ingredients: IngredientForm[];
+  bakingTemperature: string;
+  bakingTime: string;
+  ingredients: IngredientRow[];
   steps: StepForm[];
   tags: string;
 };
+
+function newIngredientRow(): IngredientRow {
+  return { id: rowId(), amount: "", unit: "", name: "", note: "" };
+}
+
+/** crypto.randomUUID needs a secure context; plain http on a LAN does not have one. */
+function rowId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  return `row-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function ingredientNameId(id: string): string {
+  return `draft-ingredient-${id}-name`;
+}
 
 function parseAmount(value: string): number | null {
   const clean = value.trim().replace(/\s/g, "").replace(",", ".");
@@ -51,7 +69,10 @@ function toForm(draft: RecipeInput): FormState {
     title: draft.title,
     description: draft.description ?? "",
     servings: String(draft.servings),
+    bakingTemperature: draft.bakingTemperature ?? "",
+    bakingTime: draft.bakingTime ?? "",
     ingredients: draft.ingredients.map((ingredient) => ({
+      id: rowId(),
       amount: ingredient.amount === null ? "" : String(ingredient.amount).replace(".", ","),
       unit: ingredient.unit ?? "",
       name: ingredient.name,
@@ -79,7 +100,8 @@ export function warningText(warning: string): string {
   return WARNING_TEXT[warning] ?? warning;
 }
 
-function buildInput(form: FormState, draft: RecipeInput): RecipeInput | string {  const title = form.title.trim();
+function buildInput(form: FormState, draft: RecipeInput): RecipeInput | string {
+  const title = form.title.trim();
   if (!title) return "Bitte gib einen Titel ein.";
   if (title.length > 200) return "Der Titel ist zu lang (höchstens 200 Zeichen).";
 
@@ -87,6 +109,11 @@ function buildInput(form: FormState, draft: RecipeInput): RecipeInput | string {
   if (!Number.isFinite(servings) || servings < 1 || servings > 100) {
     return "Portionen müssen zwischen 1 und 100 liegen.";
   }
+
+  const bakingTemperature = form.bakingTemperature.trim();
+  const bakingTime = form.bakingTime.trim();
+  if (bakingTemperature.length > 80) return "Die Backtemperatur ist zu lang (höchstens 80 Zeichen).";
+  if (bakingTime.length > 80) return "Die Backzeit ist zu lang (höchstens 80 Zeichen).";
 
   for (const ingredient of form.ingredients) {
     if (!ingredient.name.trim() && ingredient.amount.trim()) {
@@ -142,6 +169,8 @@ function buildInput(form: FormState, draft: RecipeInput): RecipeInput | string {
     title,
     description: form.description.trim() || null,
     servings,
+    bakingTemperature: bakingTemperature || null,
+    bakingTime: bakingTime || null,
     ingredients,
     steps,
     tagNames,
@@ -153,26 +182,63 @@ export function DraftForm({
   warnings,
   submitting,
   error,
+  servingsEstimated = false,
   onSubmit,
 }: {
   draft: RecipeInput;
   warnings: string[];
   submitting: boolean;
   error: string | null;
+  servingsEstimated?: boolean;
   onSubmit: (input: RecipeInput) => void;
 }) {
   const [form, setForm] = useState<FormState>(() => toForm(draft));
   const [localError, setLocalError] = useState<string | null>(null);
+  const [estimated, setEstimated] = useState(servingsEstimated);
+  const [focusId, setFocusId] = useState<string | null>(null);
+
+  // New rows are inserted at the top; focus their name field once, after the render.
+  useEffect(() => {
+    if (!focusId) return;
+    document.getElementById(ingredientNameId(focusId))?.focus();
+    setFocusId(null);
+  }, [focusId]);
 
   const update = (patch: Partial<FormState>) => setForm((current) => ({ ...current, ...patch }));
 
-  const updateIngredient = (index: number, patch: Partial<IngredientForm>) => {
+  const updateIngredient = (id: string, patch: Partial<IngredientForm>) => {
     setForm((current) => ({
       ...current,
-      ingredients: current.ingredients.map((ingredient, itemIndex) =>
-        itemIndex === index ? { ...ingredient, ...patch } : ingredient,
+      ingredients: current.ingredients.map((ingredient) =>
+        ingredient.id === id ? { ...ingredient, ...patch } : ingredient,
       ),
     }));
+  };
+
+  const addIngredient = () => {
+    const row = newIngredientRow();
+    setForm((current) => ({ ...current, ingredients: [row, ...current.ingredients] }));
+    setFocusId(row.id);
+  };
+
+  const removeIngredient = (id: string) => {
+    setForm((current) => ({
+      ...current,
+      ingredients: current.ingredients.filter((ingredient) => ingredient.id !== id),
+    }));
+  };
+
+  const moveIngredient = (id: string, direction: -1 | 1) => {
+    setForm((current) => {
+      const from = current.ingredients.findIndex((ingredient) => ingredient.id === id);
+      const to = from + direction;
+      if (from < 0 || to < 0 || to >= current.ingredients.length) return current;
+      const next = [...current.ingredients];
+      const [moved] = next.splice(from, 1);
+      if (!moved) return current;
+      next.splice(to, 0, moved);
+      return { ...current, ingredients: next };
+    });
   };
 
   const updateStep = (index: number, patch: Partial<StepForm>) => {
@@ -226,27 +292,37 @@ export function DraftForm({
             onChange={(event) => update({ description: event.target.value })}
           />
         </Field>
-        <Field label="Portionen" className="max-w-40">
+        <div className="max-w-52">
+          <div className="mb-1.5 flex flex-wrap items-center gap-2">
+            <label htmlFor="draft-servings" className="text-sm font-medium text-ink">
+              Portionen
+            </label>
+            {estimated && <Badge tone="gold">geschätzt</Badge>}
+          </div>
           <Input
+            id="draft-servings"
             type="number"
             inputMode="numeric"
             min={1}
             max={100}
             value={form.servings}
-            onChange={(event) => update({ servings: event.target.value })}
+            onChange={(event) => {
+              setEstimated(false);
+              update({ servings: event.target.value });
+            }}
           />
-        </Field>
+          {estimated && (
+            <p className="mt-1 text-xs text-ink-soft">
+              Die Quelle nennt keine Portionszahl. Der Wert ist geschätzt.
+            </p>
+          )}
+        </div>
       </Card>
 
       <Card className="p-4 sm:p-5">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg">Zutaten</h2>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={() => update({ ingredients: [...form.ingredients, { amount: "", unit: "", name: "", note: "" }] })}
-          >
+          <Button type="button" variant="secondary" size="sm" onClick={addIngredient}>
             <Plus className="size-4" />
             Zutat hinzufügen
           </Button>
@@ -256,57 +332,100 @@ export function DraftForm({
         ) : (
           <div className="space-y-3">
             {form.ingredients.map((ingredient, index) => (
-              <div key={index} className="grid grid-cols-2 gap-2 sm:grid-cols-[6rem_8rem_1fr_auto] sm:items-start">
-                <Input
-                  value={ingredient.amount}
-                  inputMode="decimal"
-                  maxLength={20}
-                  aria-label={`Menge für Zutat ${index + 1}`}
-                  placeholder="Menge"
-                  onChange={(event) => updateIngredient(index, { amount: event.target.value })}
-                />
-                <Select
-                  value={ingredient.unit}
-                  aria-label={`Einheit für Zutat ${index + 1}`}
-                  onChange={(event) => updateIngredient(index, { unit: event.target.value as UnitKey | "" })}
-                >
-                  <option value="">ohne Einheit</option>
-                  {UNITS.map((unit) => (
-                    <option key={unit.value} value={unit.value}>
-                      {unit.label}
-                    </option>
-                  ))}
-                </Select>
-                <Input
-                  className="col-span-2 sm:col-span-1"
-                  value={ingredient.name}
-                  maxLength={200}
-                  aria-label={`Zutat ${index + 1}`}
-                  placeholder="Zutat"
-                  onChange={(event) => updateIngredient(index, { name: event.target.value })}
-                />
-                <IconButton
-                  type="button"
-                  label={`Zutat ${index + 1} entfernen`}
-                  className="col-span-2 justify-self-end text-danger sm:col-span-1 sm:justify-self-auto"
-                  onClick={() =>
-                    update({ ingredients: form.ingredients.filter((_, itemIndex) => itemIndex !== index) })
-                  }
-                >
-                  <Trash2 className="size-4" />
-                </IconButton>
-                <Input
-                  className="col-span-2 text-sm sm:col-span-3 sm:col-start-1"
-                  value={ingredient.note}
-                  maxLength={300}
-                  aria-label={`Hinweis für Zutat ${index + 1}`}
-                  placeholder="Hinweis (optional), z. B. fein gehackt"
-                  onChange={(event) => updateIngredient(index, { note: event.target.value })}
-                />
+              <div key={ingredient.id} className="rounded-xl border border-line/70 bg-paper/50 p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium text-ink">Zutat {index + 1}</span>
+                  <div className="flex items-center gap-1">
+                    <IconButton
+                      type="button"
+                      label={`Zutat ${index + 1} nach oben`}
+                      disabled={index === 0}
+                      onClick={() => moveIngredient(ingredient.id, -1)}
+                    >
+                      <ArrowUp className="size-4" />
+                    </IconButton>
+                    <IconButton
+                      type="button"
+                      label={`Zutat ${index + 1} nach unten`}
+                      disabled={index === form.ingredients.length - 1}
+                      onClick={() => moveIngredient(ingredient.id, 1)}
+                    >
+                      <ArrowDown className="size-4" />
+                    </IconButton>
+                    <IconButton
+                      type="button"
+                      label={`Zutat ${index + 1} entfernen`}
+                      className="text-danger"
+                      onClick={() => removeIngredient(ingredient.id)}
+                    >
+                      <Trash2 className="size-4" />
+                    </IconButton>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-[5rem_7rem_minmax(0,1fr)_minmax(0,1fr)] md:items-center">
+                  <Input
+                    value={ingredient.amount}
+                    inputMode="decimal"
+                    maxLength={20}
+                    aria-label={`Menge für Zutat ${index + 1}`}
+                    placeholder="Menge"
+                    onChange={(event) => updateIngredient(ingredient.id, { amount: event.target.value })}
+                  />
+                  <Select
+                    value={ingredient.unit}
+                    aria-label={`Einheit für Zutat ${index + 1}`}
+                    onChange={(event) =>
+                      updateIngredient(ingredient.id, { unit: event.target.value as UnitKey | "" })
+                    }
+                  >
+                    <option value="">ohne Einheit</option>
+                    {UNITS.map((unit) => (
+                      <option key={unit.value} value={unit.value}>
+                        {unit.label}
+                      </option>
+                    ))}
+                  </Select>
+                  <Input
+                    id={ingredientNameId(ingredient.id)}
+                    className="col-span-2 md:col-span-1"
+                    value={ingredient.name}
+                    maxLength={200}
+                    aria-label={`Zutat ${index + 1}`}
+                    placeholder="Zutat"
+                    onChange={(event) => updateIngredient(ingredient.id, { name: event.target.value })}
+                  />
+                  <Input
+                    className="col-span-2 text-sm md:col-span-1"
+                    value={ingredient.note}
+                    maxLength={300}
+                    aria-label={`Hinweis für Zutat ${index + 1}`}
+                    placeholder="Hinweis (optional)"
+                    onChange={(event) => updateIngredient(ingredient.id, { note: event.target.value })}
+                  />
+                </div>
               </div>
             ))}
           </div>
         )}
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <Field label="Backtemperatur">
+            <Input
+              value={form.bakingTemperature}
+              maxLength={80}
+              placeholder="z. B. 180 °C Ober-/Unterhitze"
+              onChange={(event) => update({ bakingTemperature: event.target.value })}
+            />
+          </Field>
+          <Field label="Backzeit">
+            <Input
+              value={form.bakingTime}
+              maxLength={80}
+              placeholder="z. B. 35 Min."
+              onChange={(event) => update({ bakingTime: event.target.value })}
+            />
+          </Field>
+        </div>
       </Card>
 
       <Card className="p-4 sm:p-5">
@@ -346,16 +465,16 @@ export function DraftForm({
                   aria-label={`Text für Schritt ${index + 1}`}
                   onChange={(event) => updateStep(index, { text: event.target.value })}
                 />
-                <div className="mt-2 flex items-center gap-2">
-                  <Input
-                    className="w-24"
-                    value={step.minutes}
-                    inputMode="decimal"
-                    aria-label={`Dauer für Schritt ${index + 1} in Minuten`}
-                    placeholder="Min."
-                    onChange={(event) => updateStep(index, { minutes: event.target.value })}
-                  />
-                  <span className="text-xs text-ink-soft">Minuten (optional)</span>
+                <div className="mt-2 max-w-44">
+                  <Field label="Dauer in Minuten (optional)">
+                    <Input
+                      value={step.minutes}
+                      inputMode="decimal"
+                      aria-label={`Dauer für Schritt ${index + 1} in Minuten`}
+                      placeholder="z. B. 30"
+                      onChange={(event) => updateStep(index, { minutes: event.target.value })}
+                    />
+                  </Field>
                 </div>
               </div>
             ))}

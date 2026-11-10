@@ -55,7 +55,7 @@ function CommentRow({
           <CommentBody comment={comment} />
         </div>
         {!comment.deletedAt && (
-          <div className="mt-1 flex items-center gap-1">
+          <div className="mt-1 flex flex-wrap items-center gap-1">
             {canReply && onReply && (
               <Button variant="ghost" size="sm" className="min-h-9 px-2 text-xs" onClick={onReply}>
                 <Reply className="size-3.5" />

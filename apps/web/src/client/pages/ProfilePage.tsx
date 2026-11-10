@@ -29,7 +29,7 @@ function Section({
 }) {
   return (
     <section>
-      <div className="mb-2 flex items-center justify-between gap-2">
+      <div className="mb-2 flex items-center gap-2">
         <h2 className="text-xl">{title}</h2>
         <Badge tone="neutral">{count}</Badge>
       </div>
@@ -98,7 +98,7 @@ export function ProfilePage() {
     <div className="mx-auto max-w-4xl space-y-6">
       <button
         type="button"
-        className="inline-flex items-center gap-1 text-sm text-ink-soft underline-offset-4 hover:text-ink hover:underline"
+        className="tap inline-flex min-h-11 items-center gap-1 text-sm text-ink-soft underline-offset-4 hover:text-ink hover:underline"
         onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/"))}
       >
         <ChevronLeft className="size-4" />
@@ -109,7 +109,7 @@ export function ProfilePage() {
         <div className="flex flex-wrap items-center gap-4">
           <Avatar name={profile.user.name} url={profile.user.avatarUrl} size={72} />
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-2xl">{deleted ? "gelöschtes Konto" : profile.user.name}</h1>
+            <h1 className="text-2xl break-words">{deleted ? "gelöschtes Konto" : profile.user.name}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {isSelf && <Badge tone="brand">Dein Profil</Badge>}
               {deleted && <Badge tone="danger">gelöschtes Konto</Badge>}
@@ -118,12 +118,12 @@ export function ProfilePage() {
             </div>
           </div>
           {isSelf ? (
-            <Button variant="secondary" size="sm" onClick={() => navigate("/einstellungen")}>
+            <Button variant="secondary" size="sm" className="max-sm:w-full" onClick={() => navigate("/einstellungen")}>
               <Settings className="size-4" />
               Einstellungen
             </Button>
           ) : deleted ? null : (
-            <Button variant="secondary" size="sm" onClick={() => navigate("/freunde")}>
+            <Button variant="secondary" size="sm" className="max-sm:w-full" onClick={() => navigate("/freunde")}>
               <UserPlus className="size-4" />
               Einladung
             </Button>
@@ -153,7 +153,7 @@ export function ProfilePage() {
                 <li key={friend.id}>
                   <Link
                     to={`/profil/${friend.id}`}
-                    className="tap inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 text-sm text-ink transition hover:border-ink/20"
+                    className="tap tap-target inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-white px-3 text-sm text-ink transition hover:border-ink/20"
                   >
                     <Avatar name={friend.name} url={friend.avatarUrl} size={24} />
                     {friend.deletedAt ? "gelöschtes Konto" : friend.name}

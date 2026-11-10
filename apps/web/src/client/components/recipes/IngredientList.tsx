@@ -69,9 +69,11 @@ export function ServingsStepper({
 function IngredientRowBody({
   item,
   factor,
+  inline,
 }: {
   item: Ingredient;
   factor: number;
+  inline?: boolean;
 }) {
   const scaled = item.amount === null ? null : scaleAmount(item.amount, item.unit, factor);
   const shown = scaled === null ? null : presentAmount(scaled, item.unit);
@@ -80,12 +82,21 @@ function IngredientRowBody({
         .filter(Boolean)
         .join(" ")
     : "";
+  if (inline) {
+    return (
+      <span className="min-w-0 flex-1 text-sm leading-relaxed break-words">
+        {amountText && <span className="font-medium tabular-nums text-ink">{amountText} </span>}
+        <span className="text-ink">{item.name}</span>
+        {item.note && <span className="text-ink-soft"> ({item.note})</span>}
+      </span>
+    );
+  }
   return (
     <>
       <span className="w-20 shrink-0 text-right text-sm font-medium tabular-nums text-ink sm:w-24">
         {amountText}
       </span>
-      <span className="min-w-0 flex-1 text-sm leading-relaxed">
+      <span className="min-w-0 flex-1 text-sm leading-relaxed break-words">
         <span className="text-ink">{item.name}</span>
         {item.note && <span className="text-ink-soft"> ({item.note})</span>}
       </span>
@@ -100,6 +111,7 @@ export function IngredientRows({
   onToggle,
   emptyText,
   className,
+  inline,
 }: {
   ingredients: Ingredient[];
   factor?: number;
@@ -107,6 +119,8 @@ export function IngredientRows({
   onToggle?: (key: string) => void;
   emptyText?: string;
   className?: string;
+  /** Stack the amount with the name. For narrow columns. */
+  inline?: boolean;
 }) {
   if (ingredients.length === 0) {
     return <p className="text-sm text-ink-soft">{emptyText ?? "Keine Zutaten eingetragen."}</p>;
@@ -136,14 +150,14 @@ export function IngredientRows({
                 >
                   {isChecked && <Check className="size-3.5" />}
                 </span>
-                <IngredientRowBody item={item} factor={factor} />
+                <IngredientRowBody item={item} factor={factor} inline={inline} />
               </button>
             </li>
           );
         }
         return (
           <li key={key} className="flex items-start gap-3 px-1 py-2.5">
-            <IngredientRowBody item={item} factor={factor} />
+            <IngredientRowBody item={item} factor={factor} inline={inline} />
           </li>
         );
       })}

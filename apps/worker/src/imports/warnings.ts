@@ -1,7 +1,6 @@
 /** German text for the warning codes that `normalizeDraft` emits. */
 const WARNING_MESSAGES: Record<string, string> = {
   titel_fehlt: "Der Titel fehlt. Bitte ergänze ihn.",
-  portionen_fehlen: "Die Portionsangabe fehlt. Es wurden 4 Portionen angenommen.",
   zu_viele_zutaten: "Es wurden nur die ersten 200 Zutaten übernommen.",
   zu_viele_schritte: "Es wurden nur die ersten 100 Schritte übernommen.",
   kein_rezept_gefunden: "Auf der Quelle war kein vollständiges Rezept erkennbar.",

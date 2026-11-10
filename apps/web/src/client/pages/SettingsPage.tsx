@@ -166,7 +166,6 @@ export function SettingsPage() {
     <div className="mx-auto max-w-2xl space-y-4">
       <PageHeader
         title="Einstellungen"
-        eyebrow="Dein Konto"
         subtitle="Ansicht, Sichtbarkeit und Benachrichtigungen. Alles gilt nur für dich."
       />
 
@@ -182,9 +181,10 @@ export function SettingsPage() {
           <Segmented
             value={cookingView}
             ariaLabel="Ansicht beim Kochen"
+            fluid
             options={[
-              { value: "steps", label: "Schritt für Schritt" },
-              { value: "overview", label: "Ganze Übersicht" },
+              { value: "steps", label: "Schritt für Schritt", shortLabel: "Schritte" },
+              { value: "overview", label: "Ganze Übersicht", shortLabel: "Übersicht" },
             ]}
             onChange={(next) => {
               setCookingView(next);
@@ -215,10 +215,7 @@ export function SettingsPage() {
         </Link>
       </Card>
 
-      <div>
-        <h2 className="mb-2 text-lg">Benachrichtigungen</h2>
-        <PushControl />
-      </div>
+      <PushControl />
 
       <Card className="p-4 sm:p-5">
         <h2 className="text-lg">App</h2>
@@ -228,7 +225,7 @@ export function SettingsPage() {
             <dd className="text-ink">Kochen</dd>
           </div>
           <div className="flex flex-wrap justify-between gap-2">
-            <dt className="text-ink-soft">Fassung</dt>
+            <dt className="text-ink-soft">Version</dt>
             <dd className="text-ink">0.1.0</dd>
           </div>
           <div className="flex flex-wrap justify-between gap-2">

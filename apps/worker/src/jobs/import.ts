@@ -294,6 +294,7 @@ async function processImport(job: JobRow): Promise<void> {
     draft: parsed.data,
     warnings: allWarnings,
     asksForScreenshot: normalized.asksForScreenshot,
+    servingsEstimated: normalized.servingsEstimated,
     sourceLang: parsed.data.originalLang,
     keys: imageKeys,
     sourceKeys,

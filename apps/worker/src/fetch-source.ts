@@ -6,7 +6,7 @@ import type { LookupAddress } from "node:dns";
 import { brotliDecompressSync, gunzipSync, inflateSync } from "node:zlib";
 import { Readability } from "@mozilla/readability";
 import { JSDOM } from "jsdom";
-import { parseAmount } from "@kochen/core";
+import { parseAmount, detectBaking } from "@kochen/core";
 import { JobFailure } from "./errors";
 
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -434,13 +434,19 @@ export function parseRecipeJsonLd(html: string, pageUrl: string): JsonLdRecipe |
     .trim()
     .slice(0, 200_000);
 
+  const stepTexts = instructionSteps(recipe.recipeInstructions);
+  // Baking data only when the source itself states it; detection is conservative.
+  const baking = detectBaking(...stepTexts, description ?? "");
+
   return {
     draft: {
       title,
       description,
       servings,
+      bakingTemperature: baking.bakingTemperature,
+      bakingTime: baking.bakingTime,
       ingredients: stringList(recipe.recipeIngredient),
-      steps: instructionSteps(recipe.recipeInstructions),
+      steps: stepTexts,
       tags,
       sourceLang,
       sourceUrl: pageUrl,

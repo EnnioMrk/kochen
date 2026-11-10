@@ -28,6 +28,7 @@ import {
 } from "../components/ui";
 import {
   checkFiles,
+  contentTypeFor,
   formatMinutes,
   formatMb,
   importErrorMessage,
@@ -73,6 +74,31 @@ function ProgressRow({ name, percent }: { name: string; percent: number }) {
       <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-ink/10">
         <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${percent}%` }} />
       </div>
+    </div>
+  );
+}
+
+/**
+ * A photo thumbnail. Browsers that cannot decode HEIC (or a file that cannot
+ * be read at all) get a labelled tile instead of a broken image.
+ */
+export function PhotoPreviewTile({ file, className }: { file: File; className?: string }) {
+  const [failed, setFailed] = useState(false);
+  const url = useMemo(() => URL.createObjectURL(file), [file]);
+  useEffect(() => () => URL.revokeObjectURL(url), [url]);
+  const type = contentTypeFor(file);
+  const undecodable = type === "image/heic" || type === "image/heif" || failed;
+  return (
+    <div className={["relative overflow-hidden", className].filter(Boolean).join(" ")}>
+      {undecodable ? (
+        <div className="flex size-full flex-col items-center justify-center gap-1 border border-dashed border-line bg-paper-2/70 px-1 py-1 text-center">
+          <ImagePlus className="size-4 shrink-0 text-ink-soft" aria-hidden />
+          <span className="w-full truncate text-[10px] leading-tight text-ink-soft">{file.name}</span>
+          <span className="text-[9px] leading-tight text-ink-soft">Vorschau nicht verfügbar</span>
+        </div>
+      ) : (
+        <img src={url} alt="" className="size-full object-cover" onError={() => setFailed(true)} />
+      )}
     </div>
   );
 }
@@ -128,11 +154,9 @@ export function CapturePage() {
   /* ------------------------------------------------------------- photos */
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoError, setPhotoError] = useState<string | null>(null);
-  const previews = useMemo(
-    () => photos.map((file) => ({ file, url: URL.createObjectURL(file) })),
-    [photos],
-  );
-  useEffect(() => () => previews.forEach((item) => URL.revokeObjectURL(item.url)), [previews]);
+  // Each tile owns its object URL (see PhotoPreviewTile), so the list only
+  // carries the files.
+  const previews = useMemo(() => photos.map((file) => ({ file })), [photos]);
 
   const addPhotos = (list: FileList | null) => {
     if (!list || list.length === 0) return;
@@ -287,11 +311,10 @@ export function CapturePage() {
     <div className="mx-auto max-w-3xl">
       <PageHeader
         title="Rezept erfassen"
-        eyebrow="Neu"
         subtitle="Wähle eine Quelle. Die KI macht daraus einen Entwurf, den du danach prüfst."
       />
 
-      <div className="mb-5">
+      <div className="mb-5 -mx-1 px-1">
         <Segmented
           value={kind}
           options={TABS}
@@ -317,7 +340,7 @@ export function CapturePage() {
               <label className="tap flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-line bg-paper/60 px-4 py-8 text-center transition hover:border-brand/50">
                 <ImagePlus className="size-6 text-brand" />
                 <span className="text-sm font-medium text-ink">Fotos auswählen</span>
-                <span className="text-xs text-ink-soft">JPG, PNG, HEIC oder GIF</span>
+                <span className="text-xs text-ink-soft">JPG, PNG, WebP, HEIC, HEIF oder GIF</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -366,7 +389,7 @@ export function CapturePage() {
                 <ul className="grid grid-cols-3 gap-2 sm:grid-cols-5">
                   {previews.slice(0, PREVIEW_LIMIT).map((item, index) => (
                     <li key={`${item.file.name}-${index}`} className="relative overflow-hidden rounded-lg border border-line">
-                      <img src={item.url} alt="" className="aspect-square w-full object-cover" />
+                      <PhotoPreviewTile file={item.file} className="aspect-square w-full" />
                       <IconButton
                         label={`${item.file.name} entfernen`}
                         className="absolute right-0.5 top-0.5 size-7 bg-white/90 text-ink shadow-sm"

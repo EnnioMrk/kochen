@@ -49,7 +49,6 @@ export function RecipeListPage({ scope }: { scope: "mine" | "all" }) {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow={scope === "mine" ? "Deine Sammlung" : "Von Freunden und Mitgliedern"}
         title={scope === "mine" ? "Meine Rezepte" : "Entdecken"}
         subtitle={
           scope === "mine"
@@ -64,20 +63,21 @@ export function RecipeListPage({ scope }: { scope: "mine" | "all" }) {
             </Button>
             <Button onClick={() => navigate("/neu")}>
               <Plus className="size-4" />
-              Neues Rezept
+              <span className="sm:hidden">Neu</span>
+              <span className="hidden sm:inline">Neues Rezept</span>
             </Button>
           </>
         }
       />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="mr-1 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.1em] text-ink-soft">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="no-scrollbar scroll-fade -mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0">
+          <span className="mr-1 inline-flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-[0.1em] text-ink-soft">
             <SlidersHorizontal className="size-3.5" />
             Tags
           </span>
           {visibleTags.length === 0 && (
-            <span className="text-xs text-ink-soft">Noch keine Tags.</span>
+            <span className="shrink-0 text-xs text-ink-soft">Noch keine Tags.</span>
           )}
           {visibleTags.map((tag) => {
             const active = selectedTags.includes(tag.slug);
@@ -88,7 +88,7 @@ export function RecipeListPage({ scope }: { scope: "mine" | "all" }) {
                 aria-pressed={active}
                 onClick={() => toggleTag(tag.slug)}
                 className={cn(
-                  "tap min-h-9 rounded-full border px-3 text-xs font-medium transition",
+                  "tap tap-target min-h-9 shrink-0 rounded-full border px-3 text-xs font-medium transition",
                   active
                     ? "border-ink bg-ink text-white"
                     : "border-line bg-white text-ink-soft hover:border-ink/30 hover:text-ink",
@@ -102,7 +102,7 @@ export function RecipeListPage({ scope }: { scope: "mine" | "all" }) {
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs"
+              className="shrink-0 text-xs"
               onClick={() => setSelectedTags([])}
             >
               Filter zurücksetzen
@@ -110,7 +110,7 @@ export function RecipeListPage({ scope }: { scope: "mine" | "all" }) {
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Button
             variant={archived ? "sage" : "secondary"}
             size="sm"
@@ -120,7 +120,7 @@ export function RecipeListPage({ scope }: { scope: "mine" | "all" }) {
             <Archive className="size-4" />
             Archiv
           </Button>
-          <Link to="/suche" className={linkButton}>
+          <Link to="/suche" className={cn(linkButton, "max-sm:hidden")}>
             <Search className="size-4" />
             Suche
           </Link>

@@ -1,7 +1,7 @@
 import type { RecipeSummary } from "@kochen/contracts";
 import { ChefHat, Lock, UtensilsCrossed } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Avatar, Badge, Card, Skeleton, Stars } from "../ui";
+import { Avatar, Badge, Card, MediaImage, Skeleton, Stars } from "../ui";
 import { ratingLabel } from "./format";
 
 export function RecipeCard({ recipe }: { recipe: RecipeSummary }) {
@@ -12,21 +12,20 @@ export function RecipeCard({ recipe }: { recipe: RecipeSummary }) {
   const friends = recipe.variedByFriends ?? [];
 
   return (
-    <Link to={`/rezept/${recipe.id}`} className="group block rounded-[var(--radius-card)]">
+    <Link to={`/rezept/${recipe.id}`} className="group block min-w-0 rounded-[var(--radius-card)]">
       <Card className="hover-lift flex h-full flex-col overflow-hidden">
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-paper-2">
-          {recipe.coverUrl ? (
-            <img
-              src={recipe.coverUrl}
-              alt=""
-              loading="lazy"
-              className="size-full object-cover transition duration-300 group-hover:scale-[1.03]"
-            />
-          ) : (
-            <div className="paper-grain flex size-full items-center justify-center bg-[linear-gradient(135deg,var(--color-paper-2),var(--color-sage-soft))]">
-              <ChefHat className="size-12 text-brand/35" strokeWidth={1.4} />
-            </div>
-          )}
+          <MediaImage
+            src={recipe.coverUrl}
+            alt=""
+            loading="lazy"
+            className="size-full object-cover transition duration-300 group-hover:scale-[1.03]"
+            fallback={
+              <div className="paper-grain flex size-full items-center justify-center bg-[linear-gradient(135deg,var(--color-paper-2),var(--color-sage-soft))]">
+                <ChefHat className="size-12 text-brand/35" strokeWidth={1.4} />
+              </div>
+            }
+          />
           <div className="absolute left-3 top-3 flex flex-wrap items-center gap-1.5">
             {recipe.archivedAt && <Badge tone="gold">Archiviert</Badge>}
             {recipe.cookedByMe && (
@@ -45,7 +44,7 @@ export function RecipeCard({ recipe }: { recipe: RecipeSummary }) {
         </div>
 
         <div className="flex flex-1 flex-col p-4">
-          <h3 className="text-lg leading-snug text-ink">{recipe.title}</h3>
+          <h3 className="text-lg leading-snug break-words text-ink">{recipe.title}</h3>
           <p className="mt-1 text-xs text-ink-soft">{recipe.owner.name}</p>
 
           {tags.length > 0 && (

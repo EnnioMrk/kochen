@@ -10,7 +10,8 @@
     "worker": "bun run apps/worker/src/index.ts",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
-    "db:generate": "bun run scripts/migrate.ts"
+    "db:generate": "bun run scripts/migrate.ts",
+    "r2:cors": "bun run scripts/r2-cors.ts"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

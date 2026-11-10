@@ -1,5 +1,11 @@
 import { RecipeInput } from "@kochen/contracts";
 import type { Ingredient, RecipeInput as RecipeInputType, RecipeStep, Visibility } from "@kochen/contracts";
+import {
+  detectBaking,
+  durationFromStepText,
+  estimateServings,
+  orderByFirstStepMention,
+} from "./import-quality";
 
 export type RawDraft = {
   title?: unknown;
@@ -20,6 +26,8 @@ export type NormalizedDraft = {
   recipe: RecipeInputType;
   warnings: string[];
   asksForScreenshot: boolean;
+  /** True when `recipe.servings` was estimated because the source did not state one. */
+  servingsEstimated: boolean;
   sourceLang: string | null;
 };
 
@@ -91,22 +99,100 @@ function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
+const GLYPHS: Record<string, number> = {
+  "½": 0.5, "¼": 0.25, "¾": 0.75, "⅓": 1 / 3, "⅔": 2 / 3, "⅛": 0.125,
+};
+
+/** "ca. 200", "1 1/2", "1/2", "2-3", "½", "200" in front of an ingredient line. */
+const LEADING_AMOUNT =
+  /^(?:ca\.?\s*)?(\d+\s+\d+\s*\/\s*\d+|\d+\s*\/\s*\d+|\d+(?:[.,]\d+)?|[½¼¾⅓⅔⅛])\s*([½¼¾⅓⅔⅛])?(?:\s*[-–—]\s*\d+(?:[.,]\d+)?)?\s*/i;
+
+const UNIT_TOKEN = /^([A-Za-zÄÖÜäöüß]+)\.?(?=\s|$)/;
+
+/** Drop a trailing parenthetical sub-amount such as "(400 g)". Nothing else. */
+function stripTrailingSubAmount(name: string): string {
+  const match = /^(.*?)\s*\(([^()]{1,40})\)\s*$/.exec(name);
+  if (!match) return name;
+  const inner = (match[2] ?? "").trim();
+  if (!/^(?:ca\.?\s*)?[\d½¼¾⅓⅔⅛]/.test(inner)) return name;
+  const head = (match[1] ?? "").trim();
+  return head || name;
+}
+
+/**
+ * Parse one plain ingredient line the way recipe sources write it:
+ * "200 g Mehl", "2 Äpfel", "1/2 TL Salz", "1 Dose Tomaten (400 g)",
+ * "2-3 Äpfel", "200g Mehl", "Salz", "1 Prise Salz", "1 1/2 Tassen Milch".
+ *
+ * A leading amount is read first (a range keeps its lower number), then a
+ * known unit. No unit is ever invented: an amount without a named unit counts
+ * as "stueck", an unknown unit word stays part of the name, and a line
+ * without an amount keeps no unit at all.
+ */
+function parseIngredientLine(raw: string): Ingredient | null {
+  const line = raw.replace(/\s+/g, " ").trim();
+  if (!line) return null;
+
+  const amountMatch = LEADING_AMOUNT.exec(line);
+  let amount: number | null = null;
+  let rest = line;
+  if (amountMatch) {
+    amount = parseAmount(amountMatch[1]);
+    const glyph = amountMatch[2];
+    if (amount !== null && glyph && GLYPHS[glyph] !== undefined) amount += GLYPHS[glyph] as number;
+    rest = line.slice(amountMatch[0].length).trim();
+  }
+  if (amount === null) rest = line;
+
+  let unit: string | null = null;
+  let name = rest;
+  if (amount !== null) {
+    const unitMatch = UNIT_TOKEN.exec(rest);
+    const known = unitMatch ? normalizeUnit(unitMatch[1]) : null;
+    if (known) {
+      unit = known;
+      name = rest.slice(unitMatch![0].length).trim();
+    } else {
+      // No known unit named: a bare count, the unknown word stays in the name.
+      unit = "stueck";
+      name = rest;
+    }
+  }
+  name = stripTrailingSubAmount(name).trim() || line;
+  return {
+    position: 0,
+    amount,
+    unit: unit as Ingredient["unit"],
+    name: name.slice(0, 200),
+    note: null,
+  };
+}
+
 function normalizeIngredient(raw: unknown, position: number): Ingredient | null {
   if (typeof raw === "string") {
-    const name = raw.trim();
-    return name ? { position, amount: null, unit: null, name: name.slice(0, 200), note: null } : null;
+    const parsed = parseIngredientLine(raw);
+    return parsed ? { ...parsed, position } : null;
   }
   if (!raw || typeof raw !== "object") return null;
   const item = raw as Record<string, unknown>;
-  const name = cleanText(item.name ?? item.ingredient ?? item.item, 200);
+  let name = cleanText(item.name ?? item.ingredient ?? item.item, 200);
   if (!name) return null;
-  const unit = normalizeUnit(item.unit ?? item.einheit);
+  const unitText =
+    typeof (item.unit ?? item.einheit) === "string"
+      ? String(item.unit ?? item.einheit).trim().slice(0, 40)
+      : null;
+  const knownUnit = normalizeUnit(unitText);
   const amount = parseAmount(item.amount ?? item.menge ?? item.quantity);
+  if (unitText && !knownUnit && !name.toLowerCase().includes(unitText.toLowerCase())) {
+    // An unknown unit word carries information: keep it in the name text.
+    name = `${unitText} ${name}`.trim().slice(0, 200);
+  }
   const note = cleanText(item.note ?? item.hinweis, 300);
   return {
     position,
     amount,
-    unit: unit as Ingredient["unit"],
+    // No unit without an amount; an amount without a known unit is a bare count.
+    unit: (amount === null ? null : (knownUnit ?? "stueck")) as Ingredient["unit"],
     name,
     note,
   };
@@ -115,7 +201,13 @@ function normalizeIngredient(raw: unknown, position: number): Ingredient | null 
 function normalizeStep(raw: unknown, position: number): RecipeStep | null {
   if (typeof raw === "string") {
     const text = raw.trim();
-    return text ? { position, text: text.slice(0, 4000), durationS: null } : null;
+    if (!text) return null;
+    return {
+      position,
+      text: text.slice(0, 4000),
+      // Only when the source states a duration in the text.
+      durationS: durationFromStepText(text),
+    };
   }
   if (!raw || typeof raw !== "object") return null;
   const item = raw as Record<string, unknown>;
@@ -128,6 +220,8 @@ function normalizeStep(raw: unknown, position: number): RecipeStep | null {
     const minutes = parseAmount(item.duration);
     if (minutes) durationS = Math.round(minutes * 60);
   }
+  // A model duration always wins; the text only fills the gap.
+  if (durationS === null) durationS = durationFromStepText(text);
   return { position, text, durationS };
 }
 
@@ -143,13 +237,9 @@ export function normalizeDraft(raw: RawDraft, options?: { visibility?: Visibilit
   const title = cleanText(raw.title, 200);
   if (!title) warnings.push("titel_fehlt");
 
-  const servingsRaw = parseAmount(raw.servings);
-  const servings = servingsRaw && servingsRaw >= 1 ? Math.min(100, Math.round(servingsRaw)) : 4;
-  if (!servingsRaw) warnings.push("portionen_fehlen");
-
   const rawIngredients = asArray(raw.ingredients);
   const ingredients: Ingredient[] = [];
-  rawIngredients.slice(0, MAX_INGREDIENTS).forEach((entry, index) => {
+  rawIngredients.slice(0, MAX_INGREDIENTS).forEach((entry) => {
     const item = normalizeIngredient(entry, ingredients.length);
     if (item) ingredients.push(item);
   });
@@ -163,6 +253,20 @@ export function normalizeDraft(raw: RawDraft, options?: { visibility?: Visibilit
   });
   if (rawSteps.length > MAX_STEPS) warnings.push("zu_viele_schritte");
 
+  // Cooks work through the ingredients in the order the steps need them.
+  const orderedIngredients = orderByFirstStepMention(ingredients, steps);
+
+  // Never a silent 4: estimate from the draft and say that it is an estimate.
+  const servingsRaw = parseAmount(raw.servings);
+  const servingsEstimated = servingsRaw === null;
+  const servings =
+    servingsRaw !== null && servingsRaw >= 1
+      ? Math.min(100, Math.max(1, Math.round(servingsRaw)))
+      : estimateServings(orderedIngredients, steps);
+
+  const rawText = cleanText(raw.rawText, 200_000);
+  const baking = detectBaking(...steps.map((step) => step.text), rawText ?? "");
+
   const tags = [...new Set(
     asArray(raw.tags)
       .map((tag) => (typeof tag === "string" ? tag.trim().toLowerCase() : ""))
@@ -171,18 +275,20 @@ export function normalizeDraft(raw: RawDraft, options?: { visibility?: Visibilit
   )];
 
   const sourceLang = typeof raw.sourceLang === "string" ? raw.sourceLang.slice(0, 16) : null;
-  const asksForScreenshot = ingredients.length === 0 && steps.length === 0;
+  const asksForScreenshot = orderedIngredients.length === 0 && steps.length === 0;
   if (asksForScreenshot) warnings.push("kein_rezept_gefunden");
 
   const candidate = {
     title: title ?? "",
     description: cleanText(raw.description, 4000),
     servings,
-    ingredients: ingredients.map((item, index) => ({ ...item, position: index })),
+    bakingTemperature: baking.bakingTemperature,
+    bakingTime: baking.bakingTime,
+    ingredients: orderedIngredients.map((item, index) => ({ ...item, position: index })),
     steps: steps.map((item, index) => ({ ...item, position: index })),
     sourceType: "text" as const,
     sourceUrl: null,
-    rawText: cleanText(raw.rawText, 200_000),
+    rawText,
     transcript: cleanText(raw.transcript, 200_000),
     originalLang: sourceLang,
     visibility: options?.visibility ?? ("friends" as Visibility),
@@ -201,8 +307,15 @@ export function normalizeDraft(raw: RawDraft, options?: { visibility?: Visibilit
       },
       warnings: [...new Set([...warnings, ...parsed.error.issues.map((i) => `feld:${i.path.join(".")}`)])],
       asksForScreenshot,
+      servingsEstimated,
       sourceLang,
     };
   }
-  return { recipe: parsed.data, warnings: [...new Set(warnings)], asksForScreenshot, sourceLang };
+  return {
+    recipe: parsed.data,
+    warnings: [...new Set(warnings)],
+    asksForScreenshot,
+    servingsEstimated,
+    sourceLang,
+  };
 }

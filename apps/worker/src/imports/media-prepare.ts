@@ -14,6 +14,22 @@ const MAX_MODEL_EDGE = 2048;
 const VARIANT_WIDTHS = [320, 800, 1600] as const;
 const MAX_INLINE_AUDIO_BYTES = 13 * MB;
 
+/**
+ * Read the uploaded source from the media store. A failed getObject (missing
+ * object, wrong credentials, S3 or network error) must read as storage, not as
+ * an unreadable photo.
+ */
+async function readSource(key: string): Promise<Uint8Array> {
+  try {
+    return await getObject(key);
+  } catch {
+    throw new JobFailure(
+      "media_unavailable",
+      "Der Medienspeicher ist nicht erreichbar oder die Datei fehlt dort.",
+    );
+  }
+}
+
 export type ModelImage = { data: string; mime: string };
 
 export type PreparedImages = {
@@ -88,7 +104,7 @@ export async function preparePhotos(keys: string[], limits: Limits): Promise<Pre
   let total = 0;
 
   for (const key of keys) {
-    const bytes = await getObject(key);
+    const bytes = await readSource(key);
     total += bytes.byteLength;
     if (bytes.byteLength > limits.maxPhotoMb * MB) {
       throw new JobFailure(
@@ -105,10 +121,7 @@ export async function preparePhotos(keys: string[], limits: Limits): Promise<Pre
 
     const format = sniffImage(bytes);
     if (!format) {
-      throw new JobFailure(
-        "invalid_source",
-        "Ein Foto hat ein unbekanntes Format. Erlaubt sind JPEG, PNG, HEIC und WebP.",
-      );
+      throw new JobFailure("invalid_source", "Das Foto ist keine gültige Bilddatei oder beschädigt.");
     }
 
     const jpeg = await jpegSource(bytes, format, warnings);
@@ -135,7 +148,7 @@ export async function preparePdf(keys: string[], limits: Limits): Promise<Prepar
   const key = keys[0];
   if (!key) throw new JobFailure("invalid_source", "Es wurde kein PDF übermittelt.");
 
-  const bytes = await getObject(key);
+  const bytes = await readSource(key);
   if (bytes.byteLength > limits.maxTotalMb * MB) {
     throw new JobFailure(
       "limit_exceeded",
@@ -208,7 +221,7 @@ export async function prepareAudio(keys: string[], limits: Limits): Promise<Prep
   const key = keys[0];
   if (!key) throw new JobFailure("invalid_source", "Es wurde keine Audiodatei übermittelt.");
 
-  const bytes = await getObject(key);
+  const bytes = await readSource(key);
   if (bytes.byteLength > limits.maxTotalMb * MB) {
     throw new JobFailure(
       "limit_exceeded",

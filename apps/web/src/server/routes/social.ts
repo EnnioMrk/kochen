@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Profile } from "@kochen/contracts";
 import { db } from "@kochen/db";
 import { requireUser } from "../auth";
+import { env } from "../env";
 import { forbidden, invalid, notFound, ok } from "../errors";
 import { randomToken, sha256hex } from "../crypto";
 import { notify } from "../notify";
@@ -90,7 +91,7 @@ social.post("/friends/invites", async (c) => {
   return ok(
     c,
     {
-      url: `https://rezepte.ennio.vip/f/${token}`,
+      url: new URL(`/f/${token}`, env.appOrigin).toString(),
       expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
     },
     201,

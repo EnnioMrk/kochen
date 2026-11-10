@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { env } from "../env";
 import { requireUser } from "../auth";
-import { invalid, notFound, ok } from "../errors";
+import { invalid, limitExceeded, notFound, ok } from "../errors";
 import { localPut, safeKey, verifyMediaSignature } from "../media-local";
 import { readFile } from "node:fs/promises";
 import { localPath } from "../media-local";
@@ -22,9 +22,9 @@ mediaRoutes.put("/media/upload", requireUser, async (c) => {
     throw invalid("bad_media_key");
   }
   const length = Number(c.req.header("content-length") ?? 0);
-  if (length > MAX_BYTES) throw invalid("file_too_large");
+  if (length > MAX_BYTES) throw limitExceeded("file_too_large");
   const bytes = new Uint8Array(await c.req.arrayBuffer());
-  if (bytes.byteLength > MAX_BYTES) throw invalid("file_too_large");
+  if (bytes.byteLength > MAX_BYTES) throw limitExceeded("file_too_large");
   await localPut(clean, bytes);
   return ok(c, { stored: true, key: clean });
 });
@@ -51,7 +51,8 @@ function contentType(key: string): string {
   const extension = key.split(".").pop()?.toLowerCase();
   const types: Record<string, string> = {
     jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp",
-    gif: "image/gif", pdf: "application/pdf", mp4: "video/mp4", webm: "video/webm",
+    heic: "image/heic", heif: "image/heic", gif: "image/gif",
+    pdf: "application/pdf", mp4: "video/mp4", webm: "video/webm",
     m4a: "audio/mp4", mp3: "audio/mpeg", wav: "audio/wav",
   };
   return types[extension ?? ""] ?? "application/octet-stream";

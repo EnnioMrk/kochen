@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { RecipeDetail, RecipeStep } from "@kochen/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -67,6 +67,40 @@ function stepIdOf(step: RecipeStep, index: number): string {
   return step.id ?? `step-${index}`;
 }
 
+const NARROW_QUERY = "(max-width: 767px)";
+
+/** True on phone-sized viewports; mirrors the `md` breakpoint used by the layout. */
+function useNarrowViewport(): boolean {
+  const [narrow, setNarrow] = useState(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return false;
+    }
+    return window.matchMedia(NARROW_QUERY).matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
+    const query = window.matchMedia(NARROW_QUERY);
+    setNarrow(query.matches);
+    const onChange = (event: MediaQueryListEvent) => setNarrow(event.matches);
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+  }, []);
+
+  return narrow;
+}
+
+/** "0,5" or "1.5" -> seconds. Null while the field is empty or not a positive number. */
+function minutesToSeconds(raw: string): number | null {
+  const text = raw.trim().replace(",", ".");
+  if (!text) return null;
+  const value = Number(text);
+  if (!Number.isFinite(value) || value <= 0) return null;
+  return Math.max(1, Math.round(value * 60));
+}
+
 function TimerControl({
   stepId,
   durationS,
@@ -76,6 +110,7 @@ function TimerControl({
   onDismiss,
   startPending,
   compact,
+  defaultMinutes,
 }: {
   stepId: string;
   durationS: number | null | undefined;
@@ -85,10 +120,22 @@ function TimerControl({
   onDismiss: (timerId: string) => void;
   startPending: boolean;
   compact?: boolean;
+  /**
+   * Prefilled minutes for a step without a duration, e.g. the overview keeps 5.
+   * Omitted in the step-by-step view: there the field starts empty behind a
+   * "Timer hinzufügen" action, so no timer is ever preset.
+   */
+  defaultMinutes?: number;
 }) {
   const [minutes, setMinutes] = useState(
-    durationS ? String(Math.max(1, Math.round(durationS / 60))) : "5",
+    durationS
+      ? String(Math.max(1, Math.round(durationS / 60)))
+      : defaultMinutes !== undefined
+        ? String(defaultMinutes)
+        : "",
   );
+  const [adding, setAdding] = useState(false);
+  const enteredSeconds = minutesToSeconds(minutes);
 
   if (timer) {
     const left = remainingMs(timer);
@@ -133,6 +180,56 @@ function TimerControl({
     );
   }
 
+  if (defaultMinutes === undefined) {
+    // Step-by-step view: nothing is preset, the field opens empty.
+    if (!adding) {
+      return (
+        <Button
+          variant="secondary"
+          size="sm"
+          className={cn("min-h-11", compact && "min-h-10")}
+          onClick={() => setAdding(true)}
+        >
+          <TimerIcon className="size-4" />
+          Timer hinzufügen
+        </Button>
+      );
+    }
+    return (
+      <span className="inline-flex flex-wrap items-center gap-1.5">
+        <Input
+          value={minutes}
+          onChange={(event) => setMinutes(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter" || enteredSeconds === null) return;
+            event.preventDefault();
+            onStart(stepId, enteredSeconds);
+          }}
+          autoFocus
+          inputMode="decimal"
+          placeholder="Minuten"
+          aria-label="Minuten für den Timer"
+          className="h-11 w-16 px-2 py-1 text-center text-sm"
+        />
+        <span className="text-xs text-ink-soft">Min.</span>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="min-h-11"
+          disabled={enteredSeconds === null}
+          loading={startPending}
+          onClick={() => {
+            if (enteredSeconds === null) return;
+            onStart(stepId, enteredSeconds);
+          }}
+        >
+          <TimerIcon className="size-4" />
+          Start
+        </Button>
+      </span>
+    );
+  }
+
   return (
     <span className="inline-flex items-center gap-1.5">
       <Input
@@ -150,7 +247,8 @@ function TimerControl({
         loading={startPending}
         onClick={() => {
           const value = Number(minutes.replace(",", "."));
-          onStart(stepId, Math.max(1, Math.round(Number.isFinite(value) ? value : 5)) * 60);
+          const fallback = Number.isFinite(value) ? value : defaultMinutes;
+          onStart(stepId, Math.max(1, Math.round(fallback)) * 60);
         }}
       >
         <TimerIcon className="size-4" />
@@ -166,12 +264,14 @@ function IngredientsPanel({
   onServingsChange,
   checked,
   onToggle,
+  inline,
 }: {
   recipe: RecipeDetail;
   servings: number;
   onServingsChange: (next: number) => void;
   checked: string[];
   onToggle: (key: string) => void;
+  inline?: boolean;
 }) {
   const factor = recipe.servings > 0 ? servings / recipe.servings : 1;
   return (
@@ -190,6 +290,7 @@ function IngredientsPanel({
         factor={factor}
         checked={checked}
         onToggle={onToggle}
+        inline={inline}
       />
     </div>
   );
@@ -211,6 +312,7 @@ export function CookingPage() {
 
   const wake = useWakeLock(Boolean(recipe));
   const timers = useCookingTimers(id);
+  const narrow = useNarrowViewport();
 
   const [view, setView] = useState<"steps" | "overview">(() => {
     try {
@@ -251,6 +353,11 @@ export function CookingPage() {
   const currentKey = currentStep ? stepIdOf(currentStep, current) : "";
   const currentDone = checked.includes(currentKey);
 
+  // Latest values for the check-off and keydown handlers, so they never act on
+  // a stale closure (the keydown listener outlives a single render).
+  const latest = useRef({ checked, current, currentKey, total, view, narrow });
+  latest.current = { checked, current, currentKey, total, view, narrow };
+
   const changeView = (next: "steps" | "overview") => {
     setView(next);
     setViewTouched(true);
@@ -266,13 +373,22 @@ export function CookingPage() {
     );
   };
 
-  const toggleStep = (stepId: string) => {
+  const toggleStep = useCallback((stepId: string) => {
+    const state = latest.current;
+    const wasChecked = state.checked.includes(stepId);
     setChecked((items) =>
       items.includes(stepId)
         ? items.filter((item) => item !== stepId)
         : [...items, stepId],
     );
-  };
+    // Checking never moves on desktop or in the overview; unchecking never moves.
+    if (wasChecked) return;
+    if (!state.narrow || state.view !== "steps") return;
+    if (stepId !== state.currentKey) return;
+    // The last step stays put so the finish button remains in reach.
+    if (state.current >= state.total - 1) return;
+    setStepIndex(state.current + 1);
+  }, []);
 
   const finish = useMutation({
     mutationFn: () => api(`/api/recipes/${id}/cook`, { method: "POST" }),
@@ -364,29 +480,38 @@ export function CookingPage() {
   const exit = () => navigate(`/rezept/${id}`);
 
   return (
-    <div className="min-h-dvh pb-24">
-      <header className="sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-3 py-2">
-          <Button variant="ghost" size="sm" onClick={exit}>
+    <div
+      className="min-h-dvh pb-24"
+      style={{ ["--timer-offset" as string]: timers.timers.length > 0 ? "3.5rem" : "0px" }}
+    >
+      <header
+        className="sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur"
+        style={{ paddingTop: "var(--safe-top)" }}
+      >
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2">
+          <Button variant="ghost" size="sm" className="shrink-0 px-2" onClick={exit}>
             <ArrowLeft className="size-4" />
-            Rezept
+            <span className="sr-only sm:not-sr-only">Rezept</span>
           </Button>
           <h1 className="min-w-0 flex-1 truncate text-base text-ink">{recipe.title}</h1>
           {wake.active && (
-            <span className="inline-flex items-center gap-1.5 text-xs text-ink-soft">
+            <span className="inline-flex shrink-0 items-center gap-1.5 text-xs text-ink-soft">
               <span className="size-2 animate-pulse rounded-full bg-sage" aria-hidden />
-              Bildschirm bleibt an
+              <span className="hidden md:inline">Bildschirm bleibt an</span>
+              <span className="sr-only md:hidden">Bildschirm bleibt an</span>
             </span>
           )}
-          <Segmented
-            value={view}
-            onChange={changeView}
-            ariaLabel="Kochansicht"
-            options={[
-              { value: "steps", label: "Schritt für Schritt" },
-              { value: "overview", label: "Alles auf einer Seite" },
-            ]}
-          />
+          <div className="order-last w-full sm:order-none sm:w-auto">
+            <Segmented
+              value={view}
+              onChange={changeView}
+              ariaLabel="Kochansicht"
+              options={[
+                { value: "steps", label: "Schritt für Schritt", shortLabel: "Schritte" },
+                { value: "overview", label: "Alles auf einer Seite", shortLabel: "Übersicht" },
+              ]}
+            />
+          </div>
         </div>
       </header>
 
@@ -436,7 +561,7 @@ export function CookingPage() {
           </details>
 
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-0 overflow-x-auto" aria-label="Fortschritt">
+            <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-0 overflow-x-auto" aria-label="Fortschritt">
               {steps.map((step, index) => {
                 const done = checked.includes(stepIdOf(step, index));
                 return (
@@ -462,13 +587,13 @@ export function CookingPage() {
                 );
               })}
             </div>
-            <span className="text-xs text-ink-soft">
+            <span className="shrink-0 whitespace-nowrap text-xs text-ink-soft">
               {doneCount} von {total} erledigt
             </span>
           </div>
 
-          <div key={current} className="cook-step-enter flex flex-1 flex-col justify-center py-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sage">
+          <div key={current} className="cook-step cook-step-enter flex flex-1 flex-col justify-center py-6">
+            <p className="text-sm font-medium tabular-nums text-ink-soft">
               Schritt {current + 1} von {total}
             </p>
             <p className="mt-3 whitespace-pre-wrap break-words text-2xl leading-snug text-ink sm:text-3xl lg:text-4xl">
@@ -493,7 +618,7 @@ export function CookingPage() {
             </div>
             <Button
               variant={currentDone ? "sage" : "secondary"}
-              className="mt-6 min-h-14 w-full sm:w-auto"
+              className="cook-inline-toggle mt-6 min-h-14 w-full md:w-auto"
               aria-pressed={currentDone}
               onClick={() => toggleStep(currentKey)}
             >
@@ -502,40 +627,54 @@ export function CookingPage() {
             </Button>
           </div>
 
-          <div className="mt-2 flex items-center gap-3">
+          <div className="cook-nav mt-2 flex items-center gap-2 md:gap-3">
             <Button
               variant="secondary"
-              size="lg"
-              className="flex-1"
+              size="sm"
+              className="min-h-11 min-w-0 flex-1 md:min-h-12"
               disabled={current === 0}
               onClick={() => setStepIndex((index) => Math.max(0, index - 1))}
             >
-              <ArrowLeft className="size-5" />
-              Zurück
+              <ArrowLeft className="size-5 shrink-0" />
+              <span className="truncate">Zurück</span>
+            </Button>
+            <Button
+              variant={currentDone ? "sage" : "secondary"}
+              size="sm"
+              className="cook-nav-toggle min-h-11 w-11 shrink-0 px-0"
+              aria-pressed={currentDone}
+              aria-label={currentDone ? "Erledigt" : "Als erledigt markieren"}
+              title={currentDone ? "Erledigt" : "Als erledigt markieren"}
+              onClick={() => toggleStep(currentKey)}
+            >
+              <Check className="size-5" />
             </Button>
             {current < total - 1 ? (
               <Button
-                size="lg"
-                className="flex-1"
+                size="sm"
+                className="min-h-11 min-w-0 flex-1 md:min-h-12"
                 onClick={() => setStepIndex((index) => Math.min(total - 1, index + 1))}
               >
-                Weiter
-                <ArrowRight className="size-5" />
+                <span className="truncate">Weiter</span>
+                <ArrowRight className="size-5 shrink-0" />
               </Button>
             ) : (
               <Button
                 variant="sage"
-                size="lg"
-                className="flex-1"
+                size="sm"
+                className="min-h-11 min-w-0 flex-1 md:min-h-12"
                 loading={finish.isPending}
                 onClick={() => finish.mutate()}
               >
-                <Check className="size-5" />
-                Fertig gekocht
+                <Check className="size-5 shrink-0" />
+                <span className="truncate">
+                  <span className="md:hidden">Fertig</span>
+                  <span className="hidden md:inline">Fertig gekocht</span>
+                </span>
               </Button>
             )}
           </div>
-          <p className="mt-2 text-center text-xs text-ink-soft">
+          <p className="cook-nav-hint mt-2 hidden text-center text-xs text-ink-soft md:block">
             Pfeiltasten wechseln den Schritt. Leertaste hakt ihn ab.
           </p>
         </div>
@@ -543,8 +682,8 @@ export function CookingPage() {
 
       {total > 0 && view === "overview" && (
         <div className="mx-auto w-full max-w-6xl px-4 pb-4 pt-4">
-          <div className="grid gap-4 lg:grid-cols-[20rem_minmax(0,1fr)]">
-            <aside className="space-y-3">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[20rem_minmax(0,1fr)]">
+            <aside className="min-w-0 space-y-3">
               <details className="rounded-[var(--radius-card)] border border-line bg-white/80 lg:hidden">
                 <summary className="tap flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
                   <span className="inline-flex items-center gap-2">
@@ -575,6 +714,7 @@ export function CookingPage() {
                   servings={currentServings}
                   onServingsChange={setServings}
                   checked={checkedIngredients}
+                  inline
                   onToggle={(key) =>
                     setCheckedIngredients((items) =>
                       items.includes(key)
@@ -589,7 +729,7 @@ export function CookingPage() {
               </p>
             </aside>
 
-            <ol className="space-y-2.5">
+            <ol className="min-w-0 space-y-2.5">
               {steps.map((step, index) => {
                 const stepId = stepIdOf(step, index);
                 const done = checked.includes(stepId);
@@ -637,6 +777,7 @@ export function CookingPage() {
                             }
                             onDismiss={timers.dismiss}
                             startPending={timers.startPending}
+                            defaultMinutes={5}
                             compact
                           />
                         </div>

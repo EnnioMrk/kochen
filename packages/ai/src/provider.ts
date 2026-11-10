@@ -72,12 +72,29 @@ export function dataFence(text: string): string {
   ].join("\n");
 }
 
-export const RECIPE_JSON_SHAPE = `{
+const SHAPE_JSON = `{
   "title": string,
   "description": string|null,
-  "servings": number,
+  "servings": number|null,
+  "bakingTemperature": string|null,
+  "bakingTime": string|null,
   "ingredients": [{"amount": number|null, "unit": "g|kg|ml|l|tl|el|stueck|prise|bund|dose|packung|zehe|scheibe|tasse"|null, "name": string, "note": string|null}],
   "steps": [{"text": string, "durationS": number|null}],
   "tags": string[],
   "sourceLang": string
 }`;
+
+/** Rules both providers get. */
+export const EXTRACTION_RULES = `- Einheiten nur nennen, wenn die Quelle sie nennt. Sonst keine Einheit erfinden.
+- Eine reine Anzahl ohne genannte Einheit ist "stueck" (z. B. "2 Äpfel").
+- servings nur setzen, wenn die Quelle eine Portionszahl nennt. Sonst null.
+- bakingTemperature und bakingTime nur setzen, wenn die Quelle sie nennt (z. B. "180 °C Ober-/Unterhitze", "35 Min."). Sonst null.`;
+
+/**
+ * The shape every provider interpolates into its extraction prompt. The rules
+ * ride along with it, so gemini and the OpenAI-compatible provider share one
+ * prompt text without a second constant to keep in sync.
+ */
+export const RECIPE_JSON_SHAPE = `${SHAPE_JSON}
+${EXTRACTION_RULES}`;
+

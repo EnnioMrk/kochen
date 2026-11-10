@@ -20,7 +20,7 @@ import { Avatar, Button } from "./ui";
 import { AuthGate, LoadingScreen } from "./AuthGate";
 
 const NAV = [
-  { to: "/", label: "Meine Rezepte", icon: BookOpen, end: true },
+  { to: "/", label: "Rezepte", icon: BookOpen, end: true },
   { to: "/entdecken", label: "Entdecken", icon: Compass },
   { to: "/suche", label: "Suche", icon: Search },
   { to: "/einkauf", label: "Einkauf", icon: ShoppingBasket },
@@ -29,7 +29,7 @@ const NAV = [
 
 const BOTTOM = [
   { to: "/", label: "Rezepte", icon: BookOpen, end: true },
-  { to: "/suche", label: "Suche", icon: Search },
+  { to: "/entdecken", label: "Entdecken", icon: Compass },
   { to: "/erfassen", label: "Erfassen", icon: Camera },
   { to: "/einkauf", label: "Einkauf", icon: ShoppingBasket },
   { to: "/freunde", label: "Freunde", icon: Users },
@@ -62,16 +62,19 @@ export function AppShell() {
   if (onCooking || onPrint) return <Outlet />;
 
   return (
-    <div className="min-h-dvh pb-24 sm:pb-10">
-      <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/85 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6">
+    <div className="min-h-dvh pb-24 md:pb-10">
+      <header
+        className="sticky top-0 z-40 border-b border-line/70 bg-paper/85 backdrop-blur-md"
+        style={{ paddingTop: "var(--safe-top)" }}
+      >
+        <div className="mx-auto flex min-h-16 max-w-6xl items-center gap-3 px-4 sm:px-6">
           <Link to="/" className="mr-2 flex items-center gap-2">
             <span className="flex size-9 items-center justify-center rounded-xl bg-brand text-white shadow-sm">
               <ChefHat className="size-5" />
             </span>
             <span className="display hidden text-xl tracking-tight sm:block">Kochen</span>
           </Link>
-          <nav className="hidden items-center gap-1 sm:flex">
+          <nav className="hidden items-center gap-1 md:flex">
             {NAV.map((item) => (
               <NavLink
                 key={item.to}
@@ -90,8 +93,15 @@ export function AppShell() {
           </nav>
           <div className="ml-auto flex items-center gap-1">
             <Link
+              to="/suche"
+              className="tap tap-target inline-flex size-10 items-center justify-center rounded-full text-ink-soft transition hover:bg-ink/5 hover:text-ink md:hidden"
+              aria-label="Suche"
+            >
+              <Search className="size-5" />
+            </Link>
+            <Link
               to="/benachrichtigungen"
-              className="relative inline-flex size-10 items-center justify-center rounded-full text-ink-soft transition hover:bg-ink/5 hover:text-ink"
+              className="tap tap-target relative inline-flex size-10 items-center justify-center rounded-full text-ink-soft transition hover:bg-ink/5 hover:text-ink"
               aria-label="Benachrichtigungen"
             >
               <Bell className="size-5" />
@@ -101,7 +111,7 @@ export function AppShell() {
                 </span>
               )}
             </Link>
-            <Link to={`/profil/${me.id}`} className="ml-1" aria-label="Mein Profil">
+            <Link to={`/profil/${me.id}`} className="tap tap-target ml-1 inline-flex items-center justify-center" aria-label="Mein Profil">
               <Avatar name={me.name} url={me.avatarUrl} size={34} />
             </Link>
             <button
@@ -120,7 +130,14 @@ export function AppShell() {
         <Outlet context={{ me }} />
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-paper/95 backdrop-blur-md sm:hidden" style={{ paddingBottom: "var(--safe-bottom)" }}>
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-paper/95 backdrop-blur-md md:hidden"
+        style={{
+          paddingBottom: "var(--safe-bottom)",
+          paddingLeft: "var(--safe-left)",
+          paddingRight: "var(--safe-right)",
+        }}
+      >
         <div className="mx-auto flex max-w-lg items-stretch justify-between px-2">
           {BOTTOM.map((item) => (
             <NavLink
@@ -129,7 +146,7 @@ export function AppShell() {
               end={item.end}
               className={({ isActive }) =>
                 cn(
-                  "tap flex flex-1 flex-col items-center gap-0.5 px-1 py-2.5 text-[10px] font-medium",
+                  "tap flex min-w-0 flex-1 flex-col items-center gap-0.5 px-0.5 py-2.5 text-[10px] font-medium",
                   isActive ? "text-brand" : "text-ink-soft",
                   item.to === "/erfassen" && "relative",
                 )
@@ -142,7 +159,7 @@ export function AppShell() {
               ) : (
                 <item.icon className="size-5" />
               )}
-              {item.label}
+              <span className="truncate">{item.label}</span>
             </NavLink>
           ))}
         </div>
@@ -150,7 +167,8 @@ export function AppShell() {
 
       <Link
         to="/einstellungen"
-        className="fixed bottom-5 right-4 z-30 hidden size-11 items-center justify-center rounded-full border border-line bg-white text-ink-soft shadow-md transition hover:text-ink sm:flex"
+        className="fixed right-[calc(1rem+var(--safe-right))] z-30 hidden size-11 items-center justify-center rounded-full border border-line bg-white text-ink-soft shadow-md transition hover:text-ink md:flex"
+        style={{ bottom: "calc(1.25rem + var(--safe-bottom))" }}
         aria-label="Einstellungen"
       >
         <Settings className="size-5" />

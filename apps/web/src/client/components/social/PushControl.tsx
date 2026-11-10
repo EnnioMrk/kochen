@@ -136,7 +136,7 @@ export function PushControl({ compact = false }: { compact?: boolean }) {
             <Spinner className="size-3" /> wird geprüft
           </span>
         ) : subscribed ? (
-          <span className="rounded-full bg-sage-soft px-2 py-0.5 text-xs font-medium text-sage">aktiv</span>
+          <span className="rounded-full bg-sage-soft px-2 py-0.5 text-xs font-medium text-sage-text">aktiv</span>
         ) : (
           <span className="rounded-full bg-ink/5 px-2 py-0.5 text-xs font-medium text-ink-soft">aus</span>
         )}

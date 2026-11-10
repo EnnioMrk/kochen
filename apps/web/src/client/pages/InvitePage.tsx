@@ -61,7 +61,6 @@ export function InvitePage() {
     <div className="mx-auto max-w-lg">
       <PageHeader
         title="Freundschaftsanfrage"
-        eyebrow="Einladung"
         subtitle="Über diesen Link verbindet ihr eure Konten. Beide Seiten bestätigen."
       />
 

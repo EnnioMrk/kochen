@@ -40,6 +40,8 @@ const formSchema = z
     title: z.string(),
     description: z.string(),
     servings: z.string(),
+    bakingTemperature: z.string(),
+    bakingTime: z.string(),
     visibility: z.enum(["private", "friends", "members"]),
     tagNames: z.array(z.string()),
     categoryIds: z.array(z.string()),
@@ -69,6 +71,20 @@ const formSchema = z
     }
     if (values.description.length > 4000) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["description"], message: "Höchstens 4000 Zeichen." });
+    }
+    if (values.bakingTemperature.trim().length > 80) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["bakingTemperature"],
+        message: "Höchstens 80 Zeichen.",
+      });
+    }
+    if (values.bakingTime.trim().length > 80) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["bakingTime"],
+        message: "Höchstens 80 Zeichen.",
+      });
     }
     const servings = numberText(values.servings);
     if (!Number.isInteger(servings) || servings < 1 || servings > 100) {
@@ -125,6 +141,8 @@ const EMPTY_VALUES: FormValues = {
   title: "",
   description: "",
   servings: "4",
+  bakingTemperature: "",
+  bakingTime: "",
   visibility: "friends",
   tagNames: [],
   categoryIds: [],
@@ -137,6 +155,8 @@ function fromDetail(recipe: RecipeDetail): FormValues {
     title: recipe.title,
     description: recipe.description ?? "",
     servings: String(recipe.servings),
+    bakingTemperature: recipe.bakingTemperature ?? "",
+    bakingTime: recipe.bakingTime ?? "",
     visibility: recipe.visibility,
     tagNames: recipe.tags,
     categoryIds: recipe.categories.map((category) => category.id),
@@ -183,7 +203,12 @@ function buildLines(values: FormValues) {
         : null,
       ...(row.lineageKey ? { lineageKey: row.lineageKey } : {}),
     }));
-  return { ingredients, steps };
+  return {
+    ingredients,
+    steps,
+    bakingTemperature: values.bakingTemperature.trim() || null,
+    bakingTime: values.bakingTime.trim() || null,
+  };
 }
 
 export function RecipeEditorPage() {
@@ -274,11 +299,13 @@ export function RecipeEditorPage() {
 
   const save = useMutation({
     mutationFn: (values: FormValues) => {
-      const { ingredients, steps } = buildLines(values);
+      const { ingredients, steps, bakingTemperature, bakingTime } = buildLines(values);
       const shared = {
         title: values.title.trim(),
         description: values.description.trim() ? values.description.trim() : null,
         servings: Math.round(numberText(values.servings)),
+        bakingTemperature,
+        bakingTime,
         ingredients,
         steps,
         visibility: values.visibility,
@@ -345,6 +372,23 @@ export function RecipeEditorPage() {
   const stepPath = (index: number, field: keyof FormValues["steps"][number]) =>
     `steps.${index}.${field}` as FieldPath<FormValues>;
 
+  /**
+   * Prepending inserts the row at index 0. The DOM only has it after the next
+   * frame, so focus its name field inside requestAnimationFrame.
+   */
+  const focusIngredientName = (index: number) => {
+    window.requestAnimationFrame(() => {
+      document
+        .querySelector<HTMLInputElement>(`[name="ingredients.${index}.name"]`)
+        ?.focus();
+    });
+  };
+
+  const addIngredient = () => {
+    ingredientFields.prepend({ amount: "", unit: "", name: "", note: "" });
+    focusIngredientName(0);
+  };
+
   if (editing && (detail.isLoading || (detail.data && !initialized))) {
     return (
       <div className="space-y-4">
@@ -377,7 +421,6 @@ export function RecipeEditorPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow={editing ? "Bearbeiten" : "Neu"}
         title={editing ? "Rezept bearbeiten" : "Neues Rezept"}
         subtitle={
           editing
@@ -464,14 +507,7 @@ export function RecipeEditorPage() {
         <Card className="space-y-4 p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-xl">Zutaten</h2>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() =>
-                ingredientFields.append({ amount: "", unit: "", name: "", note: "" })
-              }
-            >
+            <Button type="button" variant="secondary" size="sm" onClick={addIngredient}>
               <Plus className="size-4" />
               Zutat
             </Button>
@@ -481,14 +517,46 @@ export function RecipeEditorPage() {
             <p className="text-sm text-ink-soft">Noch keine Zutaten.</p>
           )}
 
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {ingredientFields.fields.map((field, index) => {
               const rowError =
                 errors.ingredients?.[index]?.name?.message ??
                 errors.ingredients?.[index]?.amount?.message;
               return (
-                <div key={field.id} className="rounded-xl border border-line bg-white/70 p-2.5">
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-[5.5rem_8.5rem_minmax(0,1fr)_minmax(0,1fr)]">
+                <div
+                  key={field.id}
+                  className="rounded-xl border border-line/70 bg-paper/50 p-3"
+                >
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-ink">Zutat {index + 1}</span>
+                    <div className="flex items-center gap-1">
+                      <IconButton
+                        type="button"
+                        label={`Zutat ${index + 1} nach oben`}
+                        disabled={index === 0}
+                        onClick={() => ingredientFields.move(index, index - 1)}
+                      >
+                        <ArrowUp className="size-4" />
+                      </IconButton>
+                      <IconButton
+                        type="button"
+                        label={`Zutat ${index + 1} nach unten`}
+                        disabled={index === ingredientFields.fields.length - 1}
+                        onClick={() => ingredientFields.move(index, index + 1)}
+                      >
+                        <ArrowDown className="size-4" />
+                      </IconButton>
+                      <IconButton
+                        type="button"
+                        label={`Zutat ${index + 1} entfernen`}
+                        className="text-danger"
+                        onClick={() => ingredientFields.remove(index)}
+                      >
+                        <Trash2 className="size-4" />
+                      </IconButton>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 md:grid-cols-[5.5rem_8.5rem_minmax(0,1fr)_minmax(0,1fr)] md:items-center">
                     <Input
                       {...register(ingredientPath(index, "amount"))}
                       inputMode="decimal"
@@ -510,45 +578,36 @@ export function RecipeEditorPage() {
                       {...register(ingredientPath(index, "name"))}
                       placeholder="Zutat"
                       aria-label={`Zutat ${index + 1}`}
-                      className="col-span-2 sm:col-span-1"
+                      className="col-span-2 md:col-span-1"
                     />
                     <Input
                       {...register(ingredientPath(index, "note"))}
-                      placeholder="Notiz (optional)"
+                      placeholder="Hinweis (optional)"
                       aria-label={`Notiz Zutat ${index + 1}`}
-                      className="col-span-2 sm:col-span-1"
+                      className="col-span-2 text-sm md:col-span-1"
                     />
-                  </div>
-                  <div className="mt-2 flex items-center justify-end gap-1">
-                    <IconButton
-                      type="button"
-                      label="Zutat nach oben"
-                      disabled={index === 0}
-                      onClick={() => ingredientFields.move(index, index - 1)}
-                    >
-                      <ArrowUp className="size-4" />
-                    </IconButton>
-                    <IconButton
-                      type="button"
-                      label="Zutat nach unten"
-                      disabled={index === ingredientFields.fields.length - 1}
-                      onClick={() => ingredientFields.move(index, index + 1)}
-                    >
-                      <ArrowDown className="size-4" />
-                    </IconButton>
-                    <IconButton
-                      type="button"
-                      label="Zutat entfernen"
-                      className="text-danger"
-                      onClick={() => ingredientFields.remove(index)}
-                    >
-                      <Trash2 className="size-4" />
-                    </IconButton>
                   </div>
                   {rowError && <p className="mt-1 text-xs text-danger">{rowError}</p>}
                 </div>
               );
             })}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Backtemperatur" error={errors.bakingTemperature?.message}>
+              <Input
+                {...register("bakingTemperature")}
+                maxLength={80}
+                placeholder="z. B. 180 °C Ober-/Unterhitze"
+              />
+            </Field>
+            <Field label="Backzeit" error={errors.bakingTime?.message}>
+              <Input
+                {...register("bakingTime")}
+                maxLength={80}
+                placeholder="z. B. 35 Min."
+              />
+            </Field>
           </div>
         </Card>
 
@@ -570,15 +629,15 @@ export function RecipeEditorPage() {
             <p className="text-sm text-ink-soft">Noch keine Schritte.</p>
           )}
 
-          <div className="space-y-2.5">
+          <div className="divide-y divide-line/60">
             {stepFields.fields.map((field, index) => {
               const rowError =
                 errors.steps?.[index]?.text?.message ??
                 errors.steps?.[index]?.minutes?.message;
               return (
-                <div key={field.id} className="rounded-xl border border-line bg-white/70 p-2.5">
+                <div key={field.id} className="py-3">
                   <div className="flex gap-2">
-                    <span className="mt-2 flex size-7 shrink-0 items-center justify-center rounded-full bg-sage-soft text-xs font-semibold text-sage">
+                    <span className="mt-2 flex size-7 shrink-0 items-center justify-center rounded-full bg-sage-soft text-xs font-semibold text-sage-text">
                       {index + 1}
                     </span>
                     <div className="min-w-0 flex-1 space-y-2">
@@ -588,16 +647,19 @@ export function RecipeEditorPage() {
                         aria-label={`Schritt ${index + 1}`}
                         className="min-h-20"
                       />
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Input
-                          {...register(stepPath(index, "minutes"))}
-                          inputMode="decimal"
-                          placeholder="Min."
-                          aria-label={`Dauer Schritt ${index + 1} in Minuten`}
-                          className="w-24"
-                        />
-                        <span className="text-xs text-ink-soft">Minuten (optional)</span>
-                        <div className="ml-auto flex items-center gap-1">
+                      <div className="flex flex-wrap items-end justify-between gap-2">
+                        <label className="block w-40">
+                          <span className="mb-1 block text-xs text-ink-soft">
+                            Dauer (Min., optional)
+                          </span>
+                          <Input
+                            {...register(stepPath(index, "minutes"))}
+                            inputMode="decimal"
+                            placeholder="z. B. 30"
+                            aria-label={`Dauer Schritt ${index + 1} in Minuten`}
+                          />
+                        </label>
+                        <div className="flex items-center gap-1">
                           <IconButton
                             type="button"
                             label="Schritt nach oben"
@@ -650,6 +712,7 @@ export function RecipeEditorPage() {
                   <button
                     type="button"
                     aria-label={`Tag ${tag} entfernen`}
+                    className="-my-1 -mr-1 ml-0.5 flex size-6 shrink-0 items-center justify-center rounded-full transition hover:bg-white/20"
                     onClick={() =>
                       setValue(
                         "tagNames",
@@ -706,7 +769,7 @@ export function RecipeEditorPage() {
                       key={tag.slug}
                       type="button"
                       onClick={() => addTag(tag.label)}
-                      className="tap min-h-8 rounded-full border border-line bg-white px-2.5 text-xs text-ink-soft transition hover:border-ink/30 hover:text-ink"
+                      className="tap tap-target min-h-8 shrink-0 rounded-full border border-line bg-white px-2.5 text-xs text-ink-soft transition hover:border-ink/30 hover:text-ink"
                     >
                       + {tag.label}
                     </button>
@@ -734,7 +797,7 @@ export function RecipeEditorPage() {
                       )
                     }
                     className={cn(
-                      "tap min-h-9 rounded-full border px-3 text-xs font-medium transition",
+                      "tap tap-target min-h-9 rounded-full border px-3 text-xs font-medium transition",
                       active
                         ? "border-ink bg-ink text-white"
                         : "border-line bg-white text-ink-soft hover:border-ink/30 hover:text-ink",

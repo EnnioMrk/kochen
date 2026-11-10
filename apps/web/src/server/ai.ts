@@ -3,11 +3,12 @@ import { aiUnavailable, rateLimited } from "./errors";
 
 let provider: AiProvider | null = null;
 let failures = 0;
+/** 0 means "closed". Only a real failure opens the breaker. */
 let openedAt = 0;
 
 /** Circuit breaker: 3 failures open it for 60 seconds. */
 export async function aiCall<T>(fn: (provider: AiProvider) => Promise<T>): Promise<T> {
-  if (performance.now() - openedAt < 60_000) throw aiUnavailable();
+  if (openedAt !== 0 && performance.now() - openedAt < 60_000) throw aiUnavailable();
   try {
     provider ??= createProvider();
     const result = await fn(provider);

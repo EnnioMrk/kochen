@@ -131,7 +131,6 @@ export function NotificationsPage() {
     <div className="mx-auto max-w-3xl">
       <PageHeader
         title="Benachrichtigungen"
-        eyebrow="Alles an einem Ort"
         subtitle="Kommentare, Freundschaften, Varianten und Timer. Push ist nur ein Hinweis, diese Liste ist der Verlauf."
         actions={
           <Button
@@ -210,7 +209,13 @@ export function NotificationsPage() {
                 );
 
                 return (
-                  <li key={notification.id} className="flex items-center gap-1">
+                  <li
+                    key={notification.id}
+                    className={cn(
+                      "flex items-center gap-1 rounded-lg",
+                      isUnread && "bg-brand/[0.045]",
+                    )}
+                  >
                     {info.to ? (
                       <Link
                         to={info.to}
@@ -227,10 +232,10 @@ export function NotificationsPage() {
                     {isUnread && (
                       <IconButton
                         label="Als gelesen markieren"
-                        className="size-9 shrink-0 text-ink-soft"
+                        className="size-9 shrink-0"
                         onClick={() => markOne.mutate(notification.id)}
                       >
-                        <Check className="size-4" />
+                        <span className="size-2.5 rounded-full bg-brand" aria-hidden />
                       </IconButton>
                     )}
                   </li>

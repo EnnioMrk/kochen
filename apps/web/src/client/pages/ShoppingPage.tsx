@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { RecipeSummary, ShoppingList } from "@kochen/contracts";
 import { AlertTriangle, Check, Info, Plus, Search, ShoppingBasket, Trash2, X } from "lucide-react";
@@ -77,6 +77,8 @@ export function ShoppingPage() {
   const [list, setList] = useState<ShoppingList | null>(null);
   const [checked, setChecked] = useState<string[]>(() => readChecked());
   const [confirmClear, setConfirmClear] = useState(false);
+  const pickerRef = useRef<HTMLUListElement>(null);
+  const [pickerScrollable, setPickerScrollable] = useState(false);
 
   const recipesQuery = useQuery({
     queryKey: qk.recipes("all"),
@@ -106,6 +108,18 @@ export function ShoppingPage() {
 
   const chosenIds = useMemo(() => new Set(selection.map((item) => item.recipeId)), [selection]);
 
+  /* The recipe picker scrolls on small screens. Only fade its bottom edge when
+     it really overflows, so a short list keeps clean rows. */
+  useEffect(() => {
+    const element = pickerRef.current;
+    if (!element) return;
+    const measure = () => setPickerScrollable(element.scrollHeight > element.clientHeight + 4);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [recipesQuery.data, search]);
+
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     const items = recipesQuery.data?.items ?? [];
@@ -116,8 +130,7 @@ export function ShoppingPage() {
     });
   }, [recipesQuery.data, search]);
 
-  const add = (recipe: RecipeSummary) => {
-    if (chosenIds.has(recipe.id)) return;
+  const add = (recipe: RecipeSummary) => {    if (chosenIds.has(recipe.id)) return;
     setSelection((current) => [
       ...current,
       { recipeId: recipe.id, title: recipe.title, owner: recipe.owner.name, servings: recipe.servings },
@@ -157,12 +170,11 @@ export function ShoppingPage() {
     <div className="mx-auto max-w-3xl">
       <PageHeader
         title="Einkaufsliste"
-        eyebrow="Aus Rezepten"
         subtitle="Wähle Rezepte und Portionen. Die Zutaten werden zu einer Liste zusammengefasst."
       />
 
       {list && (
-        <div className="sticky top-20 z-10 mb-5">
+        <div className="sticky top-[calc(4rem+var(--safe-top)+0.25rem)] z-10 mb-5">
           <Card className="border-sage/30 bg-white/95 p-4 shadow-sm backdrop-blur">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
@@ -224,13 +236,19 @@ export function ShoppingPage() {
           )}
 
           {filtered.length > 0 && (
-            <ul className="mt-3 max-h-80 divide-y divide-line/60 overflow-y-auto rounded-xl border border-line/70">
+            <ul
+              ref={pickerRef}
+              className={cn(
+                "mt-3 max-h-80 divide-y divide-line/60 overflow-y-auto rounded-xl border border-line/70",
+                pickerScrollable && "scroll-fade-y",
+              )}
+            >
               {filtered.slice(0, 40).map((recipe) => {
                 const added = chosenIds.has(recipe.id);
                 return (
                   <li key={recipe.id} className="flex items-center gap-2 px-2 py-2">
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium text-ink">{recipe.title}</span>
+                      <span className="line-clamp-2 text-sm font-medium break-words text-ink">{recipe.title}</span>
                       <span className="block truncate text-xs text-ink-soft">
                         {recipe.owner.name} · {recipe.servings} {recipe.servings === 1 ? "Portion" : "Portionen"}
                       </span>
@@ -239,17 +257,19 @@ export function ShoppingPage() {
                       variant={added ? "ghost" : "secondary"}
                       size="sm"
                       disabled={added}
+                      className="shrink-0 px-2 sm:px-3"
+                      aria-label={`${recipe.title} hinzufügen`}
                       onClick={() => add(recipe)}
                     >
                       {added ? (
                         <>
                           <Check className="size-4" />
-                          Gewählt
+                          <span className="sr-only sm:not-sr-only">Gewählt</span>
                         </>
                       ) : (
                         <>
                           <Plus className="size-4" />
-                          Hinzufügen
+                          <span className="sr-only sm:not-sr-only">Hinzufügen</span>
                         </>
                       )}
                     </Button>
@@ -314,7 +334,7 @@ export function ShoppingPage() {
 
         {list && (
           <Card className="p-4 sm:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg">Deine Liste</h2>
               <Badge tone={checkedCount === items.length && items.length > 0 ? "sage" : "neutral"}>
                 {items.length === 0 ? "leer" : `${checkedCount}/${items.length}`}

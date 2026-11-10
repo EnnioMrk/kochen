@@ -24,7 +24,7 @@ export function Stepper({
         aria-label={`${label} verringern`}
         disabled={value <= min}
         onClick={() => onChange(clamp(value - 1))}
-        className="tap inline-flex size-9 items-center justify-center rounded-lg text-ink-soft transition hover:bg-ink/5 hover:text-ink disabled:opacity-40"
+        className="tap tap-target inline-flex size-9 items-center justify-center rounded-lg text-ink-soft transition hover:bg-ink/5 hover:text-ink disabled:opacity-40"
       >
         <Minus className="size-4" />
       </button>
@@ -34,7 +34,7 @@ export function Stepper({
         aria-label={`${label} erhöhen`}
         disabled={value >= max}
         onClick={() => onChange(clamp(value + 1))}
-        className="tap inline-flex size-9 items-center justify-center rounded-lg text-ink-soft transition hover:bg-ink/5 hover:text-ink disabled:opacity-40"
+        className="tap tap-target inline-flex size-9 items-center justify-center rounded-lg text-ink-soft transition hover:bg-ink/5 hover:text-ink disabled:opacity-40"
       >
         <Plus className="size-4" />
       </button>

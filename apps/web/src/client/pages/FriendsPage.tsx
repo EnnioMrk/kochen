@@ -157,7 +157,6 @@ export function FriendsPage() {
     <div className="mx-auto max-w-3xl">
       <PageHeader
         title="Freunde"
-        eyebrow="Nur mit Einladung"
         subtitle="Freundschaften entstehen über einen Einladungslink. Beide Seiten bestätigen."
       />
 
@@ -285,11 +284,9 @@ export function FriendsPage() {
         </Card>
 
         <Card className="p-4 sm:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="flex items-center gap-2 text-lg">
-              <Users className="size-5 text-sage" />
-              Deine Freunde
-            </h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <Users className="size-5 text-sage" />
+            <h2 className="text-lg">Deine Freunde</h2>
             {friendsQuery.data && (
               <Badge tone="neutral">
                 {friendsQuery.data.length} {friendsQuery.data.length === 1 ? "Freund" : "Freunde"}
@@ -325,7 +322,7 @@ export function FriendsPage() {
                   <Avatar name={friend.name} url={friend.avatarUrl} size={38} />
                   <Link
                     to={`/profil/${friend.id}`}
-                    className="min-w-0 flex-1 truncate text-sm font-medium text-ink underline-offset-4 hover:underline"
+                    className="flex min-h-11 min-w-0 flex-1 items-center truncate text-sm font-medium text-ink underline-offset-4 hover:underline"
                   >
                     {friend.deletedAt ? "gelöschtes Konto" : friend.name}
                   </Link>

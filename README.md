@@ -11,9 +11,9 @@ The app has no public page. Only approved `ennio.vip` accounts reach it.
 | Area | Behaviour |
 | --- | --- |
 | Access | Platform session + 5-minute Ed25519 project JWT. Server verifies offline and checks the `kochen` grant. A German gate talks to the platform account API; the platform overlay is not used. |
-| Recipes | Title, description, servings, ingredients, steps, tags, categories, images, source. Raw text and transcript stay readable. |
-| Capture | Photo, PDF, link, video, audio, text. Worker queue with visible position. JSON-LD first, Readability fallback. Audio and video speech go through Parakeet TDT 0.6B v3 (25 European languages, German included). German draft, member confirms before save. |
-| Cooking | Step-by-step or full page. Screen wake lock. One timer per step, running after reload. Servings scale with practical rounding (`4 ½` eggs, never `1 ⅓`). |
+| Recipes | Title, description, servings, ingredients, steps, tags, categories, images, source, baking temperature and baking time (free text). Raw text and transcript stay readable. |
+| Capture | Photo, PDF, link, video, audio, text. Worker queue with visible position. JSON-LD first, Readability fallback. Audio and video speech go through Parakeet TDT 0.6B v3 (25 European languages, German included). German draft, member confirms before save. A unit stays only when the source states it; a bare count becomes `Stück`. Servings are estimated when the source names none, and the review marks the value as `geschätzt`. Ingredients follow their first mention in the steps. A duration in the step text fills the step timer. |
+| Cooking | Step-by-step or full page. Screen wake lock. One timer per step, running after reload. On a phone a check-off moves to the next step. A step with a duration starts its timer at that duration; a step without one asks for minutes. Servings scale with practical rounding (`4 ½` eggs, never `1 ⅓`). |
 | Cook state | Per person: untested, count, last cooked. A rating needs a cook event. Half stars. One rating per person and recipe. |
 | Variations | Fork keeps `lineage_key` per line. Unlimited chain. Side-by-side diff. Predecessor drift banner. |
 | Social | QR friend invite with two-sided confirmation. Profiles, friend list visibility, comments with one reply level, private links (login required, read and comment only). |
@@ -82,6 +82,26 @@ OPENAI_SESSION_ID=<stable uuid per app>
 `AI_PROVIDER=gemini` with `GEMINI_API_KEY` also works. Without a key, only the
 AI surfaces fail with `ai_unavailable`; every other function keeps working.
 
+### R2 bucket CORS
+
+The browser uploads a photo straight to R2 with a presigned `PUT`. The bucket
+must allow that cross-origin request. Without the policy the presign answers
+`200`, the browser blocks the `PUT`, and no file arrives from any device.
+
+The app's own R2 keys cannot change a bucket policy; S3 answers
+`PutBucketCors` with `AccessDenied`. Use a Cloudflare API token with R2 edit
+rights:
+
+```bash
+CLOUDFLARE_ACCOUNT_ID=... CLOUDFLARE_API_TOKEN=... R2_BUCKET=kochen \
+APP_ORIGIN=https://rezepte.ennio.vip bun run r2:cors
+```
+
+The script writes the policy and reads it back. The policy allows `PUT`,
+`GET` and `HEAD` from `APP_ORIGIN`, `https://rezepte.ennio.vip`,
+`https://kochen.ennio.vip` and `http://localhost:5173`, with the
+`content-type` header and a one-hour cache. The dashboard does the same job.
+
 ### Tests
 
 ```bash
@@ -139,7 +159,9 @@ Dokploy (Ennio, `84.247.128.111`):
   volume `parakeet-models` at `/models`, internal only. First start downloads
   the ~650 MB GGUF once.
 - R2 bucket `kochen` in EU jurisdiction, endpoint
-  `https://<account>.eu.r2.cloudflarestorage.com`.
+  `https://<account>.eu.r2.cloudflarestorage.com` with the CORS policy from
+  `bun run r2:cors` (see Local development). A new host needs a new origin in
+  that policy.
 - Dokploy backup `db-backups`, nightly 03:00, 30 kept, to the same R2 bucket.
 - DNS: proxied A records for both hosts to `84.247.128.111`. The wildcard still
   points at the old server, so both records are explicit.
@@ -170,6 +192,13 @@ Dokploy (Ennio, `84.247.128.111`):
   preview for browser print.
 - YouTube, Instagram and TikTok can block `yt-dlp`. The app then asks for a
   screenshot; it never cuts a video.
+- Chrome cannot decode HEIC. On such a browser the photo list shows a file tile
+  with the name, not a preview. The import still converts the photo in the
+  worker.
+- The servings estimate is a heuristic from the number of ingredients and
+  steps. It is marked `geschätzt` in the review; correct it before you save.
+- Baking temperature and baking time come from the source text. The import
+  fills them only when the source states them; leave them empty otherwise.
 - Uploaded originals are kept. Use an R2 lifecycle rule or an operator decision
   to remove old originals.
 

@@ -26,6 +26,8 @@ export type RecipeRow = {
   title: string;
   description: string | null;
   servings: number;
+  bakingTemperature: string | null;
+  bakingTime: string | null;
   sourceType: string;
   sourceUrl: string | null;
   rawText: string | null;
@@ -188,6 +190,8 @@ export function toDetail(
     ingredients: parts.ingredients,
     steps: parts.steps,
     images: parts.images,
+    bakingTemperature: row.bakingTemperature,
+    bakingTime: row.bakingTime,
     sourceType: row.sourceType as RecipeDetail["sourceType"],
     sourceUrl: row.sourceUrl,
     rawText: row.rawText,

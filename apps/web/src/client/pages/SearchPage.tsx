@@ -18,6 +18,12 @@ import { plural } from "../lib/utils";
 
 const number = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 });
 
+const EXAMPLES = [
+  "Schnelle vegetarische Gerichte unter 30 Minuten",
+  "Rezepte von Anna mit vier Sternen",
+  "Was ich noch nie gekocht habe",
+];
+
 function personLabel(person: string): string {
   return person === "me" ? "ich" : person;
 }
@@ -100,7 +106,6 @@ export function SearchPage() {
     <div className="mx-auto max-w-3xl">
       <PageHeader
         title="Suche"
-        eyebrow="Beschreiben statt filtern"
         subtitle="Sage in deinen Worten, was du kochen möchtest. Die Suche liest daraus einen Filter."
       />
 
@@ -132,12 +137,28 @@ export function SearchPage() {
       </Card>
 
       {!query && (
-        <div className="mt-5">
-          <EmptyState
-            title="Noch keine Suche"
-            body="Schreibe einen Wunsch in das Feld. Zum Beispiel: „Rezepte von Anna, die ich mit vier Sternen bewertet habe“."
-          />
-        </div>
+        <Card className="mt-5 p-5">
+          <h2 className="text-lg">Noch keine Suche</h2>
+          <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+            Beschreibe einen Wunsch in eigenen Worten. Zum Beispiel:
+          </p>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {EXAMPLES.map((example) => (
+              <li key={example}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setText(example);
+                    setParams({ q: example });
+                  }}
+                  className="rounded-full border border-line bg-white px-3 py-1.5 text-sm text-ink-soft transition hover:border-ink/25 hover:text-ink"
+                >
+                  {example}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Card>
       )}
 
       {query && search.isPending && (

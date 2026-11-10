@@ -94,7 +94,13 @@ export function AuthGate({ code, onRetry }: { code: string | undefined; onRetry:
           : "Der Betreiber sieht deine Anfrage. Du bekommst eine E-Mail, sobald sie beantwortet ist.";
 
   return (
-    <div className="paper-grain flex min-h-dvh items-center justify-center px-4 py-16">
+    <div
+      className="paper-grain flex min-h-dvh items-center justify-center px-4"
+      style={{
+        paddingTop: "calc(2rem + var(--safe-top))",
+        paddingBottom: "calc(2rem + var(--safe-bottom))",
+      }}
+    >
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-brand text-white shadow-lg shadow-brand/20">
@@ -110,7 +116,7 @@ export function AuthGate({ code, onRetry }: { code: string | undefined; onRetry:
 
           {mode === "pending" ? (
             <div className="mt-6 space-y-3">
-              <div className="rounded-xl bg-sage-soft px-4 py-3 text-sm text-sage">
+              <div className="rounded-xl bg-sage-soft px-4 py-3 text-sm text-sage-text">
                 Deine Anfrage liegt beim Betreiber. Nichts weiter zu tun.
               </div>
               <Button variant="secondary" className="w-full" onClick={() => void signOut()}>

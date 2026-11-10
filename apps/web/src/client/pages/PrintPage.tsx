@@ -7,7 +7,6 @@ import { api, qk } from "../lib/api";
 import { errorText, formatDate } from "../lib/utils";
 import { Button, EmptyState, Skeleton } from "../components/ui";
 import {
-  VISIBILITY_LABEL,
   SOURCE_LABEL,
   durationLabel,
   servingsLabel,
@@ -15,12 +14,30 @@ import {
 
 export function PrintPage() {
   const { id = "" } = useParams<{ id: string }>();
+  const host = window.location.host;
   const detail = useQuery({
     queryKey: qk.recipe(id),
     queryFn: () => api<RecipeDetail>(`/api/recipes/${id}`),
     enabled: Boolean(id),
   });
   const recipe = detail.data;
+  const categoryNames = new Set(
+    (recipe?.categories ?? []).map((category) => category.name.toLocaleLowerCase("de")),
+  );
+  const tagLine = recipe
+    ? [
+        ...recipe.categories.map((category) => category.name),
+        ...recipe.tags.filter((tag) => !categoryNames.has(tag.toLocaleLowerCase("de"))),
+      ].join(" · ")
+    : "";
+  const bakingLine = recipe
+    ? [
+        recipe.bakingTemperature?.trim() ? `Backtemperatur: ${recipe.bakingTemperature.trim()}` : "",
+        recipe.bakingTime?.trim() ? `Backzeit: ${recipe.bakingTime.trim()}` : "",
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : "";
 
   return (
     <div className="min-h-dvh bg-white text-black">
@@ -63,10 +80,7 @@ export function PrintPage() {
       {recipe && (
         <article className="print-page mx-auto w-full max-w-[210mm] px-5 py-6 sm:px-9 sm:py-8">
           <header className="border-b border-black/20 pb-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/60">
-              Rezept · {SOURCE_LABEL[recipe.sourceType]}
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold leading-tight text-black sm:text-3xl">
+            <h1 className="text-2xl font-semibold leading-tight break-words text-black sm:text-3xl">
               {recipe.title}
             </h1>
             {recipe.description && (
@@ -79,18 +93,19 @@ export function PrintPage() {
               {recipe.owner.deletedAt ? "gelöschtem Konto" : recipe.owner.name}
             </p>
             <p className="mt-0.5 text-xs text-black/60">
-              Sichtbarkeit: {VISIBILITY_LABEL[recipe.visibility]}
+              Quelle: {SOURCE_LABEL[recipe.sourceType]}
               {recipe.updatedAt ? ` · Stand ${formatDate(recipe.updatedAt)}` : ""}
             </p>
             {(recipe.tags.length > 0 || recipe.categories.length > 0) && (
-              <p className="mt-1 text-xs text-black/70">
-                {[...recipe.categories.map((category) => category.name), ...recipe.tags].join(" · ")}
-              </p>
+              <p className="mt-1 text-xs text-black/70">{tagLine}</p>
             )}
           </header>
 
           <section className="mt-5">
             <h2 className="text-lg font-semibold">Zutaten</h2>
+            {bakingLine && (
+              <p className="mt-1 text-xs text-black/80">{bakingLine}</p>
+            )}
             {recipe.ingredients.length === 0 ? (
               <p className="mt-1 text-sm text-black/70">Keine Zutaten eingetragen.</p>
             ) : (
@@ -114,7 +129,7 @@ export function PrintPage() {
                       <span className="w-20 shrink-0 text-right font-medium tabular-nums sm:w-24">
                         {amount}
                       </span>
-                      <span className="min-w-0 flex-1">
+                      <span className="min-w-0 flex-1 break-words">
                         {item.name}
                         {item.note ? (
                           <span className="text-black/60"> ({item.note})</span>
@@ -142,7 +157,7 @@ export function PrintPage() {
                       {index + 1}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                      <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
                         {step.text}
                       </p>
                       {step.durationS ? (
@@ -166,7 +181,7 @@ export function PrintPage() {
               <p className="mt-1 break-all">Quelle: {recipe.sourceUrl}</p>
             )}
             <p className="mt-1">
-              Kochen · rezepte.ennio.vip
+              Kochen · {host}
             </p>
           </footer>
         </article>

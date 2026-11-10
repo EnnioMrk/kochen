@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import type { RecipeSummary } from "@kochen/contracts";
 import { ChefHat } from "lucide-react";
-import { Badge, Stars } from "../ui";
+import { Badge, MediaImage, Stars } from "../ui";
 import { cn } from "../../lib/utils";
 
 export function recipeMeta(recipe: RecipeSummary): string {
@@ -24,16 +24,18 @@ export function RecipeRow({
     <Link
       to={`/rezept/${recipe.id}`}
       className={cn(
-        "tap group flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-ink/5",
+        "tap group flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-ink/5 min-w-0",
         className,
       )}
     >
       <span className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-paper-2 text-ink-soft">
-        {recipe.coverUrl ? (
-          <img src={recipe.coverUrl} alt="" className="size-full object-cover" loading="lazy" />
-        ) : (
-          <ChefHat className="size-5" />
-        )}
+        <MediaImage
+          src={recipe.coverUrl}
+          alt=""
+          loading="lazy"
+          className="size-full object-cover"
+          fallback={<ChefHat className="size-5" />}
+        />
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
@@ -70,21 +72,18 @@ export function RecipeCard({ recipe, className }: { recipe: RecipeSummary; class
     <Link
       to={`/rezept/${recipe.id}`}
       className={cn(
-        "tap group flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-white/80 transition hover:border-ink/20",
+        "tap group flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-white/80 transition hover:border-ink/20 min-w-0",
         className,
       )}
     >
       <span className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-paper-2 text-ink-soft">
-        {recipe.coverUrl ? (
-          <img
-            src={recipe.coverUrl}
-            alt=""
-            className="size-full object-cover transition duration-300 group-hover:scale-[1.02]"
-            loading="lazy"
-          />
-        ) : (
-          <ChefHat className="size-7" />
-        )}
+        <MediaImage
+          src={recipe.coverUrl}
+          alt=""
+          loading="lazy"
+          className="size-full object-cover transition duration-300 group-hover:scale-[1.02]"
+          fallback={<ChefHat className="size-7" />}
+        />
         {recipe.parentId && (
           <span className="absolute left-2 top-2">
             <Badge tone="sage">Variante</Badge>
@@ -92,7 +91,7 @@ export function RecipeCard({ recipe, className }: { recipe: RecipeSummary; class
         )}
       </span>
       <span className="flex flex-1 flex-col gap-1 p-3">
-        <span className="line-clamp-2 font-medium text-ink group-hover:underline">{recipe.title}</span>
+        <span className="line-clamp-2 font-medium break-words text-ink group-hover:underline">{recipe.title}</span>
         <span className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-soft">
           <span>{recipe.owner.name}</span>
           {recipe.avgRating ? (
@@ -101,7 +100,7 @@ export function RecipeCard({ recipe, className }: { recipe: RecipeSummary; class
               <span>({recipe.ratingCount ?? 0})</span>
             </span>
           ) : (
-            <span>unbewertet</span>
+            <span>neu</span>
           )}
         </span>
       </span>

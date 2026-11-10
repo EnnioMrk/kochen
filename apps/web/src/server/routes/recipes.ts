@@ -20,7 +20,7 @@ import {
 } from "../repo";
 
 import { attachCategories, attachTags } from "../tags-lib";
-import { createRecipe, writeLines } from "../recipe-write";
+import { createRecipe, bakingText, writeLines } from "../recipe-write";
 import type { AppEnv } from "../types";
 import { body, idParam, linkToken, query } from "../validate";
 
@@ -39,6 +39,8 @@ const PatchInput = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().max(4000).nullable().optional(),
   servings: z.number().int().min(1).max(100).optional(),
+  bakingTemperature: z.string().max(80).nullable().optional(),
+  bakingTime: z.string().max(80).nullable().optional(),
   ingredients: z.array(RecipeInput.shape.ingredients.element).optional(),
   steps: z.array(RecipeInput.shape.steps.element).optional(),
   visibility: Visibility.optional(),
@@ -131,6 +133,8 @@ recipes.patch("/:id", async (c) => {
         title = coalesce(${patch.title ?? null}, title),
         description = ${patch.description === undefined ? row.description : patch.description},
         servings = coalesce(${patch.servings ?? null}, servings),
+        baking_temperature = ${patch.bakingTemperature === undefined ? row.bakingTemperature : bakingText(patch.bakingTemperature)},
+        baking_time = ${patch.bakingTime === undefined ? row.bakingTime : bakingText(patch.bakingTime)},
         visibility = coalesce(${patch.visibility ?? null}, visibility),
         source_url = ${patch.sourceUrl === undefined ? row.sourceUrl : patch.sourceUrl},
         raw_text = ${patch.rawText === undefined ? row.rawText : patch.rawText},
@@ -286,9 +290,10 @@ recipes.post("/:id/fork", async (c) => {
 
   const newId = await sql.begin(async (tx) => {
     const rows = await tx<{ id: string }[]>`
-      insert into recipes (owner_id, title, description, servings, source_type, source_url,
-                           raw_text, transcript, original_lang, visibility, parent_id)
+      insert into recipes (owner_id, title, description, servings, baking_temperature, baking_time,
+                           source_type, source_url, raw_text, transcript, original_lang, visibility, parent_id)
       values (${user.id}, ${input.title ?? row.title}, ${row.description}, ${targetServings},
+              ${row.bakingTemperature}, ${row.bakingTime},
               ${row.sourceType}, ${row.sourceUrl}, ${row.rawText}, ${row.transcript},
               ${row.originalLang}, ${row.visibility}, ${row.id})
       returning id
@@ -518,10 +523,14 @@ recipes.get("/:id/export.md", async (c) => {
   const steps = await sql<{ text: string }[]>`
     select text from recipe_steps where recipe_id = ${row.id} order by position
   `;
+  const bakingTemperature = bakingText(row.bakingTemperature);
+  const bakingTime = bakingText(row.bakingTime);
   const lines = [
     `# ${row.title}`,
     row.description ? `\n${row.description}\n` : "",
     `\nPortionen: ${row.servings}\n`,
+    bakingTemperature ? `Backtemperatur: ${bakingTemperature}\n` : "",
+    bakingTime ? `Backzeit: ${bakingTime}\n` : "",
     `\n## Zutaten\n`,
     ...ingredients.map((item) => {
       const amount = item.amount ? Number(item.amount) : null;

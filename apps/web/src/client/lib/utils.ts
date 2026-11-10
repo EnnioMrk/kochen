@@ -33,7 +33,7 @@ export function relativeTime(value: string | Date): string {
   const hours = Math.round(minutes / 60);
   if (Math.abs(hours) < 24) return `vor ${hours} Std.`;
   const days = Math.round(hours / 24);
-  if (Math.abs(days) < 7) return `vor ${days} Tagen`;
+  if (Math.abs(days) < 7) return `vor ${days} ${days === 1 ? "Tag" : "Tagen"}`;
   return formatDate(value);
 }
 

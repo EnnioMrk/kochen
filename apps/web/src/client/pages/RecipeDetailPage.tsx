@@ -24,6 +24,7 @@ import {
   Button,
   Card,
   EmptyState,
+  MediaImage,
   Modal,
   Skeleton,
   Stars,
@@ -37,12 +38,42 @@ import { ShareModal } from "../components/recipes/ShareModal";
 import {
   SOURCE_LABEL,
   VISIBILITY_LABEL,
+  decimal,
   durationLabel,
   ratingLabel,
   servingsLabel,
 } from "../components/recipes/format";
 
 type ConfirmAction = "archive" | "delete";
+
+/** One gallery tile. A broken file keeps a quiet placeholder instead of a dead link. */
+function GalleryTile({ url, index }: { url: string; index: number }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <span className="flex aspect-square w-full items-center justify-center rounded-xl border border-line bg-paper-2 text-ink-soft/70">
+        <Camera className="size-6" strokeWidth={1.4} aria-hidden />
+        <span className="sr-only">Bild {index + 1} ist nicht verfügbar.</span>
+      </span>
+    );
+  }
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer noopener"
+      className="block overflow-hidden rounded-xl border border-line transition hover:border-ink/25"
+    >
+      <img
+        src={url}
+        alt={`Bild ${index + 1}`}
+        loading="lazy"
+        onError={() => setFailed(true)}
+        className="aspect-square w-full object-cover"
+      />
+    </a>
+  );
+}
 
 export function RecipeDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
@@ -57,6 +88,7 @@ export function RecipeDetailPage() {
   const [forkOpen, setForkOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmAction | null>(null);
+  const [showAllTags, setShowAllTags] = useState(false);
 
   /* The private link token lives in the URL once, then only in sessionStorage.
      api() reads `kochen.link:<id>` and sends it as x-link-token. */
@@ -237,26 +269,41 @@ export function RecipeDetailPage() {
   const gallery = recipe.images.filter((image) => image.url !== recipe.coverUrl);
   const friends = recipe.variedByFriends ?? [];
   const isOwner = Boolean(me.data && me.data.id === recipe.owner.id);
+  const canRate = cookStatus?.state === "cooked";
+  const categoryNames = new Set(
+    recipe.categories.map((category) => category.name.toLocaleLowerCase("de")),
+  );
+  const ownTags = recipe.tags.filter(
+    (tag) => !categoryNames.has(tag.toLocaleLowerCase("de")),
+  );
+  const visibleTags = showAllTags ? ownTags : ownTags.slice(0, 8);
+  const hiddenTagCount = ownTags.length - 8;
+
+  const bakingTemperature = recipe.bakingTemperature?.trim();
+  const bakingTime = recipe.bakingTime?.trim();
+  const bakingRows = [
+    bakingTemperature ? { label: "Backtemperatur", value: bakingTemperature } : null,
+    bakingTime ? { label: "Backzeit", value: bakingTime } : null,
+  ].filter((row): row is { label: string; value: string } => row !== null);
 
   return (
     <div className="space-y-6">
       <Card className="overflow-hidden">
-        <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-          <div className="relative aspect-[4/3] bg-paper-2 lg:aspect-auto lg:min-h-80">
-            {recipe.coverUrl ? (
-              <img
-                src={recipe.coverUrl}
-                alt={`Titelbild von ${recipe.title}`}
-                className="absolute inset-0 size-full object-cover"
-              />
-            ) : (
-              <div className="paper-grain flex size-full min-h-48 items-center justify-center bg-[linear-gradient(135deg,var(--color-paper-2),var(--color-sage-soft))]">
-                <ChefHat className="size-16 text-brand/30" strokeWidth={1.2} />
-              </div>
-            )}
+        <div className="grid grid-cols-[minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+          <div className="relative aspect-[16/10] overflow-hidden bg-paper-2 sm:aspect-[16/9] md:aspect-auto md:min-h-80">
+            <MediaImage
+              src={recipe.coverUrl}
+              alt={`Titelbild von ${recipe.title}`}
+              className="absolute inset-0 size-full object-cover"
+              fallback={
+                <div className="paper-grain flex size-full min-h-48 items-center justify-center bg-[linear-gradient(135deg,var(--color-paper-2),var(--color-sage-soft))]">
+                  <ChefHat className="size-16 text-brand/30" strokeWidth={1.2} />
+                </div>
+              }
+            />
           </div>
 
-          <div className="p-5 sm:p-7">
+          <div className="min-w-0 p-5 sm:p-7">
             <div className="flex flex-wrap items-center gap-1.5">
               <Badge tone="sage">{VISIBILITY_LABEL[recipe.visibility]}</Badge>
               <Badge>{SOURCE_LABEL[recipe.sourceType]}</Badge>
@@ -270,7 +317,7 @@ export function RecipeDetailPage() {
               {recipe.parentId && <Badge tone="brand">Variante</Badge>}
             </div>
 
-            <h1 className="mt-3 text-3xl leading-tight sm:text-4xl">{recipe.title}</h1>
+            <h1 className="mt-3 text-3xl leading-tight break-words sm:text-4xl">{recipe.title}</h1>
 
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-ink-soft">
               <Avatar name={recipe.owner.name} url={recipe.owner.avatarUrl} size={24} />
@@ -301,31 +348,52 @@ export function RecipeDetailPage() {
                     {category.name}
                   </Badge>
                 ))}
-                {recipe.tags.map((tag) => (
+                {visibleTags.map((tag) => (
                   <Badge key={tag}>{tag}</Badge>
                 ))}
+                {hiddenTagCount > 0 && (
+                  <button
+                    type="button"
+                    aria-expanded={showAllTags}
+                    onClick={() => setShowAllTags((current) => !current)}
+                    className="inline-flex items-center rounded-full bg-ink/5 px-2.5 py-1 text-xs font-medium text-ink-soft transition hover:bg-ink/10 hover:text-ink"
+                  >
+                    {showAllTags ? "weniger anzeigen" : `+${hiddenTagCount} weitere`}
+                  </button>
+                )}
               </div>
             )}
 
-            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-line pt-4">
-              <div className="flex items-center gap-2">
+            <div className="mt-4 space-y-2 border-t border-line pt-4">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <span className="text-sm font-medium text-ink">Deine Bewertung</span>
                 <Stars
                   value={recipe.myRating ?? null}
                   size={26}
-                  onChange={(stars) => rate.mutate(stars)}
+                  readOnly={!canRate}
+                  onChange={canRate ? (stars) => rate.mutate(stars) : undefined}
                 />
+                <span className="text-xs text-ink-soft">
+                  {recipe.myRating
+                    ? `${decimal(recipe.myRating)} von 5`
+                    : canRate
+                      ? "Noch nicht bewertet."
+                      : "Noch offen."}
+                </span>
                 {rate.isPending && <span className="text-xs text-ink-soft">speichert …</span>}
               </div>
-              <span className="text-sm text-ink-soft">
-                {ratingLabel(recipe.avgRating, recipe.ratingCount)}
-              </span>
-            </div>
-            {cookStatus?.state !== "cooked" && (
-              <p className="mt-1 text-xs text-ink-soft">
-                Bewerten ist erst nach dem ersten Kochen möglich.
+              {recipe.avgRating != null && (
+                <div className="flex flex-wrap items-center gap-2 text-sm text-ink-soft">
+                  <Stars value={recipe.avgRating} readOnly size={16} />
+                  <span>{ratingLabel(recipe.avgRating, recipe.ratingCount)}</span>
+                </div>
+              )}
+              <p className="text-xs text-ink-soft">
+                {canRate
+                  ? cookedText
+                  : "Bewerten ist erst nach dem ersten Kochen möglich."}
               </p>
-            )}
-            <p className="mt-2 text-xs text-ink-soft">{cookedText}</p>
+            </div>
 
             {friends.length > 0 && (
               <div className="mt-4 flex items-center gap-2 rounded-xl bg-paper-2/60 px-3 py-2">
@@ -345,8 +413,8 @@ export function RecipeDetailPage() {
         </div>
       </Card>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Button onClick={() => navigate(`/rezept/${id}/kochen`)}>
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+        <Button className="col-span-2 sm:col-auto" onClick={() => navigate(`/rezept/${id}/kochen`)}>
           <Play className="size-4" />
           Kochen
         </Button>
@@ -370,7 +438,7 @@ export function RecipeDetailPage() {
           <Share2 className="size-4" />
           Teilen
         </Button>
-        <ExportControls recipeId={id} title={recipe.title} />
+        <ExportControls recipeId={id} title={recipe.title} className="col-span-2 sm:col-auto" />
         <Button
           variant="sage"
           loading={cook.isPending}
@@ -381,8 +449,8 @@ export function RecipeDetailPage() {
         </Button>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="space-y-5">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="min-w-0 space-y-5">
           <Card className="p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-xl">Zutaten</h2>
@@ -403,6 +471,16 @@ export function RecipeDetailPage() {
               factor={factor}
               className="mt-3"
             />
+            {bakingRows.length > 0 && (
+              <dl className="mt-3 space-y-1 rounded-xl bg-paper-2/60 px-3 py-2 text-sm">
+                {bakingRows.map((row) => (
+                  <div key={row.label} className="flex items-baseline justify-between gap-3">
+                    <dt className="text-ink-soft">{row.label}</dt>
+                    <dd className="min-w-0 break-words text-right text-ink">{row.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
             <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-4">
               <Button variant="secondary" size="sm" onClick={() => setForkOpen(true)}>
                 Als Variante übernehmen
@@ -421,7 +499,7 @@ export function RecipeDetailPage() {
               <ol className="mt-3 space-y-4">
                 {recipe.steps.map((step, index) => (
                   <li key={step.id ?? `step-${index}`} className="flex gap-3">
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sage-soft text-sm font-semibold text-sage">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sage-soft text-sm font-semibold text-sage-text">
                       {index + 1}
                     </span>
                     <div className="min-w-0">
@@ -489,7 +567,7 @@ export function RecipeDetailPage() {
           </Card>
         </div>
 
-        <aside className="space-y-5">
+        <aside className="min-w-0 space-y-5">
           <Card className="p-5">
             <h2 className="text-base">Details</h2>
             <dl className="mt-3 space-y-2 text-sm">
@@ -573,20 +651,11 @@ export function RecipeDetailPage() {
               </h2>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 {gallery.map((image, index) => (
-                  <a
+                  <GalleryTile
                     key={image.id ?? `image-${index}`}
-                    href={image.url}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="block overflow-hidden rounded-xl border border-line"
-                  >
-                    <img
-                      src={image.url}
-                      alt={`Bild ${index + 1}`}
-                      loading="lazy"
-                      className="aspect-square w-full object-cover"
-                    />
-                  </a>
+                    url={image.url}
+                    index={index}
+                  />
                 ))}
               </div>
             </Card>

@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+/* Self-hosted brand faces. Only the latin subset ships; German needs no more. */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/inter-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/fraunces-latin.woff2") format("woff2");
+}
+
 @theme {
   --color-paper: #faf7f2;
   --color-paper-2: #f3ede3;
@@ -8,10 +25,14 @@
   --color-line: #e3d9ca;
   --color-brand: #b4552d;
   --color-brand-dark: #8f3f1e;
-  --color-sage: #6f7d5c;
+  /* Fill colours: safe behind white text. */
+  --color-sage: #63714f;
   --color-sage-soft: #e8ecdf;
   --color-danger: #a83232;
   --color-gold: #c98a2b;
+  /* Text colours: safe on their own tint. Never use the fill ones as text. */
+  --color-sage-text: #4f5c3d;
+  --color-gold-text: #8a5a12;
 
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Fraunces", ui-serif, Georgia, "Times New Roman", serif;
@@ -21,7 +42,10 @@
 
 :root {
   color-scheme: light;
+  --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 html,
@@ -37,6 +61,8 @@ body {
   margin: 0;
   min-height: 100dvh;
   overscroll-behavior-y: none;
+  /* One long word must never pan the whole page sideways. */
+  overflow-x: clip;
 }
 
 * {
@@ -47,6 +73,45 @@ body {
   background: color-mix(in oklab, var(--color-brand) 22%, transparent);
 }
 
+/* Browser surfaces belong to the palette: caret, form accents, scrollbars. */
+:root {
+  caret-color: var(--color-brand);
+  accent-color: var(--color-brand);
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-ink) 22%, transparent) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--color-ink) 24%, transparent);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--color-ink) 38%, transparent);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* One visible ring for keyboard users on every control the app draws.
+   Zero specificity, so a component's own focus ring still wins. */
+:where(a, button, summary, [role="tab"], [role="switch"], [role="slider"], [role="checkbox"]):focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
 h1, h2, h3, .display {
   font-family: var(--font-display);
   font-weight: 600;
@@ -55,7 +120,14 @@ h1, h2, h3, .display {
 
 button, input, select, textarea {
   font: inherit;
-  color: inherit;
+}
+
+/* The reset above must not beat a utility such as `text-white`. Tailwind
+   preflight already inherits colour, so the reset leaves `color` alone. */
+@layer base {
+  button, input, select, textarea {
+    color: inherit;
+  }
 }
 
 /* Sticky hover only where a real pointer exists. */
@@ -80,9 +152,78 @@ button, input, select, textarea {
   touch-action: manipulation;
 }
 
+/* Coarse pointers need 44x44 targets; the visual size can stay smaller. */
+@media (pointer: coarse) {
+  .tap-target {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+}
+
+/* A control strip that scrolls sideways leaves no scrollbar behind. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* A sideways strip on a phone fades at its right edge, so the cut-off chip
+   reads as "more to scroll" instead of a broken row. */
+@media (max-width: 767px) {
+  .scroll-fade {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+  }
+}
+
+/* A scroll box that really overflows fades at its bottom edge, so the last
+   half-visible row reads as scrollable instead of broken. */
+.scroll-fade-y {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 1.75rem), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 1.75rem), transparent);
+}
+
 /* Cooking mode: keep the screen awake visually calm. */
 .cook-step-enter {
   animation: step-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Cooking steps: keep the next-step control in thumb reach on phones, in
+   portrait and in short landscape. */
+.cook-nav-toggle {
+  display: none;
+}
+
+@media (max-width: 767px), (max-height: 560px) {
+  .cook-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--timer-offset, 0px) + var(--safe-bottom));
+    z-index: 30;
+    padding: 0.75rem 1rem;
+    padding-left: max(1rem, var(--safe-left));
+    padding-right: max(1rem, var(--safe-right));
+    border-top: 1px solid var(--color-line);
+    background: color-mix(in oklab, var(--color-paper) 95%, transparent);
+    backdrop-filter: blur(8px);
+  }
+
+  .cook-nav-toggle {
+    display: inline-flex;
+  }
+
+  .cook-inline-toggle,
+  .cook-nav-hint {
+    display: none;
+  }
+
+  .cook-step {
+    padding-bottom: calc(6rem + var(--timer-offset, 0px));
+  }
 }
 
 @keyframes step-in {
@@ -107,4 +248,6 @@ button, input, select, textarea {
   .print-avoid-break { break-inside: avoid; }
   a { color: #000; text-decoration: none; }
   .print-page { max-width: none !important; padding: 0 !important; }
+  /* A single long word must not push the print sheet sideways. */
+  .print-page :is(p, li, span, dd) { overflow-wrap: anywhere; }
 }

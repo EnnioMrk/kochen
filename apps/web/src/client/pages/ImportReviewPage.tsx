@@ -15,7 +15,15 @@ import {
   useToast,
 } from "../components/ui";
 import { DraftForm } from "../components/capture/DraftForm";
-import { importErrorMessage, startImport, uploadFiles } from "../components/capture/upload";
+import {
+  formatMb,
+  importErrorMessage,
+  startImport,
+  unreadableFileMessage,
+  uploadErrorMessage,
+  uploadFiles,
+} from "../components/capture/upload";
+import { PhotoPreviewTile } from "./CapturePage";
 import { cn, formatDateTime } from "../lib/utils";
 
 const ACTIVE_STATES = new Set<JobState>(["queued", "fetching", "normalizing", "understanding"]);
@@ -26,15 +34,6 @@ const STEP_LABELS: Record<string, string> = {
   fetching: "Quelle wird geladen",
   normalizing: "Dateien werden vorbereitet",
   understanding: "Rezept wird erkannt",
-};
-
-const KIND_LABELS: Record<string, string> = {
-  photo: "Fotos",
-  link: "Link",
-  video: "Video",
-  audio: "Audio",
-  text: "Text",
-  pdf: "PDF",
 };
 
 function failedMessage(job: ImportJob): string {
@@ -50,7 +49,7 @@ function failedMessage(job: ImportJob): string {
     case "source_unavailable":
       return "Die Quelle ist nicht erreichbar. Bitte prüfe den Link oder versuche es später erneut.";
     case "media_unavailable":
-      return "Der Medienspeicher ist gerade nicht erreichbar. Bitte versuche es später erneut.";
+      return "Der Medienspeicher ist nicht erreichbar oder die Datei fehlt dort. Bitte melde das dem Betreiber.";
     case "tool_missing":
       return "Für diesen Import fehlt ein Werkzeug auf dem Server. Bitte melde das dem Betreiber.";
     case "cancelled":
@@ -65,9 +64,15 @@ function ScreenshotPanel({ onStarted }: { onStarted: (id: string) => void }) {
   const [busy, setBusy] = useState(false);
   const [percent, setPercent] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const blocked = file ? unreadableFileMessage(file) : null;
 
   const send = async () => {
     if (!file || busy) return;
+    const problem = unreadableFileMessage(file);
+    if (problem) {
+      setError(problem);
+      return;
+    }
     setBusy(true);
     setError(null);
     setPercent(0);
@@ -76,7 +81,8 @@ function ScreenshotPanel({ onStarted }: { onStarted: (id: string) => void }) {
       const id = await startImport({ kind: "photo", keys });
       onStarted(id);
     } catch (caught) {
-      setError(importErrorMessage(caught));
+      // Stay on the page and show the real reason.
+      setError(uploadErrorMessage(caught, "upload"));
       setBusy(false);
     }
   };
@@ -100,16 +106,26 @@ function ScreenshotPanel({ onStarted }: { onStarted: (id: string) => void }) {
             accept="image/*"
             className="sr-only"
             onChange={(event) => {
-              setFile(event.target.files?.[0] ?? null);
-              setError(null);
+              const next = event.target.files?.[0] ?? null;
+              setFile(next);
+              setError(next ? unreadableFileMessage(next) : null);
               event.target.value = "";
             }}
           />
         </label>
-        <Button loading={busy} disabled={!file} onClick={() => void send()}>
+        <Button loading={busy} disabled={!file || Boolean(blocked)} onClick={() => void send()}>
           Hochladen und neu starten
         </Button>
       </div>
+      {file && (
+        <div className="mt-3 flex items-center gap-3">
+          <PhotoPreviewTile file={file} className="size-16 shrink-0 rounded-lg border border-line" />
+          <div className="min-w-0">
+            <p className="truncate text-sm text-ink">{file.name}</p>
+            <p className="text-xs text-ink-soft">{formatMb(file.size)}</p>
+          </div>
+        </div>
+      )}
       {busy && (
         <div className="mt-3">
           <div className="h-2 w-full overflow-hidden rounded-full bg-ink/10">
@@ -218,9 +234,8 @@ export function ImportReviewPage() {
     <div className="mx-auto max-w-3xl">
       <PageHeader
         title="Entwurf prüfen"
-        eyebrow={`Import · ${KIND_LABELS[job.kind] ?? job.kind}`}
         subtitle="Prüfe die Angaben. Erst mit „Rezept speichern“ wird das Rezept angelegt."
-        actions={
+        titleAddon={
           <Badge tone={job.state === "failed" ? "danger" : job.state === "needs_review" ? "gold" : "brand"}>
             {active ? "läuft" : job.state === "needs_review" ? "prüfen" : job.state === "done" ? "fertig" : "fehlgeschlagen"}
           </Badge>
@@ -244,7 +259,7 @@ export function ImportReviewPage() {
                     className={cn(
                       "flex size-6 shrink-0 items-center justify-center rounded-full border",
                       done
-                        ? "border-sage bg-sage-soft text-sage"
+                        ? "border-sage bg-sage-soft text-sage-text"
                         : current
                           ? "border-brand text-brand"
                           : "border-line text-ink-soft/50",
@@ -285,6 +300,7 @@ export function ImportReviewPage() {
           <DraftForm
             draft={job.draft}
             warnings={job.draftMeta?.warnings ?? []}
+            servingsEstimated={job.draftMeta?.servingsEstimated ?? false}
             submitting={confirming}
             error={confirmError}
             onSubmit={(input) => void confirm(input)}
@@ -332,12 +348,13 @@ export function ImportReviewPage() {
             <AlertTriangle className="mt-0.5 size-5 shrink-0 text-danger" />
             <div>
               <h2 className="text-lg">{job.errorCode === "cancelled" ? "Abgebrochen" : "Import fehlgeschlagen"}</h2>
-              <p className="mt-1 text-sm leading-relaxed text-ink-soft">{failedMessage(job)}</p>
-              {job.errorMessage && (
-                <details className="mt-2">
-                  <summary className="cursor-pointer text-xs text-ink-soft">Technische Meldung anzeigen</summary>
-                  <p className="mt-1 break-words text-xs leading-relaxed text-ink-soft/80">{job.errorMessage}</p>
-                </details>
+              <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+                {/* The worker names the real cause, for example an unreadable
+                    HEIC photo or a missing media store. */}
+                {job.errorMessage?.trim() || failedMessage(job)}
+              </p>
+              {job.errorCode && (
+                <p className="mt-2 text-xs text-ink-soft/80">Fehlercode: {job.errorCode}</p>
               )}
               <p className="mt-2 text-xs text-ink-soft">Zuletzt aktualisiert: {formatDateTime(job.updatedAt)}</p>
             </div>

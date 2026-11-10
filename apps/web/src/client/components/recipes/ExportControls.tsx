@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { FileDown, FileText } from "lucide-react";
 import { api, qk } from "../../lib/api";
-import { errorText } from "../../lib/utils";
+import { cn, errorText } from "../../lib/utils";
 import { Button, useToast } from "../ui";
 
 type JobStatus = {
@@ -34,7 +34,15 @@ function fileName(title: string, extension: string): string {
   return `${base || "rezept"}.${extension}`;
 }
 
-export function ExportControls({ recipeId, title }: { recipeId: string; title: string }) {
+export function ExportControls({
+  recipeId,
+  title,
+  className,
+}: {
+  recipeId: string;
+  title: string;
+  className?: string;
+}) {
   const toast = useToast();
   const [jobId, setJobId] = useState<string | null>(null);
   const [finishedJob, setFinishedJob] = useState<string | null>(null);
@@ -104,7 +112,7 @@ export function ExportControls({ recipeId, title }: { recipeId: string; title: s
   const running = start.isPending || Boolean(jobId);
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className={cn("flex flex-wrap items-center gap-2 max-sm:[&>button]:flex-1", className)}>
       <Button
         variant="secondary"
         size="sm"

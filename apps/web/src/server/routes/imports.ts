@@ -27,6 +27,29 @@ export async function currentLimits(): Promise<Limits> {
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "image/gif"];
 const AUDIO_TYPES = ["audio/mpeg", "audio/mp4", "audio/m4a", "audio/x-m4a", "audio/wav", "audio/webm", "video/mp4", "video/quicktime", "video/webm"];
 
+/** Types a browser reports when it does not know the real type. */
+const GENERIC_TYPES = ["", "application/octet-stream", "binary/octet-stream", "application/x-unknown"];
+
+/** Extension to MIME type, used when the browser sends no usable type. */
+const EXTENSION_TYPES: Record<string, string> = {
+  jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp",
+  heic: "image/heic", heif: "image/heif", gif: "image/gif", pdf: "application/pdf",
+  mp4: "video/mp4", mov: "video/quicktime", webm: "video/webm",
+  m4a: "audio/mp4", mp3: "audio/mpeg", wav: "audio/wav",
+};
+
+/**
+ * The type the browser declares is often "image/jpg" or generic. Sign and
+ * check the same type the file really has.
+ */
+function normalizeContentType(contentType: string, filename: string): string {
+  const declared = contentType.trim().toLowerCase();
+  const normalized = declared === "image/jpg" || declared === "image/pjpeg" ? "image/jpeg" : declared;
+  if (!GENERIC_TYPES.includes(normalized)) return normalized;
+  const extension = /\.([a-zA-Z0-9]{1,8})$/.exec(filename.trim())?.[1]?.toLowerCase() ?? "";
+  return EXTENSION_TYPES[extension] ?? "application/octet-stream";
+}
+
 imports.get("/limits", async (c) => ok(c, await currentLimits()));
 
 imports.post("/uploads/presign", async (c) => {
@@ -45,22 +68,24 @@ imports.post("/uploads/presign", async (c) => {
     if (file.size > limits.maxPhotoMb * MB) {
       throw limitExceeded({ limit: "maxPhotoMb", allowed: limits.maxPhotoMb, actual: Math.ceil(file.size / MB) });
     }
-    if (input.kind === "photo" && !IMAGE_TYPES.includes(file.contentType)) {
-      throw invalid(`unsupported_type:${file.contentType}`);
+    const contentType = normalizeContentType(file.contentType, file.filename);
+    if (input.kind === "photo" && !IMAGE_TYPES.includes(contentType)) {
+      throw invalid(`unsupported_type:${contentType}`);
     }
-    if ((input.kind === "video" || input.kind === "audio") && !AUDIO_TYPES.includes(file.contentType)) {
-      throw invalid(`unsupported_type:${file.contentType}`);
+    if ((input.kind === "video" || input.kind === "audio") && !AUDIO_TYPES.includes(contentType)) {
+      throw invalid(`unsupported_type:${contentType}`);
     }
-    if (input.kind === "pdf" && file.contentType !== "application/pdf") {
-      throw invalid(`unsupported_type:${file.contentType}`);
+    if (input.kind === "pdf" && contentType !== "application/pdf") {
+      throw invalid(`unsupported_type:${contentType}`);
     }
   }
 
   const files = await Promise.all(
     input.files.map(async (file) => {
       const key = mediaKey(`imports/${user.id}/${input.kind}`, file.filename);
-      const uploadUrl = await presignPut(key, file.contentType, file.size);
-      return { key, uploadUrl, headers: { "content-type": file.contentType } };
+      const contentType = normalizeContentType(file.contentType, file.filename);
+      const uploadUrl = await presignPut(key, contentType, file.size);
+      return { key, uploadUrl, headers: { "content-type": contentType } };
     }),
   );
   return ok(c, { files });
@@ -138,6 +163,7 @@ imports.get("/:id", async (c) => {
     warnings?: unknown;
     asksForScreenshot?: unknown;
     sourceLang?: unknown;
+    servingsEstimated?: unknown;
     keys?: string[];
   };
   return ok(c, {
@@ -153,6 +179,7 @@ imports.get("/:id", async (c) => {
           warnings: Array.isArray(payload.warnings) ? payload.warnings : [],
           asksForScreenshot: Boolean(payload.asksForScreenshot),
           sourceLang: typeof payload.sourceLang === "string" ? payload.sourceLang : null,
+          servingsEstimated: Boolean(payload.servingsEstimated),
         }
       : null,
     createdAt: job.createdAt.toISOString(),

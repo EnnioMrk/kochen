@@ -114,6 +114,10 @@ export const RecipeInput = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(4000).nullable().optional(),
   servings: z.number().int().min(1).max(100),
+  /** Free text such as "180 °C Ober-/Unterhitze". */
+  bakingTemperature: z.string().max(80).nullable().optional(),
+  /** Free text such as "35 Min." or "30–40 Min.". */
+  bakingTime: z.string().max(80).nullable().optional(),
   ingredients: z.array(Ingredient.omit({ id: true })).min(0),
   steps: z.array(RecipeStep.omit({ id: true })).min(0),
   sourceType: SourceType.default("manual"),
@@ -157,6 +161,8 @@ export const RecipeDetail = RecipeSummary.extend({
   ingredients: z.array(Ingredient),
   steps: z.array(RecipeStep),
   images: z.array(RecipeImage),
+  bakingTemperature: z.string().nullable(),
+  bakingTime: z.string().nullable(),
   sourceType: SourceType,
   sourceUrl: z.string().nullable(),
   rawText: z.string().nullable(),
@@ -400,6 +406,8 @@ export const ImportJob = z.object({
       warnings: z.array(z.string()).default([]),
       asksForScreenshot: z.boolean().default(false),
       sourceLang: z.string().nullable(),
+      /** True when no source value existed and the import estimated the servings. */
+      servingsEstimated: z.boolean().default(false),
     })
     .nullable(),
   createdAt: z.string(),

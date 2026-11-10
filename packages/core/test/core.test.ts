@@ -18,6 +18,12 @@ import { accessFor } from "../src/visibility";
 import { diffLines } from "../src/diff";
 import { compileFilter, FilterValidationError, personTokens } from "../src/filter";
 import { normalizeDraft, normalizeUnit, parseAmount } from "../src/normalize";
+import {
+  detectBaking,
+  durationFromStepText,
+  estimateServings,
+  orderByFirstStepMention,
+} from "../src/import-quality";
 
 describe("units", () => {
   it("scales 3 eggs by 1.5 to 4 1/2, never a third", () => {
@@ -308,5 +314,129 @@ describe("normalize", () => {
     });
     expect(result.recipe.ingredients.map((i) => i.position)).toEqual([0, 1]);
     expect(result.recipe.steps.map((s) => s.position)).toEqual([0, 1]);
+  });
+});
+
+describe("import quality", () => {
+  const line = (raw: string) =>
+    normalizeDraft({ title: "T", servings: 2, ingredients: [raw], steps: [] }).recipe.ingredients[0];
+
+  it("parses plain string ingredient lines", () => {
+    expect(line("2 Äpfel")).toMatchObject({ amount: 2, unit: "stueck", name: "Äpfel" });
+    expect(line("200 g Mehl")).toMatchObject({ amount: 200, unit: "g", name: "Mehl" });
+    expect(line("Salz")).toMatchObject({ amount: null, unit: null, name: "Salz" });
+    expect(line("1/2 TL Salz")).toMatchObject({ amount: 0.5, unit: "tl", name: "Salz" });
+    expect(line("2-3 Äpfel")).toMatchObject({ amount: 2, unit: "stueck", name: "Äpfel" });
+    expect(line("200g Mehl")).toMatchObject({ amount: 200, unit: "g", name: "Mehl" });
+    expect(line("1 1/2 Tassen Milch")).toMatchObject({ amount: 1.5, unit: "tasse", name: "Milch" });
+    expect(line("1 Prise Salz")).toMatchObject({ amount: 1, unit: "prise", name: "Salz" });
+    expect(line("1 Dose Tomaten (400 g)")).toMatchObject({ amount: 1, unit: "dose", name: "Tomaten" });
+    // No invented unit, no lost information.
+    expect(line("2 Handvoll Spinat")).toMatchObject({
+      amount: 2,
+      unit: "stueck",
+      name: "Handvoll Spinat",
+    });
+    // An object without a unit is a bare count too; without an amount no unit.
+    const objectDraft = normalizeDraft({
+      title: "T",
+      servings: 2,
+      ingredients: [{ amount: 3, name: "Eier" }, { unit: "g", name: "Mehl" }],
+      steps: [],
+    });
+    expect(objectDraft.recipe.ingredients[0]).toMatchObject({ amount: 3, unit: "stueck", name: "Eier" });
+    expect(objectDraft.recipe.ingredients[1]).toMatchObject({ amount: null, unit: null, name: "Mehl" });
+  });
+
+  it("estimates servings instead of silently assuming 4", () => {
+    expect(estimateServings(2, 1)).toBe(1);
+    expect(estimateServings(20, 10)).toBe(10);
+
+    const small = normalizeDraft({ title: "T", ingredients: ["2 Äpfel"], steps: ["Äpfel essen."] });
+    expect(small.servingsEstimated).toBe(true);
+    expect(small.recipe.servings).toBe(1);
+    expect(small.recipe.servings).not.toBe(4);
+
+    const large = normalizeDraft({
+      title: "T",
+      ingredients: Array.from({ length: 20 }, (_, index) => `${index + 1} g Zutat ${index}`),
+      steps: Array.from({ length: 10 }, () => "Alles verrühren."),
+    });
+    expect(large.servingsEstimated).toBe(true);
+    expect(large.recipe.servings).toBe(10);
+    expect(large.recipe.servings).not.toBe(4);
+
+    const stated = normalizeDraft({
+      title: "T",
+      servings: "6",
+      ingredients: ["Salz"],
+      steps: ["Streuen."],
+    });
+    expect(stated.servingsEstimated).toBe(false);
+    expect(stated.recipe.servings).toBe(6);
+    expect(stated.warnings).not.toContain("portionen_fehlen");
+  });
+
+  it("orders ingredients by their first step mention", () => {
+    const result = normalizeDraft({
+      title: "T",
+      servings: 2,
+      ingredients: ["Butter", "Mehl", "Zucker", "Salz"],
+      steps: ["Zucker und Butter verrühren.", "Mehl unterheben."],
+    });
+    expect(result.recipe.ingredients.map((item) => item.name)).toEqual([
+      "Butter",
+      "Zucker",
+      "Mehl",
+      "Salz",
+    ]);
+    expect(result.recipe.ingredients.map((item) => item.position)).toEqual([0, 1, 2, 3]);
+
+    const ordered = orderByFirstStepMention(
+      [
+        { position: 0, amount: 1, unit: "g", name: "Mehl" },
+        { position: 1, amount: 1, unit: "g", name: "Zucker" },
+      ],
+      [{ position: 0, text: "Zucker sieben." }],
+    );
+    expect(ordered.map((item) => item.name)).toEqual(["Zucker", "Mehl"]);
+    expect(ordered.map((item) => item.position)).toEqual([0, 1]);
+  });
+
+  it("reads a step duration from the text", () => {
+    expect(durationFromStepText("20 Minuten kühlen")).toBe(1200);
+    expect(durationFromStepText("ca. 10 Min.")).toBe(600);
+    expect(durationFromStepText("1 Stunde")).toBe(3600);
+    expect(durationFromStepText("90 Sekunden")).toBe(90);
+    expect(durationFromStepText("2-3 Minuten")).toBe(120);
+    expect(durationFromStepText("Alles verrühren.")).toBeNull();
+
+    const result = normalizeDraft({
+      title: "T",
+      servings: 2,
+      ingredients: ["Salz"],
+      steps: ["20 Minuten kühlen.", { text: "Backen.", durationS: 900 }],
+    });
+    expect(result.recipe.steps[0]?.durationS).toBe(1200);
+    expect(result.recipe.steps[1]?.durationS).toBe(900);
+  });
+
+  it("detects baking data only when the text states it", () => {
+    const baking = detectBaking("Im vorgeheizten Backofen bei 180 °C Ober-/Unterhitze 35 Min. backen.");
+    expect(baking.bakingTemperature).toContain("180");
+    expect(baking.bakingTemperature).toContain("Ober-");
+    expect(baking.bakingTime).toBe("35 Min.");
+
+    const soup = detectBaking("Die Suppe 20 Minuten köcheln lassen, mit Salz abschmecken.");
+    expect(soup).toEqual({ bakingTemperature: null, bakingTime: null });
+
+    const result = normalizeDraft({
+      title: "T",
+      servings: 2,
+      ingredients: ["Mehl"],
+      steps: ["Im vorgeheizten Backofen bei 180 °C Umluft 35 Minuten backen."],
+    });
+    expect(result.recipe.bakingTemperature).toBe("180 °C Umluft");
+    expect(result.recipe.bakingTime).toBe("35 Min.");
   });
 });

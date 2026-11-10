@@ -2,8 +2,10 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useId,
   useMemo,
+  useRef,
   useState,
   type ButtonHTMLAttributes,
   type InputHTMLAttributes,
@@ -11,7 +13,7 @@ import {
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from "react";
-import { Star, X } from "lucide-react";
+import { ChevronDown, Star, X } from "lucide-react";
 import { cn } from "../lib/utils";
 
 /* ---------------------------------------------------------------- button */
@@ -31,7 +33,7 @@ const VARIANTS: Record<string, string> = {
 };
 
 const SIZES: Record<string, string> = {
-  sm: "min-h-9 px-3 text-sm rounded-lg gap-1.5",
+  sm: "tap-target min-h-9 px-3 text-sm rounded-lg gap-1.5",
   md: "min-h-11 px-4 text-[0.95rem] rounded-xl gap-2",
   lg: "min-h-12 px-5 text-base rounded-xl gap-2",
 };
@@ -74,7 +76,7 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={cn(
-        "tap inline-flex size-10 items-center justify-center rounded-full text-ink-soft transition hover:bg-ink/5 hover:text-ink active:scale-95",
+        "tap tap-target inline-flex size-10 items-center justify-center rounded-full text-ink-soft transition hover:bg-ink/5 hover:text-ink active:scale-95",
         className,
       )}
     >
@@ -105,12 +107,12 @@ export function Badge({
   const tones: Record<string, string> = {
     neutral: "bg-ink/5 text-ink-soft",
     brand: "bg-brand/10 text-brand-dark",
-    sage: "bg-sage-soft text-sage",
-    gold: "bg-gold/10 text-gold",
+    sage: "bg-sage-soft text-sage-text",
+    gold: "bg-gold/10 text-gold-text",
     danger: "bg-danger/10 text-danger",
   };
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium", tones[tone], className)}>
+    <span className={cn("inline-flex max-w-full items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium", tones[tone], className)}>
       {children}
     </span>
   );
@@ -142,7 +144,7 @@ export function Field({
 }
 
 const control =
-  "w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-ink placeholder:text-ink-soft/60 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-60";
+  "w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-ink placeholder:text-ink-soft/85 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-60";
 
 export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...rest} className={cn(control, className)} />;
@@ -154,9 +156,15 @@ export function Textarea({ className, ...rest }: TextareaHTMLAttributes<HTMLText
 
 export function Select({ className, children, ...rest }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <select {...rest} className={cn(control, "appearance-none bg-[right_0.9rem_center] pr-10", className)}>
-      {children}
-    </select>
+    <span className="relative block">
+      <select {...rest} className={cn(control, "appearance-none pr-10", className)}>
+        {children}
+      </select>
+      <ChevronDown
+        aria-hidden
+        className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-ink-soft"
+      />
+    </span>
   );
 }
 
@@ -181,14 +189,14 @@ export function Switch({
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={cn(
-          "tap relative h-7 w-12 shrink-0 rounded-full transition",
+          "tap relative h-7 w-12 shrink-0 rounded-full transition outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-paper",
           checked ? "bg-sage" : "bg-ink/15",
         )}
       >
         <span
           className={cn(
-            "absolute top-0.5 size-6 rounded-full bg-white shadow transition-transform",
-            checked ? "translate-x-5.5" : "translate-x-0.5",
+            "absolute left-0.5 top-0.5 size-6 rounded-full bg-white shadow transition-transform",
+            checked ? "translate-x-5" : "translate-x-0",
           )}
         />
       </button>
@@ -233,21 +241,28 @@ export function PageHeader({
   title,
   subtitle,
   actions,
-  eyebrow,
+  titleAddon,
 }: {
   title: string;
   subtitle?: string;
   actions?: ReactNode;
-  eyebrow?: string;
+  /** A status badge or count that belongs to the title itself. */
+  titleAddon?: ReactNode;
 }) {
   return (
     <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        {eyebrow && <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-sage">{eyebrow}</p>}
-        <h1 className="text-3xl leading-tight sm:text-4xl">{title}</h1>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <h1 className="text-3xl leading-tight text-balance sm:text-4xl">{title}</h1>
+          {titleAddon}
+        </div>
         {subtitle && <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-ink-soft">{subtitle}</p>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && (
+        <div className="flex flex-wrap items-center gap-2 max-sm:w-full max-sm:[&>a]:flex-1 max-sm:[&>button]:flex-1">
+          {actions}
+        </div>
+      )}
     </header>
   );
 }
@@ -264,32 +279,67 @@ export function Stars({
   readOnly?: boolean;
 }) {
   const rating = value ?? 0;
+  const interactive = !readOnly && Boolean(onChange);
+  const label = rating ? `${String(rating).replace(".", ",")} von 5 Sternen` : "Noch keine Bewertung";
+
+  const set = (next: number) => {
+    const clamped = Math.min(5, Math.max(0.5, Math.round(next * 2) / 2));
+    onChange?.(clamped);
+  };
+
   return (
-    <div className="inline-flex items-center gap-0.5" role={readOnly ? "img" : "radiogroup"} aria-label={rating ? `${rating} von 5 Sternen` : "Noch keine Bewertung"}>
+    <div
+      role={interactive ? "slider" : "img"}
+      aria-label={interactive ? "Bewertung" : label}
+      {...(interactive
+        ? {
+            tabIndex: 0,
+            "aria-valuemin": 0.5,
+            "aria-valuemax": 5,
+            "aria-valuenow": rating || 0.5,
+            "aria-valuetext": label,
+          }
+        : {})}
+      onClick={
+        interactive
+          ? (event) => {
+              const box = event.currentTarget.getBoundingClientRect();
+              set(((event.clientX - box.left) / box.width) * 5);
+            }
+          : undefined
+      }
+      onKeyDown={
+        interactive
+          ? (event) => {
+              const step = event.key === "ArrowRight" || event.key === "ArrowUp" ? 0.5 : event.key === "ArrowLeft" || event.key === "ArrowDown" ? -0.5 : null;
+              if (step !== null) {
+                event.preventDefault();
+                set(rating + step);
+              } else if (event.key === "Home") {
+                event.preventDefault();
+                set(0.5);
+              } else if (event.key === "End") {
+                event.preventDefault();
+                set(5);
+              }
+            }
+          : undefined
+      }
+      className={cn(
+        "inline-flex items-center gap-0.5 rounded-lg",
+        interactive &&
+          "tap cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-paper",
+      )}
+      style={interactive ? { minHeight: 44, paddingBlock: `${Math.max(0, (44 - size) / 2)}px` } : undefined}
+    >
       {[1, 2, 3, 4, 5].map((index) => {
         const fill = Math.max(0, Math.min(1, rating - (index - 1)));
         return (
-          <span key={index} className="relative inline-block" style={{ width: size, height: size }}>
+          <span key={index} className="relative inline-block" style={{ width: size, height: size }} aria-hidden>
             <Star className="absolute inset-0 text-line" style={{ width: size, height: size }} strokeWidth={1.6} />
             <span className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
               <Star className="text-gold" style={{ width: size, height: size, fill: "currentColor" }} strokeWidth={1.2} />
             </span>
-            {!readOnly && onChange && (
-              <>
-                <button
-                  type="button"
-                  aria-label={`${index - 0.5} Sterne`}
-                  onClick={() => onChange(index - 0.5)}
-                  className="absolute inset-y-0 left-0 w-1/2 cursor-pointer"
-                />
-                <button
-                  type="button"
-                  aria-label={`${index} Sterne`}
-                  onClick={() => onChange(index)}
-                  className="absolute inset-y-0 right-0 w-1/2 cursor-pointer"
-                />
-              </>
-            )}
           </span>
         );
       })}
@@ -302,14 +352,24 @@ export function Segmented<T extends string>({
   options,
   onChange,
   ariaLabel,
+  fluid,
 }: {
   value: T;
-  options: Array<{ value: T; label: string }>;
+  options: Array<{ value: T; label: string; shortLabel?: string }>;
   onChange: (next: T) => void;
   ariaLabel: string;
+  /** Fill the available width with equal tabs instead of sizing to content. */
+  fluid?: boolean;
 }) {
   return (
-    <div role="tablist" aria-label={ariaLabel} className="inline-flex rounded-xl border border-line bg-paper-2/70 p-1">
+    <div
+      role="tablist"
+      aria-label={ariaLabel}
+      className={cn(
+        "no-scrollbar inline-flex max-w-full overflow-x-auto rounded-xl border border-line bg-paper-2/70 p-1",
+        fluid && "flex w-full",
+      )}
+    >
       {options.map((option) => (
         <button
           key={option.value}
@@ -317,11 +377,19 @@ export function Segmented<T extends string>({
           aria-selected={value === option.value}
           onClick={() => onChange(option.value)}
           className={cn(
-            "tap rounded-lg px-3 py-1.5 text-sm font-medium transition",
+            "tap tap-target shrink-0 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-sm font-medium transition md:px-3",
+            fluid && "flex-1",
             value === option.value ? "bg-white text-ink shadow-sm" : "text-ink-soft hover:text-ink",
           )}
         >
-          {option.label}
+          {option.shortLabel ? (
+            <>
+              <span className="md:hidden">{option.shortLabel}</span>
+              <span className="hidden md:inline">{option.label}</span>
+            </>
+          ) : (
+            option.label
+          )}
         </button>
       ))}
     </div>
@@ -329,6 +397,8 @@ export function Segmented<T extends string>({
 }
 
 export function Avatar({ name, url, size = 36 }: { name: string; url?: string | null; size?: number }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [url]);
   const initials = name
     .split(" ")
     .map((part) => part[0])
@@ -336,23 +406,58 @@ export function Avatar({ name, url, size = 36 }: { name: string; url?: string | 
     .slice(0, 2)
     .join("")
     .toUpperCase();
-  return url ? (
+  return url && !failed ? (
     <img
       src={url}
       alt=""
       width={size}
       height={size}
+      onError={() => setFailed(true)}
       className="shrink-0 rounded-full border border-line object-cover"
       style={{ width: size, height: size }}
     />
   ) : (
     <span
       aria-hidden
-      className="inline-flex shrink-0 items-center justify-center rounded-full bg-sage-soft font-semibold text-sage"
+      className="inline-flex shrink-0 items-center justify-center rounded-full bg-sage-soft font-semibold text-sage-text"
       style={{ width: size, height: size, fontSize: size * 0.38 }}
     >
       {initials || "?"}
     </span>
+  );
+}
+
+/**
+ * An image that never leaves a broken frame behind. A missing source or a
+ * failed load draws the fallback in place, so alt text never becomes layout.
+ */
+export function MediaImage({
+  src,
+  alt = "",
+  className,
+  fallback,
+  loading,
+  sizes,
+}: {
+  src?: string | null;
+  alt?: string;
+  className?: string;
+  fallback: ReactNode;
+  loading?: "lazy" | "eager";
+  sizes?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [src]);
+  if (!src || failed) return <>{fallback}</>;
+  return (
+    <img
+      src={src}
+      alt={alt}
+      loading={loading}
+      sizes={sizes}
+      onError={() => setFailed(true)}
+      className={className}
+    />
   );
 }
 
@@ -369,14 +474,71 @@ export function Modal({
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const panel = panelRef.current;
+    const restoreTo = document.activeElement as HTMLElement | null;
+
+    const focusables = () =>
+      Array.from(
+        panel?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      ).filter((node) => node.offsetParent !== null || node === panel);
+
+    // Open focus on the first control, so the dialog is never behind the trigger.
+    (focusables()[0] ?? panel)?.focus();
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const list = focusables();
+      if (list.length === 0) {
+        event.preventDefault();
+        panel?.focus();
+        return;
+      }
+      const first = list[0] as HTMLElement;
+      const last = list[list.length - 1] as HTMLElement;
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || !panel?.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !panel?.contains(active))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+      restoreTo?.focus?.();
+    };
+  }, [open, onClose]);
+
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/30 p-0 backdrop-blur-[2px] sm:items-center sm:p-6" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/30 backdrop-blur-[2px] sm:items-center sm:p-6"
+      onClick={onClose}
+    >
       <div
+        ref={panelRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-line bg-paper p-5 shadow-2xl sm:rounded-2xl"
+        className="max-h-[88dvh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-2xl border border-line bg-paper p-5 pb-[calc(1.25rem+var(--safe-bottom))] shadow-2xl sm:max-h-[85dvh] sm:rounded-2xl sm:pb-5"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between gap-4">
@@ -386,7 +548,7 @@ export function Modal({
           </IconButton>
         </div>
         {children}
-        {footer && <div className="mt-5 flex justify-end gap-2">{footer}</div>}
+        {footer && <div className="mt-5 flex flex-wrap justify-end gap-2">{footer}</div>}
       </div>
     </div>
   );

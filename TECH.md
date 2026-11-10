@@ -154,6 +154,7 @@ migrations.
 users(id, platform_sub unique, email, name, role, deleted_at)
 recipes(id, owner_id, title, description, servings, source_type, source_url,
         raw_text, transcript, original_lang, visibility,
+        baking_temperature, baking_time,
         parent_id, root_id, depth, forked_at,
         archived_at, deleted_at, created_at, updated_at)
 recipe_ingredients(id, recipe_id, position, amount numeric, unit_id,
@@ -278,9 +279,24 @@ the worker; `sharp` + `ffmpeg` + `yt-dlp`.
 
 - R2: S3 API, no egress fee, EU jurisdiction option, private bucket. Signed
   GET URLs, 1 hour. No media on the app server.
-- Upload path: browser asks `POST /api/uploads/presign`, sends the file to R2,
-  then `POST /api/imports` with the keys. The API checks size, count and type
-  before it creates a job.
+- Upload path: browser asks `POST /api/imports/uploads/presign`, sends the file
+  to R2, then `POST /api/imports` with the keys. The API checks size, count and
+  type before it creates a job.
+- The bucket needs a CORS policy for the browser `PUT`. Without it the presign
+  answers 200, the browser blocks the request and the file never arrives. The
+  policy is code: `scripts/r2-cors.ts` (`bun run r2:cors`) writes the origins,
+  methods and headers through the Cloudflare API. The runtime R2 keys cannot
+  change a bucket policy (`AccessDenied`), so the script needs a Cloudflare API
+  token with R2 edit rights. The operator runs it once per bucket and after a
+  new host.
+- The signed content type and the sent `content-type` header are the same
+  string. `image/jpg` becomes `image/jpeg`. An empty or generic browser type is
+  resolved from the file extension before the allowlist check.
+- One error map covers photo and screenshot uploads. It blames the connection
+  only when the browser is offline, a timeout fired, or the API never answered.
+  A blocked cross-origin `PUT` (status 0, browser online) reads as "the storage
+  refused the upload". Every message shows the HTTP status when one exists and
+  never shows raw English server text.
 - Worker steps: `queued → fetching → normalizing → understanding →
   needs_review → done | failed`. Each step writes state, so the UI can show
   progress.
@@ -288,6 +304,12 @@ the worker; `sharp` + `ffmpeg` + `yt-dlp`.
   libheif build; fall back to `heic-convert` when the build cannot read HEIC.
   EXIF is stripped. Long edge is capped at 2048 px for the model, and 1600 px
   for display. Variants: 320, 800, 1600.
+- A browser that cannot decode HEIC (Chrome) shows a file tile with the name
+  in the photo list, not a broken image. The conversion happens on the worker,
+  so the import is unaffected.
+- A failed object read is a storage failure (`media_unavailable`), not an
+  unreadable photo. The two messages stay apart, so the member knows what to
+  do.
 - PDF: pages rendered at 200 DPI (`pdftoppm` from poppler-utils), max 10
   pages.
 - Video: `yt-dlp` for metadata and audio. Duration is checked from metadata
@@ -333,6 +355,34 @@ operator, not an automatic delete (the spec keeps originals).
   change with an eval run.
 - The extraction result is a **draft**. The user confirms it. New recipes start
   untested. This is requirement §3, and it also hides model errors.
+
+### Import quality
+
+The model output is untrusted. `@kochen/core` repairs it with rules that have
+unit tests, before any draft reaches the review:
+
+- **Units.** A unit stays only when the source states it. A bare count becomes
+  `stueck` (`2 Äpfel` → `2 Stück Äpfel`). An unknown unit word stays in the
+  name, so no information is lost. A unit without an amount is dropped.
+- **String lines.** A line such as `200 g Mehl`, `1/2 TL Salz`, `2-3 Äpfel` or
+  `1 Dose Tomaten (400 g)` splits into amount, unit and name. Link and JSON-LD
+  imports use the same parser.
+- **Servings.** A missing source value becomes an estimate from the ingredient
+  and step counts: `clamp(round((ingredients + 2 * steps) / 4), 1, 12)`. The
+  draft carries `servingsEstimated`, the review shows `geschätzt`, and the first
+  edit clears the mark. There is no silent 4.
+- **Order.** Ingredients follow their first mention in the steps. Unused
+  ingredients follow in source order. The sort is stable and runs once, so a
+  manual order in the review is kept after save.
+- **Durations.** A duration in the step text (`20 Minuten kühlen`,
+  `1 Stunde`, `2-3 Minuten`) fills `duration_s` when the model gave none. A
+  model duration wins.
+- **Baking.** A conservative scan finds `180 °C Ober-/Unterhitze` and
+  `35 Min.` only next to a baking word. Both fields stay null when the source
+  is silent.
+
+The prompt states the same rules, but the code enforces them. A prompt change
+alone cannot break the shape.
 - Models are pinned by name in config, not by "latest". A model upgrade runs
   the eval set first.
 
@@ -388,9 +438,17 @@ provider with no fallback.
   1-pixel video (the NoSleep method).
 - Two views: `Schritt für Schritt` and `Alles auf einer Seite`. One toggle,
   stored per user.
+- On a phone the step view advances on a check-off: the next step replaces the
+  current one. Unchecking never moves, the last step stays, and desktop keeps
+  the manual `Weiter` button. The rule uses `matchMedia("(max-width: 767px)")`,
+  the same breakpoint as the layout, not a user agent.
 - Check-off lives in component state and `sessionStorage`, keyed by recipe and
   cooking session. It is not a server fact.
-- Timers: each step has one. Starting a timer writes a row and a delayed job at
+- Timers: each step has at most one. A step with a duration shows a button that
+  starts at that duration. A step without a duration shows `Timer hinzufügen`
+  with an empty minutes field; there is no 5-minute default. The one-page view
+  keeps its 5-minute default, because it is a manual action there.
+- Starting a timer writes a row and a delayed job at
   `ends_at`. The worker sends a push at that time. The client also runs a
   local interval for the visible countdown.
   - Reload or second device: the countdown is recomputed from `ends_at`.
@@ -508,6 +566,10 @@ polling only (no timer alert when the screen is off).
 - One layout, two outputs. No second PDF template to keep in sync.
 - Browser print from the same route gives the user a preview.
 - Export also offers Markdown (title, ingredients, steps, source) for backup.
+- Baking temperature and baking time are recipe fields, not ingredients. A
+  surface shows each one only when it has a value: the recipe view, the print
+  route, the PDF and the Markdown file. A variation copies both fields. An old
+  recipe has null and shows nothing.
 
 **Rejected:** `@react-pdf/renderer` (a second layout, font work, drift);
 client-side "Save as PDF" (not a file the app produces); WeasyPrint (a Python
@@ -530,6 +592,8 @@ concurrency of 1 keep memory flat. The worker image is built once per release.
 - Use Dokploy applications, not compose with Traefik labels. Swarm services
   use the file provider and do not go stale and answer 502 after a redeploy.
   (Known issue: compose routes hold a container address.)
+- R2 bucket `kochen` in EU jurisdiction with the CORS policy from
+  `bun run r2:cors`. Without it, browser uploads fail on every device.
 - DNS: explicit proxied A records for `rezepte.ennio.vip` and
   `kochen.ennio.vip` to `84.247.128.111`. The wildcard still points to the old
   server, so both records are required.
@@ -562,6 +626,12 @@ restore cost).
 - `core` unit tests (Vitest): unit conversion and rounding, rating chain,
   filter compiler, diff, visibility policy. These are the rules that must not
   drift.
+- Import fixtures for the rules in §8: `2 Äpfel`, a source without servings,
+  ingredients out of step order, `20 Minuten kühlen`, and a link page with
+  JSON-LD. Each has a unit test in `packages/core/test`.
+- Upload cases: multiple JPG and HEIC from desktop and iPhone, camera capture,
+  the screenshot fallback, offline, a rejected type, an oversized file, and a
+  bucket without CORS.
 - API integration tests against real Postgres (Testcontainers or a template
   database): auth middleware, 401/403, private recipe access, private link,
   comment permissions.

@@ -5,6 +5,13 @@ import type { postgres } from "@kochen/db";
 
 type Tx = postgres.TransactionSql<Record<string, unknown>>;
 
+/** Baking data is free text. Trim it and store a blank entry as null. */
+export function bakingText(value: string | null | undefined): string | null {
+  if (value === undefined || value === null) return null;
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
 export async function writeLines(
   tx: Tx,
   recipeId: string,
@@ -37,9 +44,10 @@ export async function createRecipe(
   const sql = db();
   return sql.begin(async (tx) => {
     const rows = await tx<{ id: string }[]>`
-      insert into recipes (owner_id, title, description, servings, source_type, source_url, raw_text,
-                           transcript, original_lang, visibility)
+      insert into recipes (owner_id, title, description, servings, baking_temperature, baking_time,
+                           source_type, source_url, raw_text, transcript, original_lang, visibility)
       values (${userId}, ${input.title}, ${input.description ?? null}, ${input.servings},
+              ${bakingText(input.bakingTemperature)}, ${bakingText(input.bakingTime)},
               ${input.sourceType}, ${input.sourceUrl ?? null}, ${input.rawText ?? null},
               ${input.transcript ?? null}, ${input.originalLang ?? null}, ${input.visibility})
       returning id

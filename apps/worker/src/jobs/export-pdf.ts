@@ -13,6 +13,8 @@ type RecipeRow = {
   title: string;
   description: string | null;
   servings: number;
+  bakingTemperature: string | null;
+  bakingTime: string | null;
   sourceUrl: string | null;
   ownerName: string;
 };
@@ -58,7 +60,9 @@ async function processExport(job: JobRow): Promise<void> {
 
   const sql = db();
   const recipeRows = await sql<RecipeRow[]>`
-    select r.id, r.title, r.description, r.servings, r.source_url as "sourceUrl",
+    select r.id, r.title, r.description, r.servings,
+           r.baking_temperature as "bakingTemperature", r.baking_time as "bakingTime",
+           r.source_url as "sourceUrl",
            coalesce(u.name, 'Unbekannt') as "ownerName"
     from recipes r join users u on u.id = r.owner_id
     where r.id = ${recipeId} and r.deleted_at is null
@@ -198,6 +202,15 @@ function renderRecipeHtml(
     ? `<p class="source">Quelle: ${escapeHtml(recipe.sourceUrl)}</p>`
     : "";
 
+  const bakingTemperature = recipe.bakingTemperature?.trim() ?? "";
+  const bakingTime = recipe.bakingTime?.trim() ?? "";
+  const metaParts = [
+    `Für ${recipe.servings} ${recipe.servings === 1 ? "Portion" : "Portionen"}`,
+    bakingTemperature ? `Backtemperatur: ${escapeHtml(bakingTemperature)}` : "",
+    bakingTime ? `Backzeit: ${escapeHtml(bakingTime)}` : "",
+    `von ${escapeHtml(recipe.ownerName)}`,
+  ].filter(Boolean);
+
   return `<!doctype html>
 <html lang="de">
 <head>
@@ -229,7 +242,7 @@ function renderRecipeHtml(
 <body>
 ${cover}
 <h1>${escapeHtml(recipe.title)}</h1>
-<p class="meta">Für ${recipe.servings} ${recipe.servings === 1 ? "Portion" : "Portionen"} · von ${escapeHtml(recipe.ownerName)}</p>
+<p class="meta">${metaParts.join(" · ")}</p>
 ${recipe.description ? `<p>${escapeHtml(recipe.description)}</p>` : ""}
 <h2>Zutaten</h2>
 <ul>
