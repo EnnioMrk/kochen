@@ -2,6 +2,7 @@ import {
   AiExtractionError,
   AiUnavailableError,
   createProvider,
+  createTranscriber,
   type ExtractionInput,
 } from "@kochen/ai";
 import {
@@ -28,6 +29,7 @@ import { failJob, finishJob, setState, type JobRow } from "../queue";
 import { MissingToolError, ToolError } from "../tools";
 
 const MAX_TEXT = 200_000;
+const transcriber = createTranscriber();
 
 type ImportKind = "photo" | "pdf" | "video" | "audio" | "text" | "link";
 
@@ -180,15 +182,25 @@ async function processImport(job: JobRow): Promise<void> {
       } else {
         throw new JobFailure("invalid_source", "Es wurde kein Video übermittelt.");
       }
+      let videoSpeech: string | null = null;
+      if (transcriber) {
+        try {
+          const speech = await transcriber.transcribe(video.audio);
+          videoSpeech = truncate(speech.text);
+          transcript = videoSpeech;
+        } catch (error) {
+          warnings.push("Die Tonspur konnte nicht verschriftet werden.");
+        }
+      }
       extractionInput = {
-        audio: video.audio,
+        ...(videoSpeech ? { text: videoSpeech } : { audio: video.audio }),
         images: video.images.length > 0 ? video.images : undefined,
         captions: video.captions ?? undefined,
         authorComment: video.authorComment ?? undefined,
         url: payload.url ?? undefined,
       };
       rawText = video.rawText;
-      transcript = video.captions;
+      transcript = videoSpeech ?? video.captions;
       imageKeys = video.coverKey ? [video.coverKey] : [];
       sourceKeys = video.sourceKeys;
       warnings.push(...video.warnings);
@@ -230,7 +242,9 @@ async function processImport(job: JobRow): Promise<void> {
     const provider = createProvider();
 
     if (audio) {
-      const transcription = await provider.transcribe(audio.audio);
+      const transcription = transcriber
+        ? await transcriber.transcribe(audio.audio)
+        : await provider.transcribe(audio.audio);
       transcript = truncate(transcription.text);
       if (!transcript) {
         throw new JobFailure(
