@@ -7,7 +7,8 @@ export type PlatformName = "youtube" | "instagram" | "tiktok";
 
 /** Where a signed-in visitor goes to check a login. */
 export const PLATFORM_TEST_URLS: Record<PlatformName, string> = {
-  youtube: "https://www.youtube.com/watch?v=BaW_jenozKc",
+  // "Me at the zoo" is the first YouTube video and has stayed public.
+  youtube: "https://www.youtube.com/watch?v=jNQXAC9IVRw",
   instagram: "https://www.instagram.com/instagram/",
   tiktok: "https://www.tiktok.com/@tiktok",
 };

@@ -27,22 +27,55 @@ function platformOfPayload(payload: Record<string, unknown>): PlatformName | nul
   return value === "youtube" || value === "instagram" || value === "tiktok" ? value : null;
 }
 
+/** yt-dlp wraps its own message in tool and extractor prefixes. */
+function cleanStderr(raw: string): string {
+  return raw
+    .replace(/^tool_failed:[^:]*:\s*/i, "")
+    .replace(/^ERROR:\s*/i, "")
+    .replace(/^\[[^\]]+\]\s*[^:]{0,80}:\s*/, "")
+    .trim();
+}
+
+const COOKIE_ADVICE =
+  "Es sind keine Cookies gespeichert. YouTube, Instagram und TikTok lassen den Server fast nur mit Cookies herein.";
+const EXPIRED_COOKIES =
+  "Die Cookies sind abgelaufen oder unvollständig. Exportiere sie neu und teste erneut.";
+
 /** Turn yt-dlp stderr into one German sentence with the likely cause. */
-function reasonFrom(stderr: string): string {
-  const text = stderr.toLowerCase();
-  if (text.includes("login") || text.includes("sign in") || text.includes("cookies")) {
-    return "Die Plattform verlangt eine Anmeldung. Die Cookies sind abgelaufen oder unvollständig.";
+export function reasonFrom(raw: string, hasCookies: boolean): string {
+  const text = cleanStderr(raw);
+  const lower = text.toLowerCase();
+  const advice = hasCookies ? EXPIRED_COOKIES : COOKIE_ADVICE;
+
+  if (
+    lower.includes("sign in") ||
+    lower.includes("login") ||
+    lower.includes("cookies") ||
+    lower.includes("not a bot")
+  ) {
+    return `Die Plattform verlangt eine Anmeldung. ${advice}`;
   }
-  if (text.includes("private") || text.includes("not available")) {
-    return "Das Testvideo ist gesperrt. Bitte prüfe die Cookies.";
+  if (lower.includes("video is unavailable") || lower.includes("video unavailable")) {
+    return "Das Testvideo ist nicht mehr erreichbar. Der Zugang kann trotzdem stimmen. Bitte melde das dem Betreiber.";
   }
-  if (text.includes("rate") || text.includes("too many")) {
+  if (lower.includes("rate") || lower.includes("too many") || lower.includes("http error 429")) {
     return "Die Plattform drosselt den Zugriff. Versuche es später erneut.";
   }
-  if (text.includes("unable to download") || text.includes("unable to extract")) {
-    return "Die Plattform hat den Abruf abgelehnt.";
+  if (
+    lower.includes("unexpected response") ||
+    lower.includes("unable to download") ||
+    lower.includes("unable to extract") ||
+    lower.includes("requested content is not available") ||
+    lower.includes("http error 401") ||
+    lower.includes("http error 403")
+  ) {
+    return `Die Plattform hat den Abruf abgelehnt. ${advice}`;
   }
-  const line = stderr.split("\n").map((row) => row.trim()).filter(Boolean).pop();
+  const line = text
+    .split("\n")
+    .map((row) => row.trim().replace(/^ERROR:\s*/i, ""))
+    .filter(Boolean)
+    .pop();
   return line ? line.slice(0, 200) : "Der Test ist ohne Antwort abgebrochen.";
 }
 
@@ -83,6 +116,16 @@ export async function runPlatformTestJob(job: JobRow): Promise<void> {
       return;
     }
 
+    if (platform !== "youtube" && !login.cookies) {
+      await finishJob(job.id, "done", {
+        result: {
+          ok: false,
+          message: `${PLATFORM_TITLES[platform]} lässt den Server nur mit Cookies herein. Ein Passwort allein genügt nicht. Trage die Cookies ein und teste erneut.`,
+        } satisfies TestResult,
+      });
+      return;
+    }
+
     const auth = await loginArgsFor(platform, dir);
     if (auth.length === 0) {
       await finishJob(job.id, "done", {
@@ -116,7 +159,9 @@ export async function runPlatformTestJob(job: JobRow): Promise<void> {
     await finishJob(job.id, "done", {
       result: {
         ok: true,
-        message: `${PLATFORM_TITLES[platform]} antwortet mit diesem Zugang.`,
+        message: login.cookies
+          ? `${PLATFORM_TITLES[platform]} antwortet mit diesem Zugang.`
+          : `${PLATFORM_TITLES[platform]} antwortet ohne Anmeldung. Öffentliche Videos lassen sich importieren; für gesperrte Videos fehlen die Cookies.`,
         title,
       } satisfies TestResult,
     });
@@ -125,7 +170,7 @@ export async function runPlatformTestJob(job: JobRow): Promise<void> {
     await finishJob(job.id, "done", {
       result: {
         ok: false,
-        message: reasonFrom(stderr),
+        message: reasonFrom(stderr, Boolean(login.cookies)),
       } satisfies TestResult,
     });
   } finally {
