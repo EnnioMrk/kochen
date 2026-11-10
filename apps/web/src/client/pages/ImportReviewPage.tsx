@@ -37,6 +37,9 @@ const STEP_LABELS: Record<string, string> = {
   fetching: "Quelle wird geladen",
   normalizing: "Dateien werden vorbereitet",
   understanding: "Rezept wird erkannt",
+  needs_review: "Prüfen",
+  done: "Fertig",
+  failed: "Fehlgeschlagen",
 };
 
 function failedMessage(job: ImportJob): string {
@@ -242,7 +245,7 @@ export function ImportReviewPage() {
         subtitle="Prüfe die Angaben. Erst mit „Rezept speichern“ wird das Rezept angelegt."
         titleAddon={
           <Badge tone={job.state === "failed" ? "danger" : job.state === "needs_review" ? "gold" : "brand"}>
-            {active ? "läuft" : job.state === "needs_review" ? "prüfen" : job.state === "done" ? "fertig" : "fehlgeschlagen"}
+            {STEP_LABELS[job.state] ?? "In Arbeit"}
           </Badge>
         }
       />
@@ -399,7 +402,10 @@ export function ImportReviewPage() {
       )}
 
       <div className="mt-5 flex flex-wrap items-center gap-2 text-xs text-ink-soft">
-        <Link to="/erfassen" className="underline-offset-4 hover:underline">
+        <Link
+          to="/erfassen"
+          className="tap-target inline-flex min-h-11 items-center underline-offset-4 hover:underline"
+        >
           Anderen Import starten
         </Link>
         {job.state === "needs_review" && (
@@ -407,7 +413,7 @@ export function ImportReviewPage() {
             <span aria-hidden>·</span>
             <button
               type="button"
-              className="underline-offset-4 hover:underline disabled:opacity-50"
+              className="tap-target inline-flex min-h-11 items-center underline-offset-4 hover:underline disabled:opacity-50"
               disabled={cancelling}
               onClick={() => void cancel()}
             >

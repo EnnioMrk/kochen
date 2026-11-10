@@ -78,7 +78,11 @@ export function buildShoppingList(sources: ShoppingSource[]): {
   }
 
   const items = [...map.values()]
-    .sort((a, b) => a.sortName.localeCompare(b.sortName, "de"))
+    .sort(
+      (a, b) =>
+        a.sortName.localeCompare(b.sortName, "de") ||
+        (a.unitLabel ?? "").localeCompare(b.unitLabel ?? "", "de"),
+    )
     .map((item) => {
       const shown = presentAmount(item.amount ?? 0, item.unit);
       return {

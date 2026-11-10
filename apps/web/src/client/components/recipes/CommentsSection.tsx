@@ -120,14 +120,29 @@ export function CommentsSection({
     onError: (error) => toast.push(errorText(error), "error"),
   });
 
+  const restore = useMutation({
+    mutationFn: (commentId: string) =>
+      api<{ restored: boolean }>(`/api/recipes/${recipeId}/comments/${commentId}/restore`, {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: qk.comments(recipeId) });
+      toast.push("Kommentar wiederhergestellt.", "success");
+    },
+    onError: (error) => toast.push(errorText(error), "error"),
+  });
+
   const remove = useMutation({
     mutationFn: (commentId: string) =>
       api<{ deleted: boolean }>(`/api/recipes/${recipeId}/comments/${commentId}`, {
         method: "DELETE",
       }),
-    onSuccess: () => {
+    onSuccess: (_data, commentId) => {
       void queryClient.invalidateQueries({ queryKey: qk.comments(recipeId) });
-      toast.push("Kommentar gelöscht.", "success");
+      toast.push("Kommentar gelöscht.", "info", {
+        label: "Rückgängig",
+        onClick: () => restore.mutate(commentId),
+      });
     },
     onError: (error) => toast.push(errorText(error), "error"),
     onSettled: () => setDeletingId(null),

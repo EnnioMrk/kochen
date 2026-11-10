@@ -17,7 +17,7 @@ import {
   Skeleton,
   useToast,
 } from "../components/ui";
-import { formatDate } from "../lib/utils";
+import { formatDate, relativeTime } from "../lib/utils";
 
 type RequestRow = {
   id: string;
@@ -143,7 +143,7 @@ export function FriendsPage() {
       await navigator.clipboard.writeText(invite.url);
       toast.push("Link kopiert.", "success");
     } catch {
-      toast.push("Kopieren nicht möglich. Markiere den Link und kopiere ihn.", "error");
+      toast.push("Kopieren ging nicht. Markiere den Link und kopiere ihn von Hand.", "error");
     }
   };
 
@@ -180,15 +180,17 @@ export function FriendsPage() {
             </h2>
             <ul className="mt-3 divide-y divide-line/60">
               {incoming.map((request) => (
-                <li key={request.id} className="flex flex-wrap items-center gap-3 py-3">
-                  <Avatar name={request.fromName} size={36} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-ink">
-                      {request.fromDeleted ? "gelöschtes Konto" : request.fromName}
+                <li key={request.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Avatar name={request.fromName} size={36} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium text-ink">
+                        {request.fromDeleted ? "gelöschtes Konto" : request.fromName}
+                      </span>
+                      <span className="block text-xs text-ink-soft">{relativeTime(request.createdAt)}</span>
                     </span>
-                    <span className="block text-xs text-ink-soft">{formatDate(request.createdAt)}</span>
-                  </span>
-                  <span className="flex gap-2">
+                  </div>
+                  <span className="flex gap-2 max-sm:[&>button]:flex-1 sm:shrink-0">
                     <Button
                       size="sm"
                       loading={respond.isPending && respond.variables?.id === request.id}

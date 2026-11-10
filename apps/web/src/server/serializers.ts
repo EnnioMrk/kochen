@@ -202,6 +202,10 @@ export function toDetail(
     myCookStatus: parts.cook,
     canEdit: parts.access.edit,
     canComment: parts.access.comment,
+    canCook: parts.access.view,
+    canRate: parts.access.view,
+    canFork: parts.access.view,
+    canShare: parts.access.share,
   };
 }
 

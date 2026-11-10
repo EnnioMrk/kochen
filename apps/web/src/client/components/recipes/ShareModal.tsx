@@ -82,7 +82,7 @@ export function ShareModal({
       await navigator.clipboard.writeText(text);
       toast.push("Link kopiert.", "success");
     } catch {
-      toast.push("Kopieren ging nicht. Bitte den Link markieren.", "error");
+      toast.push("Kopieren ging nicht. Markiere den Link und kopiere ihn von Hand.", "error");
     }
   };
 

@@ -196,6 +196,13 @@ recipes.post("/:id/images", async (c) => {
   if (!access.edit) throw forbidden();
   const input = await body(c, ImageInput);
   const sql = db();
+  // A new cover wins: every older cover moves one step back.
+  if (input.kind === "cover") {
+    await sql`
+      update images set position = position + 1
+      where recipe_id = ${row.id} and kind = 'cover'
+    `;
+  }
   await sql`
     insert into images (recipe_id, r2_key, width, height, kind, position)
     values (${row.id}, ${input.key}, ${input.width ?? null}, ${input.height ?? null}, ${input.kind}, ${input.position})
@@ -454,8 +461,26 @@ recipes.delete("/:id/comments/:commentId", async (c) => {
   const comment = rows[0];
   if (!comment) throw notFound();
   if (comment.authorId !== user.id && row.ownerId !== user.id) throw forbidden();
-  await sql`update comments set deleted_at = now(), body = '' where id = ${idParam(c, "commentId")}`;
+  await sql`update comments set deleted_at = now() where id = ${idParam(c, "commentId")}`;
   return ok(c, { deleted: true });
+});
+
+/** Undo of a soft delete. The body is kept, so the text comes back. */
+recipes.post("/:id/comments/:commentId/restore", async (c) => {
+  const user = c.get("user");
+  const { row } = await requireVisible(user.id, idParam(c));
+  const sql = db();
+  const rows = await sql<{ authorId: string; deletedAt: Date | null }[]>`
+    select author_id as "authorId", deleted_at as "deletedAt" from comments
+    where id = ${idParam(c, "commentId")} and recipe_id = ${row.id}
+  `;
+  const comment = rows[0];
+  if (!comment) throw notFound();
+  if (comment.authorId !== user.id && row.ownerId !== user.id) throw forbidden();
+  if (comment.deletedAt) {
+    await sql`update comments set deleted_at = null where id = ${idParam(c, "commentId")}`;
+  }
+  return ok(c, { restored: true });
 });
 
 /* ----------------------------------------------------------- private links */

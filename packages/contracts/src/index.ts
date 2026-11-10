@@ -179,6 +179,12 @@ export const RecipeDetail = RecipeSummary.extend({
     .optional(),
   canEdit: z.boolean(),
   canComment: z.boolean(),
+  /** The viewer may cook, rate and fork this recipe. */
+  canCook: z.boolean(),
+  canRate: z.boolean(),
+  canFork: z.boolean(),
+  /** The viewer owns the recipe and may create a private link. */
+  canShare: z.boolean(),
 });
 export type RecipeDetail = z.infer<typeof RecipeDetail>;
 

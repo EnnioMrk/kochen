@@ -27,15 +27,15 @@ export function RecipeCard({ recipe }: { recipe: RecipeSummary }) {
             }
           />
           <div className="absolute left-3 top-3 flex flex-wrap items-center gap-1.5">
-            {recipe.archivedAt && <Badge tone="gold">Archiviert</Badge>}
+            {recipe.archivedAt && <Badge tone="gold" className="bg-white/95 shadow-sm">Archiviert</Badge>}
             {recipe.cookedByMe && (
-              <Badge tone="sage">
+              <Badge tone="sage" className="bg-white/95 text-sage-text shadow-sm">
                 <UtensilsCrossed className="size-3" />
                 Gekocht
               </Badge>
             )}
             {recipe.visibility === "private" && (
-              <Badge>
+              <Badge className="bg-white/95 text-ink shadow-sm">
                 <Lock className="size-3" />
                 Privat
               </Badge>

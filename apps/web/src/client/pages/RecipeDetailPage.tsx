@@ -17,7 +17,7 @@ import {
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ApiError, api, qk } from "../lib/api";
 import { useMe } from "../lib/session";
-import { errorText, formatDate } from "../lib/utils";
+import { errorText, formatDate, relativeTime } from "../lib/utils";
 import {
   Avatar,
   Badge,
@@ -31,6 +31,7 @@ import {
   useToast,
 } from "../components/ui";
 import { CommentsSection } from "../components/recipes/CommentsSection";
+import { CoverUpload } from "../components/recipes/CoverUpload";
 import { DiffView } from "../components/recipes/DiffView";
 import { ExportControls } from "../components/recipes/ExportControls";
 import { IngredientRows, ServingsStepper } from "../components/recipes/IngredientList";
@@ -237,9 +238,9 @@ export function RecipeDetailPage() {
         title={notFound ? "Rezept nicht gefunden" : forbidden ? "Kein Zugang" : "Rezept konnte nicht geladen werden"}
         body={
           notFound
-            ? "Das Rezept gibt es nicht mehr oder der Link ist falsch."
+            ? "Das Rezept gibt es nicht mehr, der Link ist falsch, oder der Link gilt für ein anderes Rezept."
             : forbidden
-              ? "Dieses Rezept ist privat oder nur für Freunde sichtbar."
+              ? "Dieses Rezept ist privat oder nur für Freunde sichtbar. Ein privater Link öffnet nur sein eigenes Rezept."
               : errorText(detail.error)
         }
         icon={<ChefHat className="size-8" />}
@@ -263,7 +264,7 @@ export function RecipeDetailPage() {
   const cookedText =
     cookStatus && cookStatus.state === "cooked"
       ? `${cookStatus.count}-mal gekocht${
-          cookStatus.lastCookedAt ? ` · zuletzt ${formatDate(cookStatus.lastCookedAt)}` : ""
+          cookStatus.lastCookedAt ? ` · zuletzt ${relativeTime(cookStatus.lastCookedAt)}` : ""
         }`
       : "noch ungetestet";
   const gallery = recipe.images.filter((image) => image.url !== recipe.coverUrl);
@@ -296,8 +297,11 @@ export function RecipeDetailPage() {
               alt={`Titelbild von ${recipe.title}`}
               className="absolute inset-0 size-full object-cover"
               fallback={
-                <div className="paper-grain flex size-full min-h-48 items-center justify-center bg-[linear-gradient(135deg,var(--color-paper-2),var(--color-sage-soft))]">
+                <div className="paper-grain flex size-full min-h-48 flex-col items-center justify-center gap-3 bg-[linear-gradient(135deg,var(--color-paper-2),var(--color-sage-soft))]">
                   <ChefHat className="size-16 text-brand/30" strokeWidth={1.2} />
+                  {recipe.canEdit && (
+                    <CoverUpload recipeId={id} label="Foto hinzufügen" />
+                  )}
                 </div>
               }
             />
@@ -326,7 +330,7 @@ export function RecipeDetailPage() {
               ) : (
                 <Link
                   to={`/profil/${recipe.owner.id}`}
-                  className="underline-offset-4 hover:text-ink hover:underline"
+                  className="tap-target inline-flex min-h-11 items-center underline-offset-4 hover:text-ink hover:underline"
                 >
                   {recipe.owner.name}
                 </Link>
@@ -413,40 +417,51 @@ export function RecipeDetailPage() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
-        <Button className="col-span-2 sm:col-auto" onClick={() => navigate(`/rezept/${id}/kochen`)}>
-          <Play className="size-4" />
-          Kochen
-        </Button>
-        {recipe.canEdit && (
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-2 max-sm:flex-col max-sm:items-stretch">
           <Button
-            variant="secondary"
-            onClick={() => navigate(`/rezept/${id}/bearbeiten`)}
+            className="sm:mr-auto"
+            onClick={() => navigate(`/rezept/${id}/kochen`)}
           >
-            <Pencil className="size-4" />
-            Bearbeiten
+            <Play className="size-4" />
+            Kochen
           </Button>
-        )}
-        <Button
-          variant="secondary"
-          onClick={() => navigate(`/rezept/${id}/drucken`)}
-        >
-          <Printer className="size-4" />
-          Drucken
-        </Button>
-        <Button variant="secondary" onClick={() => setShareOpen(true)}>
-          <Share2 className="size-4" />
-          Teilen
-        </Button>
-        <ExportControls recipeId={id} title={recipe.title} className="col-span-2 sm:col-auto" />
-        <Button
-          variant="sage"
-          loading={cook.isPending}
-          onClick={() => cook.mutate()}
-        >
-          <UtensilsCrossed className="size-4" />
-          Gekocht
-        </Button>
+          {recipe.canEdit && (
+            <Button
+              variant="secondary"
+              onClick={() => navigate(`/rezept/${id}/bearbeiten`)}
+            >
+              <Pencil className="size-4" />
+              Bearbeiten
+            </Button>
+          )}
+          {recipe.canShare && recipe.visibility !== "private" && (
+            <Button variant="secondary" onClick={() => setShareOpen(true)}>
+              <Share2 className="size-4" />
+              Teilen
+            </Button>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2 border-t border-line pt-2">
+          <Button
+            variant="sage"
+            size="sm"
+            loading={cook.isPending}
+            onClick={() => cook.mutate()}
+          >
+            <UtensilsCrossed className="size-4" />
+            Gekocht
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(`/rezept/${id}/drucken`)}
+          >
+            <Printer className="size-4" />
+            Drucken
+          </Button>
+          <ExportControls recipeId={id} title={recipe.title} />
+        </div>
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -481,14 +496,16 @@ export function RecipeDetailPage() {
                 ))}
               </dl>
             )}
-            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-4">
-              <Button variant="secondary" size="sm" onClick={() => setForkOpen(true)}>
-                Als Variante übernehmen
-              </Button>
-              <span className="text-xs text-ink-soft">
-                Erstellt ein neues Rezept mit diesen Mengen.
-              </span>
-            </div>
+            {recipe.canFork && (
+              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-4">
+                <Button variant="secondary" size="sm" onClick={() => setForkOpen(true)}>
+                  Als Variante übernehmen
+                </Button>
+                <span className="text-xs text-ink-soft">
+                  Erstellt ein neues Rezept mit diesen Mengen.
+                </span>
+              </div>
+            )}
           </Card>
 
           <Card className="p-5">
@@ -575,10 +592,12 @@ export function RecipeDetailPage() {
                 <dt className="text-ink-soft">Portionen</dt>
                 <dd>{recipe.servings}</dd>
               </div>
-              <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-ink-soft">Sichtbarkeit</dt>
-                <dd>{VISIBILITY_LABEL[recipe.visibility]}</dd>
-              </div>
+              {isOwner && (
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="text-ink-soft">Sichtbarkeit</dt>
+                  <dd>{VISIBILITY_LABEL[recipe.visibility]}</dd>
+                </div>
+              )}
               <div className="flex items-baseline justify-between gap-3">
                 <dt className="text-ink-soft">Quelle</dt>
                 <dd>{SOURCE_LABEL[recipe.sourceType]}</dd>

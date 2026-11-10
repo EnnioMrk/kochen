@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChefHat, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button, Field, Input, Textarea } from "./ui";
 import {
   accessState,
@@ -103,9 +103,7 @@ export function AuthGate({ code, onRetry }: { code: string | undefined; onRetry:
     >
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-brand text-white shadow-lg shadow-brand/20">
-            <ChefHat className="size-7" />
-          </span>
+          <img src="/icon.svg" alt="" aria-hidden className="mx-auto mb-4 size-16" />
           <h1 className="text-4xl">Kochen</h1>
           <p className="mt-2 text-sm text-ink-soft">Rezepte für Familie und Freunde.</p>
         </div>

@@ -210,7 +210,10 @@ export function SettingsPage() {
         <p className="text-sm leading-relaxed text-ink-soft">
           Wenn aus, sehen Freunde deine Kontakte nicht. Deine Rezepte bleiben sichtbar.
         </p>
-        <Link to="/freunde" className="mt-2 inline-block text-sm text-brand underline-offset-4 hover:underline">
+        <Link
+          to="/freunde"
+          className="tap-target mt-2 inline-flex min-h-11 items-center text-sm text-brand underline-offset-4 hover:underline"
+        >
           Freunde verwalten
         </Link>
       </Card>

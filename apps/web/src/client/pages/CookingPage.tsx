@@ -110,7 +110,6 @@ function TimerControl({
   onDismiss,
   startPending,
   compact,
-  defaultMinutes,
 }: {
   stepId: string;
   durationS: number | null | undefined;
@@ -120,19 +119,9 @@ function TimerControl({
   onDismiss: (timerId: string) => void;
   startPending: boolean;
   compact?: boolean;
-  /**
-   * Prefilled minutes for a step without a duration, e.g. the overview keeps 5.
-   * Omitted in the step-by-step view: there the field starts empty behind a
-   * "Timer hinzufügen" action, so no timer is ever preset.
-   */
-  defaultMinutes?: number;
 }) {
   const [minutes, setMinutes] = useState(
-    durationS
-      ? String(Math.max(1, Math.round(durationS / 60)))
-      : defaultMinutes !== undefined
-        ? String(defaultMinutes)
-        : "",
+    durationS ? String(Math.max(1, Math.round(durationS / 60))) : "",
   );
   const [adding, setAdding] = useState(false);
   const enteredSeconds = minutesToSeconds(minutes);
@@ -180,79 +169,50 @@ function TimerControl({
     );
   }
 
-  if (defaultMinutes === undefined) {
-    // Step-by-step view: nothing is preset, the field opens empty.
-    if (!adding) {
-      return (
-        <Button
-          variant="secondary"
-          size="sm"
-          className={cn("min-h-11", compact && "min-h-10")}
-          onClick={() => setAdding(true)}
-        >
-          <TimerIcon className="size-4" />
-          Timer hinzufügen
-        </Button>
-      );
-    }
+  // No duration on the step: nothing is preset, the field opens empty.
+  if (!adding) {
     return (
-      <span className="inline-flex flex-wrap items-center gap-1.5">
-        <Input
-          value={minutes}
-          onChange={(event) => setMinutes(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key !== "Enter" || enteredSeconds === null) return;
-            event.preventDefault();
-            onStart(stepId, enteredSeconds);
-          }}
-          autoFocus
-          inputMode="decimal"
-          placeholder="Minuten"
-          aria-label="Minuten für den Timer"
-          className="h-11 w-16 px-2 py-1 text-center text-sm"
-        />
-        <span className="text-xs text-ink-soft">Min.</span>
-        <Button
-          variant="secondary"
-          size="sm"
-          className="min-h-11"
-          disabled={enteredSeconds === null}
-          loading={startPending}
-          onClick={() => {
-            if (enteredSeconds === null) return;
-            onStart(stepId, enteredSeconds);
-          }}
-        >
-          <TimerIcon className="size-4" />
-          Start
-        </Button>
-      </span>
+      <Button
+        variant="secondary"
+        size="sm"
+        className={cn("min-h-11", compact && "min-h-10")}
+        onClick={() => setAdding(true)}
+      >
+        <TimerIcon className="size-4" />
+        Timer hinzufügen
+      </Button>
     );
   }
-
   return (
-    <span className="inline-flex items-center gap-1.5">
+    <span className="inline-flex flex-wrap items-center gap-1.5">
       <Input
         value={minutes}
         onChange={(event) => setMinutes(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key !== "Enter" || enteredSeconds === null) return;
+          event.preventDefault();
+          onStart(stepId, enteredSeconds);
+        }}
+        autoFocus
         inputMode="decimal"
+        placeholder="Minuten"
         aria-label="Minuten für den Timer"
-        className="h-10 w-16 px-2 py-1 text-center text-sm"
+        className="h-11 w-16 px-2 py-1 text-center text-sm"
       />
       <span className="text-xs text-ink-soft">Min.</span>
       <Button
         variant="secondary"
         size="sm"
-        className="min-h-10"
+        className="min-h-11"
+        disabled={enteredSeconds === null}
         loading={startPending}
         onClick={() => {
-          const value = Number(minutes.replace(",", "."));
-          const fallback = Number.isFinite(value) ? value : defaultMinutes;
-          onStart(stepId, Math.max(1, Math.round(fallback)) * 60);
+          if (enteredSeconds === null) return;
+          onStart(stepId, enteredSeconds);
         }}
       >
         <TimerIcon className="size-4" />
-        Timer
+        Start
       </Button>
     </span>
   );
@@ -777,7 +737,6 @@ export function CookingPage() {
                             }
                             onDismiss={timers.dismiss}
                             startPending={timers.startPending}
-                            defaultMinutes={5}
                             compact
                           />
                         </div>

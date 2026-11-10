@@ -1,1 +1,39 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#B4552D"/><path d="M16 20h20v6H16zM16 30h20v6H16zM16 40h12v6H16z" fill="#FAF7F2"/><circle cx="46" cy="22" r="5" fill="#FAF7F2"/><path d="M40 44c4-6 8-6 12 0" stroke="#FAF7F2" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B4552D" />
+      <stop offset="100%" stop-color="#8F3F1E" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#211C16" flood-opacity="0.28" />
+    </filter>
+  </defs>
+
+  <!-- App-Icon Hintergrund -->
+  <rect width="256" height="256" rx="56" fill="url(#bg)" />
+
+  <g filter="url(#shadow)">
+    <!-- Rezeptbuch Basis -->
+    <rect x="64" y="52" width="128" height="156" rx="14" fill="#FAF7F2" />
+
+    <!-- Buchrücken -->
+    <path d="M 78 52 L 64 52 A 14 14 0 0 0 50 66 L 50 194 A 14 14 0 0 0 64 208 L 78 208 Z" fill="#E3D9CA" />
+
+    <!-- Lesezeichen -->
+    <polygon points="156,52 172,52 172,88 164,80 156,88" fill="#C98A2B" />
+
+    <!-- Kochmütze Symbol -->
+    <path d="M 106 132
+             L 106 118
+             C 94 118 90 102 102 96
+             C 104 82 122 76 132 84
+             C 142 76 160 82 162 96
+             C 174 102 170 118 158 118
+             L 158 132 Z" fill="#B4552D" />
+    <rect x="106" y="136" width="52" height="8" rx="4" fill="#8F3F1E" />
+
+    <!-- Textzeilen (Rezept-Andeutung) -->
+    <rect x="96" y="158" width="72" height="8" rx="4" fill="#5C5346" fill-opacity="0.3" />
+    <rect x="96" y="174" width="52" height="8" rx="4" fill="#5C5346" fill-opacity="0.3" />
+  </g>
+</svg>

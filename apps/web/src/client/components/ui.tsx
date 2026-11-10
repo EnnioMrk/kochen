@@ -3,7 +3,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useId,
   useMemo,
   useRef,
   useState,
@@ -13,7 +12,7 @@ import {
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from "react";
-import { ChevronDown, Star, X } from "lucide-react";
+import { ChevronDown, MoreHorizontal, Star, X } from "lucide-react";
 import { cn } from "../lib/utils";
 
 /* ---------------------------------------------------------------- button */
@@ -77,6 +76,78 @@ export function IconButton({
       title={label}
       className={cn(
         "tap tap-target inline-flex size-10 items-center justify-center rounded-full text-ink-soft transition hover:bg-ink/5 hover:text-ink active:scale-95",
+        className,
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* --------------------------------------------------------------- row menu */
+
+export function RowMenu({
+  label,
+  children,
+  className,
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+  return (
+    <div ref={ref} className={cn("relative", className)}>
+      <IconButton
+        label={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <MoreHorizontal className="size-4" />
+      </IconButton>
+      {open && (
+        <div
+          role="menu"
+          aria-label={label}
+          className="absolute right-0 top-full z-20 mt-1 w-48 overflow-hidden rounded-xl border border-line bg-white py-1 shadow-lg"
+          onClick={() => setOpen(false)}
+        >
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function RowMenuItem({
+  className,
+  children,
+  ...rest
+}: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      {...rest}
+      className={cn(
+        "tap-target flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-40",
         className,
       )}
     >
@@ -177,30 +248,33 @@ export function Switch({
   onChange: (next: boolean) => void;
   label: string;
 }) {
-  const id = useId();
   return (
-    <div className="flex items-center justify-between gap-4 py-2">
-      <label htmlFor={id} className="text-sm text-ink">
-        {label}
-      </label>
-      <button
-        id={id}
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
-        className={cn(
-          "tap relative h-7 w-12 shrink-0 rounded-full transition outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-paper",
-          checked ? "bg-sage" : "bg-ink/15",
-        )}
-      >
+    <label className="tap-target flex cursor-pointer items-center justify-between gap-4 py-2">
+      <span className="text-sm text-ink">{label}</span>
+      <span className="relative inline-flex shrink-0">
+        <input
+          type="checkbox"
+          role="switch"
+          checked={checked}
+          onChange={(event) => onChange(event.target.checked)}
+          className="peer sr-only"
+        />
         <span
+          aria-hidden
           className={cn(
-            "absolute left-0.5 top-0.5 size-6 rounded-full bg-white shadow transition-transform",
+            "block h-7 w-12 rounded-full transition peer-focus-visible:ring-2 peer-focus-visible:ring-brand peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-paper",
+            checked ? "bg-sage" : "bg-ink/15",
+          )}
+        />
+        <span
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute left-0.5 top-0.5 size-6 rounded-full bg-white shadow transition-transform",
             checked ? "translate-x-5" : "translate-x-0",
           )}
         />
-      </button>
-    </div>
+      </span>
+    </label>
   );
 }
 
@@ -556,17 +630,23 @@ export function Modal({
 
 /* ---------------------------------------------------------------- toasts */
 
-type Toast = { id: number; text: string; tone: "info" | "error" | "success" };
-const ToastContext = createContext<{ push: (text: string, tone?: Toast["tone"]) => void }>({
+type ToastAction = { label: string; onClick: () => void };
+type Toast = { id: number; text: string; tone: "info" | "error" | "success"; action?: ToastAction };
+const ToastContext = createContext<{
+  push: (text: string, tone?: Toast["tone"], action?: ToastAction) => void;
+}>({
   push: () => {},
 });
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<Toast[]>([]);
-  const push = useCallback((text: string, tone: Toast["tone"] = "info") => {
+  const push = useCallback((text: string, tone: Toast["tone"] = "info", action?: ToastAction) => {
     const id = Date.now() + Math.random();
-    setItems((list) => [...list, { id, text, tone }]);
-    setTimeout(() => setItems((list) => list.filter((item) => item.id !== id)), 4200);
+    setItems((list) => [...list, { id, text, tone, action }]);
+    setTimeout(
+      () => setItems((list) => list.filter((item) => item.id !== id)),
+      action ? 9000 : 4200,
+    );
   }, []);
   const value = useMemo(() => ({ push }), [push]);
   return (
@@ -578,11 +658,23 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={item.id}
             role="status"
             className={cn(
-              "pointer-events-auto max-w-sm rounded-xl px-4 py-2.5 text-sm shadow-lg",
+              "pointer-events-auto flex max-w-sm items-center gap-3 rounded-xl px-4 py-2.5 text-sm shadow-lg",
               item.tone === "error" ? "bg-danger text-white" : item.tone === "success" ? "bg-sage text-white" : "bg-ink text-white",
             )}
           >
-            {item.text}
+            <span>{item.text}</span>
+            {item.action && (
+              <button
+                type="button"
+                onClick={() => {
+                  item.action?.onClick();
+                  setItems((list) => list.filter((entry) => entry.id !== item.id));
+                }}
+                className="tap-target shrink-0 rounded-lg px-2 py-1 font-semibold underline underline-offset-4 hover:bg-white/15"
+              >
+                {item.action.label}
+              </button>
+            )}
           </div>
         ))}
       </div>

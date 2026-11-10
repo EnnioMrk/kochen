@@ -178,16 +178,10 @@ export function RecipeListPage({ scope }: { scope: "mine" | "all" }) {
                 Filter zurücksetzen
               </Button>
             ) : (
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <Button onClick={() => navigate("/neu")}>
-                  <Plus className="size-4" />
-                  Neues Rezept
-                </Button>
-                <Button variant="secondary" onClick={() => navigate("/erfassen")}>
-                  <Camera className="size-4" />
-                  Erfassen
-                </Button>
-              </div>
+              <Button onClick={() => navigate("/neu")}>
+                <Plus className="size-4" />
+                Erstes Rezept anlegen
+              </Button>
             )
           }
         />

@@ -340,6 +340,9 @@ export function ShoppingPage() {
                 {items.length === 0 ? "leer" : `${checkedCount}/${items.length}`}
               </Badge>
             </div>
+            {items.length > 0 && (
+              <p className="mt-1 text-xs text-ink-soft">Zutaten von A bis Z sortiert.</p>
+            )}
 
             {list.warnings.length > 0 && (
               <div className="mt-3 rounded-xl border border-gold/40 bg-gold/5 p-3">

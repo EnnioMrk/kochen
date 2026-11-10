@@ -10,11 +10,11 @@
 }
 
 @font-face {
-  font-family: "Fraunces";
+  font-family: "Petrona";
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url("/fonts/fraunces-latin.woff2") format("woff2");
+  src: url("/fonts/petrona-latin.woff2") format("woff2");
 }
 
 @theme {
@@ -35,7 +35,7 @@
   --color-gold-text: #8a5a12;
 
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Fraunces", ui-serif, Georgia, "Times New Roman", serif;
+  --font-display: "Petrona", ui-serif, Georgia, "Times New Roman", serif;
 
   --radius-card: 18px;
 }
@@ -116,6 +116,7 @@ h1, h2, h3, .display {
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: -0.015em;
+  text-wrap: balance;
 }
 
 button, input, select, textarea {
