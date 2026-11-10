@@ -192,8 +192,9 @@ Dokploy (Ennio, `84.247.128.111`):
   preview for browser print.
 - YouTube, Instagram and TikTok can block `yt-dlp`. The owner stores a login per
   platform under *Einstellungen → Zugänge*; the worker passes it to `yt-dlp` as
-  a cookies file and as a username/password pair. Without a login the app asks
-  for a screenshot; it never cuts a video.
+  a cookies file and as a username/password pair. A test button reads one public
+  item with the stored cookies and names the reason when it fails. Without a
+  login the app asks for a screenshot; it never cuts a video.
 - Chrome cannot decode HEIC. On such a browser the photo list shows a file tile
   with the name, not a preview. The import still converts the photo in the
   worker.

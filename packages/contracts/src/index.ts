@@ -55,6 +55,23 @@ export const PlatformCredentialInput = z.object({
 });
 export type PlatformCredentialInput = z.infer<typeof PlatformCredentialInput>;
 
+/** One answer from the login test the worker runs. */
+export const PlatformTestResult = z.object({
+  ok: z.boolean(),
+  message: z.string(),
+  title: z.string().nullable().optional(),
+});
+export type PlatformTestResult = z.infer<typeof PlatformTestResult>;
+
+export const PlatformTestStatus = z.object({
+  jobId: z.string(),
+  state: z.string(),
+  running: z.boolean(),
+  result: PlatformTestResult.nullable(),
+  message: z.string().nullable(),
+});
+export type PlatformTestStatus = z.infer<typeof PlatformTestStatus>;
+
 export const Visibility = z.enum(["private", "friends", "members"]);
 export type Visibility = z.infer<typeof Visibility>;
 

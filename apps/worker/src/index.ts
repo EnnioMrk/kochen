@@ -2,6 +2,7 @@ import { closeDb } from "@kochen/db";
 import { env, logger } from "./config";
 import { runExportPdfJob } from "./jobs/export-pdf";
 import { runImportJob } from "./jobs/import";
+import { runPlatformTestJob } from "./jobs/platform-test";
 import { runPushJob } from "./jobs/push";
 import { runTimerJob } from "./jobs/timer";
 import { claimNextJob, failJob, type JobRow } from "./queue";
@@ -26,6 +27,9 @@ async function dispatch(job: JobRow): Promise<void> {
       return;
     case "push":
       await runPushJob(job);
+      return;
+    case "platform_test":
+      await runPlatformTestJob(job);
       return;
     default:
       await failJob(job, "internal", "Dieser Auftragstyp wird nicht unterstützt.", false);

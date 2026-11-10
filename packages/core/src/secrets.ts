@@ -7,8 +7,18 @@ const encoder = new TextEncoder();
 
 let cached: Promise<CryptoKey> | null = null;
 
+/**
+ * The same key for the web server and the worker. CREDENTIAL_KEY wins; then
+ * MEDIA_SECRET; then the database URL, which both containers always share, so a
+ * fresh deployment works before anyone sets a new variable.
+ */
 function material(): string {
-  return process.env.CREDENTIAL_KEY ?? process.env.MEDIA_SECRET ?? "dev-credential-key";
+  return (
+    process.env.CREDENTIAL_KEY ??
+    process.env.MEDIA_SECRET ??
+    process.env.DATABASE_URL ??
+    "dev-credential-key"
+  );
 }
 
 function key(): Promise<CryptoKey> {
