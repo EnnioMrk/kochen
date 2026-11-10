@@ -165,10 +165,14 @@ function requestOnce(url: URL, deadline: number): Promise<RawResponse> {
         lookup: guardedLookup as never,
         timeout: remaining,
         headers: {
-          "user-agent": "KochenBot/1.0 (+https://rezepte.ennio.vip)",
-          accept: "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.5",
+          // Recipe sites answer a bot user agent with 403. A normal browser
+          // string is the only way to read the page the member can see.
+          "user-agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+          accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
           "accept-language": "de-DE,de;q=0.9,en;q=0.6",
           "accept-encoding": "gzip, deflate, br",
+          "cache-control": "no-cache",
         },
       },
       (response) => {
@@ -277,6 +281,37 @@ export async function assertPublicUrl(raw: string): Promise<URL> {
   return url;
 }
 
+/**
+ * One German sentence per refusal. A site that blocks the reader cannot be
+ * fetched, but a screenshot of the same page still works, so the text says so
+ * and the review offers the screenshot panel.
+ */
+function statusFailure(status: number): JobFailure {
+  if (status === 401 || status === 403) {
+    return new JobFailure(
+      "source_blocked",
+      `Die Seite lässt den Import nicht zu (HTTP ${status}). Bitte lade einen Screenshot des Rezepts hoch.`,
+    );
+  }
+  if (status === 429) {
+    return new JobFailure(
+      "source_blocked",
+      "Die Seite begrenzt gerade die Anfragen (HTTP 429). Bitte warte einen Moment oder lade einen Screenshot hoch.",
+    );
+  }
+  if (status === 404 || status === 410) {
+    return new JobFailure("invalid_source", `Die Seite wurde nicht gefunden (HTTP ${status}).`);
+  }
+  if (status >= 500) {
+    return new JobFailure(
+      "source_unavailable",
+      `Die Seite ist gerade nicht erreichbar (HTTP ${status}).`,
+      true,
+    );
+  }
+  return new JobFailure("invalid_source", `Die Seite hat die Anfrage abgelehnt (HTTP ${status}).`);
+}
+
 /** Fetch one recipe page with scheme, DNS, redirect, timeout and size guards. */
 export async function fetchPage(rawUrl: string): Promise<FetchedPage> {
   let current = asWebUrl(rawUrl);
@@ -294,12 +329,7 @@ export async function fetchPage(rawUrl: string): Promise<FetchedPage> {
       continue;
     }
     if (response.status < 200 || response.status >= 300) {
-      const retryable = response.status >= 500 || response.status === 429;
-      throw new JobFailure(
-        retryable ? "source_unavailable" : "invalid_source",
-        `Die Seite ist nicht erreichbar (HTTP ${response.status}).`,
-        retryable,
-      );
+      throw statusFailure(response.status);
     }
     if (!isTextContentType(response.contentType)) {
       throw new JobFailure("invalid_source", "Die Adresse ist keine lesbare Webseite.");

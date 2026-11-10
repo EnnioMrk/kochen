@@ -29,6 +29,9 @@ import { cn, formatDateTime } from "../lib/utils";
 const ACTIVE_STATES = new Set<JobState>(["queued", "fetching", "normalizing", "understanding"]);
 const STEP_ORDER: JobState[] = ["queued", "fetching", "normalizing", "understanding"];
 
+/** A screenshot of the same page can still rescue these failures. */
+const SCREENSHOT_HELPS = new Set(["extraction_failed", "source_blocked", "invalid_source", "source_unavailable"]);
+
 const STEP_LABELS: Record<string, string> = {
   queued: "In der Warteschlange",
   fetching: "Quelle wird geladen",
@@ -48,6 +51,8 @@ function failedMessage(job: ImportJob): string {
       return "Die Quelle konnte nicht gelesen werden. Bitte prüfe die Datei oder den Link.";
     case "source_unavailable":
       return "Die Quelle ist nicht erreichbar. Bitte prüfe den Link oder versuche es später erneut.";
+    case "source_blocked":
+      return "Die Seite lässt den Import nicht zu. Bitte lade einen Screenshot des Rezepts hoch.";
     case "media_unavailable":
       return "Der Medienspeicher ist nicht erreichbar oder die Datei fehlt dort. Bitte melde das dem Betreiber.";
     case "tool_missing":
@@ -375,7 +380,7 @@ export function ImportReviewPage() {
         </Card>
       )}
 
-      {job.state === "failed" && job.errorCode === "extraction_failed" && (
+      {job.state === "failed" && SCREENSHOT_HELPS.has(job.errorCode ?? "") && (
         <div className="mt-4">
           <ScreenshotPanel onStarted={(newId) => navigate(`/import/${newId}`)} />
         </div>
