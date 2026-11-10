@@ -10,7 +10,7 @@ The app has no public page. Only approved `ennio.vip` accounts reach it.
 
 | Area | Behaviour |
 | --- | --- |
-| Access | Platform session + 5-minute Ed25519 project JWT. Server verifies offline and checks the `kochen` grant. |
+| Access | Platform session + 5-minute Ed25519 project JWT. Server verifies offline and checks the `kochen` grant. A German gate talks to the platform account API; the platform overlay is not used. |
 | Recipes | Title, description, servings, ingredients, steps, tags, categories, images, source. Raw text and transcript stay readable. |
 | Capture | Photo, PDF, link, video, audio, text. Worker queue with visible position. JSON-LD first, Readability fallback. German draft, member confirms before save. |
 | Cooking | Step-by-step or full page. Screen wake lock. One timer per step, running after reload. Servings scale with practical rounding (`4 ½` eggs, never `1 ⅓`). |
@@ -66,9 +66,18 @@ bun run apps/worker/src/index.ts
 A dev bearer token has the form `dev:<sub>:<email>:<name>`.
 `DEV_AUTH=true` is ignored when `NODE_ENV=production`.
 
-Set `GEMINI_API_KEY` for capture, AI answers, tag suggestions and search.
-Without it, only the AI surfaces fail with `ai_unavailable`; every other
-function keeps working.
+Set the AI variables for capture, AI answers, tag suggestions and search:
+
+```
+AI_PROVIDER=openai
+OPENAI_API_KEY=...
+OPENAI_BASE_URL=https://opencode.ai/inference/go/openai/v1
+OPENAI_MODEL=deepseek-v4.1-flash
+OPENAI_SESSION_ID=<stable uuid per app>
+```
+
+`AI_PROVIDER=gemini` with `GEMINI_API_KEY` also works. Without a key, only the
+AI surfaces fail with `ai_unavailable`; every other function keeps working.
 
 ### Tests
 
@@ -92,7 +101,7 @@ API smoke test: start the API with a real database and use the endpoints in
 | `DEV_AUTH` | Local only; `true` enables `dev:` tokens |
 | `R2_ENDPOINT`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_REGION` | Cloudflare R2 |
 | `MEDIA_DIR`, `MEDIA_SECRET` | Local media volume when R2 is absent |
-| `GEMINI_API_KEY`, `AI_PROVIDER`, `AI_EXTRACTION_MODEL`, `AI_TEXT_MODEL` | AI |
+| `AI_PROVIDER`, `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`, `OPENAI_SESSION_ID`, `GEMINI_API_KEY` | AI |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Web Push |
 | `CHROMIUM_PATH` | Worker PDF render |
 | `PORT` | Web port, default 3000 |
@@ -142,7 +151,9 @@ Dokploy (Ennio, `84.247.128.111`):
 
 ## Known limits
 
-- Without `GEMINI_API_KEY` the AI surfaces are unavailable by design.
+- Without an AI key the AI surfaces are unavailable by design. Audio-only
+  imports need an ASR model; the current gateway model is text and vision, so
+  video works from frames and captions and audio-only input fails clearly.
 - PDF export renders a worker-side A4 template, not the SPA print route. The
   two layouts share the same rules but can drift; the print route remains the
   preview for browser print.
