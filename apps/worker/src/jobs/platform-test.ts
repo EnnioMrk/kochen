@@ -9,6 +9,7 @@ import {
   platformLogin,
   type PlatformName,
 } from "../imports/platform-login";
+import { YTDLP_JS_ARGS } from "../imports/ytdlp";
 
 type TestResult = {
   ok: boolean;
@@ -57,6 +58,9 @@ export function reasonFrom(raw: string, hasCookies: boolean): string {
   }
   if (lower.includes("video is unavailable") || lower.includes("video unavailable")) {
     return "Das Testvideo ist nicht mehr erreichbar. Der Zugang kann trotzdem stimmen. Bitte melde das dem Betreiber.";
+  }
+  if (lower.includes("no video formats")) {
+    return "yt-dlp konnte kein abspielbares Format lesen. Das liegt am Server, nicht am Zugang. Bitte melde das dem Betreiber.";
   }
   if (lower.includes("rate") || lower.includes("too many") || lower.includes("http error 429")) {
     return "Die Plattform drosselt den Zugriff. Versuche es später erneut.";
@@ -144,6 +148,9 @@ export async function runPlatformTestJob(job: JobRow): Promise<void> {
       "--playlist-end",
       "1",
       "--no-warnings",
+      // The test only needs the metadata, never the media itself.
+      "--ignore-no-formats-error",
+      ...YTDLP_JS_ARGS,
       ...auth,
       target,
     ], { timeoutMs: 90_000, maxBuffer: 16 * 1024 * 1024 });

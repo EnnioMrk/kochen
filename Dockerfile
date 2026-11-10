@@ -46,6 +46,10 @@ CMD ["sh", "-c", "bun run scripts/migrate.ts && cd apps/web && exec bun run src/
 FROM node:22-slim AS worker
 WORKDIR /app
 
+# A pinned release: an unchanged pin reuses the layer, a new pin fetches the
+# new binary. "latest" alone could keep a stale yt-dlp for months.
+ARG YTDLP_VERSION=2026.10.26
+
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -56,7 +60,7 @@ RUN apt-get update \
     python3 \
     fonts-dejavu-core \
     fonts-liberation \
-  && curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
+  && curl -fsSL "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp" \
        -o /usr/local/bin/yt-dlp \
   && chmod +x /usr/local/bin/yt-dlp \
   && apt-get clean \

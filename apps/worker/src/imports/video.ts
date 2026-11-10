@@ -7,7 +7,9 @@ import { JobFailure } from "../errors";
 import { getObject, mediaKey, putObject } from "../media";
 import { sniffAudio } from "../media-inspect";
 import { formatMinutes, probeDuration } from "./media-prepare";
-import { loginArgs } from "./platform-login";
+import { loginArgs, platformOf } from "./platform-login";
+import { platformLabel, publicVideoInfo } from "./public-video";
+import { YTDLP_JS_ARGS } from "./ytdlp";
 import { run, runOrFail } from "../tools";
 
 const MB = 1024 * 1024;
@@ -18,7 +20,8 @@ const FRAME_INTERVAL_SECONDS = 5;
 const MAX_FRAME_EDGE = 768;
 
 export type VideoMaterial = {
-  audio: { data: string; mime: string };
+  /** Null when the platform would not serve the media without a login. */
+  audio: { data: string; mime: string } | null;
   images: Array<{ data: string; mime: string }>;
   captions: string | null;
   authorComment: string | null;
@@ -38,7 +41,29 @@ export async function prepareVideo(url: string, limits: Limits): Promise<VideoMa
   const dir = await mkdtemp(join(env.tmpRoot, "kochen-video-"));
   try {
     const auth = await loginArgs(url, dir);
-    const meta = await fetchMetadata(url, dir, auth);
+    let meta: Record<string, unknown>;
+    try {
+      meta = await fetchMetadata(url, dir, auth);
+    } catch (error) {
+      // No media access. A draft from title and description still helps.
+      const info = await publicVideoInfo(url);
+      if (!info) throw error;
+      const text = [info.title, info.description].filter(Boolean).join("\n\n");
+      return {
+        audio: null,
+        images: [],
+        captions: null,
+        authorComment: info.description,
+        rawText: text || null,
+        coverKey: null,
+        sourceKeys: [],
+        warnings: [
+          `${platformLabel(platformOf(url))} hat den Abruf von Ton und Bildern abgelehnt. Der Entwurf stammt aus Titel und Beschreibung. Prüfe ihn besonders genau.`,
+        ],
+        title: info.title,
+        durationS: null,
+      };
+    }
     const durationS = typeof meta.duration === "number" && meta.duration > 0 ? meta.duration : null;
     assertDuration(durationS, limits);
 
@@ -159,6 +184,7 @@ async function fetchMetadata(url: string, dir: string, auth: string[]): Promise<
         "--dump-single-json",
         "--no-playlist",
         "--no-warnings",
+        ...YTDLP_JS_ARGS,
         ...auth,
         "-o",
         join(dir, "meta.%(ext)s"),
@@ -198,6 +224,7 @@ async function fetchCaptions(url: string, dir: string, warnings: string[], auth:
         "vtt",
         "--no-playlist",
         "--no-warnings",
+        ...YTDLP_JS_ARGS,
         ...auth,
         "-o",
         join(dir, "subs.%(ext)s"),
@@ -252,7 +279,7 @@ async function downloadAudio(url: string, dir: string, auth: string[]): Promise<
   try {
     await runOrFail(
       "yt-dlp",
-      ["-f", "bestaudio", "--no-playlist", "--no-warnings", ...auth, "-o", join(dir, "audio.%(ext)s"), url],
+      ["-f", "bestaudio", "--no-playlist", "--no-warnings", ...YTDLP_JS_ARGS, ...auth, "-o", join(dir, "audio.%(ext)s"), url],
       MISSING_YTDLP,
       { timeoutMs: 10 * 60_000, maxBuffer: 8 * MB },
     );
@@ -311,6 +338,7 @@ async function downloadVideo(
         "--no-warnings",
         "--max-filesize",
         "400M",
+        ...YTDLP_JS_ARGS,
         ...auth,
         "-o",
         join(dir, "video.%(ext)s"),

@@ -183,7 +183,7 @@ async function processImport(job: JobRow): Promise<void> {
         throw new JobFailure("invalid_source", "Es wurde kein Video übermittelt.");
       }
       let videoSpeech: string | null = null;
-      if (transcriber) {
+      if (transcriber && video.audio) {
         try {
           const speech = await transcriber.transcribe(video.audio);
           videoSpeech = truncate(speech.text);
@@ -192,13 +192,37 @@ async function processImport(job: JobRow): Promise<void> {
           warnings.push("Die Tonspur konnte nicht verschriftet werden.");
         }
       }
-      extractionInput = {
-        ...(videoSpeech ? { text: videoSpeech } : { audio: video.audio }),
-        images: video.images.length > 0 ? video.images : undefined,
-        captions: video.captions ?? undefined,
-        authorComment: video.authorComment ?? undefined,
-        url: payload.url ?? undefined,
-      };
+      if (!video.audio && !video.captions && !video.authorComment) {
+        throw new JobFailure(
+          "source_blocked",
+          "Das Video ließ sich ohne Anmeldung nicht laden. Es gibt auch keine Beschreibung, aus der ein Rezept entstehen könnte.",
+        );
+      }
+      if (videoSpeech) {
+        extractionInput = {
+          text: videoSpeech,
+          images: video.images.length > 0 ? video.images : undefined,
+          captions: video.captions ?? undefined,
+          authorComment: video.authorComment ?? undefined,
+          url: payload.url ?? undefined,
+        };
+      } else if (video.audio) {
+        extractionInput = {
+          audio: video.audio,
+          images: video.images.length > 0 ? video.images : undefined,
+          captions: video.captions ?? undefined,
+          authorComment: video.authorComment ?? undefined,
+          url: payload.url ?? undefined,
+        };
+      } else {
+        // Blocked media: title, captions and the description are all that is left.
+        extractionInput = {
+          text: [video.title, video.captions, video.authorComment]
+            .filter(Boolean)
+            .join("\n\n"),
+          url: payload.url ?? undefined,
+        };
+      }
       rawText = video.rawText;
       transcript = videoSpeech ?? video.captions;
       imageKeys = video.coverKey ? [video.coverKey] : [];

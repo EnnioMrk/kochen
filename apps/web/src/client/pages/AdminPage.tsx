@@ -297,9 +297,10 @@ export function AdminPage() {
       <div className="space-y-4">
         <Card className="border-gold/40 bg-gold/5 p-4">
           <p className="text-sm leading-relaxed text-ink-soft">
-            Die Daten bleiben auf dem Server. Passwort und Cookies werden
-            verschlüsselt gespeichert und nie wieder angezeigt. Der Video-Import
-            nutzt sie für YouTube, Instagram und TikTok.
+            Der Video-Import versucht es zuerst ohne Anmeldung. Cookies sind nur
+            der Zusatz, wenn eine Plattform den Server blockt. Die Daten bleiben
+            auf dem Server: Passwort und Cookies werden verschlüsselt gespeichert
+            und nie wieder angezeigt.
           </p>
 
           <details className="mt-3 rounded-xl border border-line bg-white/70 px-3 py-2">
