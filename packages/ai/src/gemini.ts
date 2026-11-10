@@ -247,35 +247,48 @@ type OpenAiPart =
 class OpenAiProvider implements AiProvider {
   readonly name = "openai";
   private readonly apiKey: string;
+  private readonly baseUrl: string;
   private readonly model: string;
+  private readonly sessionId: string;
 
   constructor() {
     this.apiKey = process.env.OPENAI_API_KEY ?? "";
+    this.baseUrl = (process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, "");
     this.model = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+    this.sessionId = process.env.OPENAI_SESSION_ID ?? crypto.randomUUID();
     if (!this.apiKey) throw new AiUnavailableError("openai_key_missing");
   }
 
-  private async json<T>(system: string, user: string, timeoutMs: number): Promise<T> {
+  private async json<T>(system: string, content: string | OpenAiPart[], timeoutMs: number): Promise<T> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${this.apiKey}` },
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${this.apiKey}`,
+          "x-opencode-session": this.sessionId,
+        },
         signal: controller.signal,
         body: JSON.stringify({
           model: this.model,
           temperature: 0.2,
+          max_tokens: 4096,
           response_format: { type: "json_object" },
           messages: [
             { role: "system", content: system },
-            { role: "user", content: user },
+            { role: "user", content },
           ],
         }),
       });
-      if (!response.ok) throw new AiUnavailableError(`openai_${response.status}`);
+      if (!response.ok) {
+        const text = await response.text();
+        throw new AiUnavailableError(`model_${response.status}:${text.slice(0, 200)}`);
+      }
       const data = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
       const text = data.choices?.[0]?.message?.content ?? "";
+      if (!text.trim()) throw new AiExtractionError("empty_model_answer");
       return JSON.parse(stripFence(text)) as T;
     } finally {
       clearTimeout(timer);
@@ -283,16 +296,28 @@ class OpenAiProvider implements AiProvider {
   }
 
   async extractRecipe(input: ExtractionInput): Promise<ExtractionResult> {
-    const raw = await this.json<Record<string, unknown>>(
-      EXTRACTION_PROMPT,
-      [input.text ?? "", input.authorComment ?? "", input.captions ?? ""].filter(Boolean).map(dataFence).join("\n\n"),
-      45_000,
-    );
+    const parts: OpenAiPart[] = [];
+    const textSource = [
+      input.text ? dataFence(input.text) : "",
+      input.captions ? `Untertitel:\n${dataFence(input.captions)}` : "",
+      input.authorComment ? `Kommentar der Autorin:\n${dataFence(input.authorComment)}` : "",
+      input.url ? `Quelle: ${input.url}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+    if (textSource) parts.push({ type: "text", text: textSource });
+    for (const image of input.images ?? []) {
+      parts.push({ type: "image_url", image_url: { url: `data:${image.mime};base64,${image.data}` } });
+    }
+    if (!textSource && parts.length === 0) throw new AiExtractionError("empty_source");
+    const content: string | OpenAiPart[] =
+      parts.length === 1 && parts[0]?.type === "text" ? parts[0].text : parts;
+    const raw = await this.json<Record<string, unknown>>(EXTRACTION_PROMPT, content, 60_000);
     const normalized = normalizeDraft(raw);
     return {
       draft: raw,
       sourceLang: normalized.sourceLang,
-      transcript: null,
+      transcript: typeof raw.transcript === "string" ? raw.transcript : null,
       warnings: normalized.warnings,
     };
   }
@@ -303,37 +328,58 @@ class OpenAiProvider implements AiProvider {
 
   async answer(input: AnswerInput): Promise<{ answer: string; kind: AnswerInput["kind"] & string }> {
     const context = input.recipe
-      ? `${input.recipe.title}\n${input.recipe.ingredients.map((i) => `${i.amount ?? ""} ${i.unit ?? ""} ${i.name}`).join("\n")}`
-      : "";
+      ? `Rezept: ${input.recipe.title}\nPortionen: ${input.recipe.servings}\nZutaten:\n${input.recipe.ingredients
+          .map((item) => `- ${item.amount ?? ""} ${item.unit ?? ""} ${item.name}`)
+          .join("\n")}\nSchritte:\n${input.recipe.steps.map((step) => step.text).join("\n")}`
+      : "Kein Rezept ausgewählt.";
     const raw = await this.json<{ answer?: string; kind?: string }>(
       ANSWER_PROMPT,
-      `${dataFence(context)}\n\nFrage: ${input.question}`,
-      15_000,
+      `${dataFence(context)}\n\nFrage: ${input.question.slice(0, 2000)}`,
+      45_000,
     );
     return {
-      answer: raw.answer ?? "",
+      answer: raw.answer ?? "Dazu kann ich gerade nichts sagen.",
       kind: (raw.kind as AnswerInput["kind"]) ?? "answer",
     };
   }
 
   async suggestTags(input: SuggestInput): Promise<{ existing: string[]; newTags: string[]; category: string | null }> {
     const raw = await this.json<{ existing?: string[]; newTags?: string[]; category?: string | null }>(
-      "Antworte als JSON {\"existing\": string[], \"newTags\": string[], \"category\": string|null}.",
-      `${dataFence(input.recipe.title)}\nVorhandene Tags: ${input.existingTags.join(", ")}`,
-      15_000,
+      `Du schlägst Tags vor. Nutze zuerst vorhandene Tags. Ein neuer Tag nur, wenn keiner passt.
+Antworte als JSON: {"existing": string[], "newTags": string[], "category": string|null}.`,
+      [
+        dataFence(
+          `Rezept: ${input.recipe.title}\n${input.recipe.ingredients.map((i) => i.name).join(", ")}\n${input.recipe.steps
+            .map((s) => s.text)
+            .join("\n")}`,
+        ),
+        `Vorhandene Tags: ${input.existingTags.join(", ")}`,
+        `Kategorien: ${input.categories.join(", ")}`,
+      ].join("\n\n"),
+      30_000,
     );
     return {
       existing: (raw.existing ?? []).filter((tag) => input.existingTags.includes(tag)),
-      newTags: (raw.newTags ?? []).slice(0, 5),
+      newTags: (raw.newTags ?? []).filter((tag) => !input.existingTags.includes(tag)).slice(0, 5),
       category: raw.category ?? null,
     };
   }
 
-  async parseFilter(input: { query: string; persons: string[] }): Promise<FilterDsl> {
+  async parseFilter(input: {
+    query: string;
+    persons: string[];
+    tags: string[];
+    categories: string[];
+  }): Promise<FilterDsl> {
     const raw = await this.json<unknown>(
       FILTER_PROMPT,
-      `Wunsch: ${input.query}\nPersonen: ${input.persons.join(", ") || "me"}`,
-      15_000,
+      [
+        `Wunsch: ${input.query.slice(0, 500)}`,
+        `Personen: ${input.persons.join(", ") || "me"}`,
+        `Tags: ${input.tags.join(", ") || "-"}`,
+        `Kategorien: ${input.categories.join(", ") || "-"}`,
+      ].join("\n"),
+      30_000,
     );
     const parsed = FilterDsl.safeParse(raw);
     if (!parsed.success) throw new AiExtractionError("invalid_filter");
