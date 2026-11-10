@@ -12,7 +12,7 @@ The app has no public page. Only approved `ennio.vip` accounts reach it.
 | --- | --- |
 | Access | Platform session + 5-minute Ed25519 project JWT. Server verifies offline and checks the `kochen` grant. A German gate talks to the platform account API; the platform overlay is not used. |
 | Recipes | Title, description, servings, ingredients, steps, tags, categories, images, source. Raw text and transcript stay readable. |
-| Capture | Photo, PDF, link, video, audio, text. Worker queue with visible position. JSON-LD first, Readability fallback. German draft, member confirms before save. |
+| Capture | Photo, PDF, link, video, audio, text. Worker queue with visible position. JSON-LD first, Readability fallback. Audio and video speech go through Parakeet TDT 0.6B v3 (25 European languages, German included). German draft, member confirms before save. |
 | Cooking | Step-by-step or full page. Screen wake lock. One timer per step, running after reload. Servings scale with practical rounding (`4 ½` eggs, never `1 ⅓`). |
 | Cook state | Per person: untested, count, last cooked. A rating needs a cook event. Half stars. One rating per person and recipe. |
 | Variations | Fork keeps `lineage_key` per line. Unlimited chain. Side-by-side diff. Predecessor drift banner. |
@@ -28,6 +28,9 @@ The app has no public page. Only approved `ennio.vip` accounts reach it.
 - TypeScript everywhere.
 - `apps/web`: Bun + Hono for API and SPA, React 19, Vite, TanStack Query, Tailwind v4.
 - `apps/worker`: Node 22, sharp, ffmpeg, pdftoppm, yt-dlp, Chromium, web-push.
+- `asr`: NVIDIA Parakeet TDT 0.6B v3 (q8_0 GGUF) on the
+  `ghcr.io/mudler/parakeet.cpp-server` CPU image, OpenAI-compatible
+  `/v1/audio/transcriptions`, internal only.
 - PostgreSQL 17. Plain SQL migrations. `postgres.js` for queries (Drizzle was dropped in favour of explicit SQL so the recursive rating rule and the filter compiler stay in one place).
 - `packages/contracts` (Zod), `packages/core` (rules with tests), `packages/db` (client + migrations), `packages/ai` (provider adapter).
 
@@ -103,6 +106,7 @@ API smoke test: start the API with a real database and use the endpoints in
 | `MEDIA_DIR`, `MEDIA_SECRET` | Local media volume when R2 is absent |
 | `AI_PROVIDER`, `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`, `OPENAI_SESSION_ID`, `GEMINI_API_KEY` | AI |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Web Push |
+| `ASR_BASE_URL`, `ASR_MODEL`, `ASR_LANGUAGE`, `ASR_API_KEY` | Parakeet ASR endpoint (internal `http://kochen-asr:8080/v1`) |
 | `CHROMIUM_PATH` | Worker PDF render |
 | `PORT` | Web port, default 3000 |
 
@@ -130,7 +134,13 @@ Dokploy (Ennio, `84.247.128.111`):
   The container applies SQL migrations at boot, then serves API and SPA.
 - Application `worker`: same repository, Dockerfile target `worker`, no domain.
   One replica. Chromium and ffmpeg need memory.
-- Mount one named volume at `/data/media` in both apps when R2 is not used.
+- Application `asr`: Docker image `ghcr.io/mudler/parakeet.cpp-server:latest`,
+  args `--model tdt-0.6b-v3-q8_0.gguf --host 0.0.0.0 --port 8080 --threads 4`,
+  volume `parakeet-models` at `/models`, internal only. First start downloads
+  the ~650 MB GGUF once.
+- R2 bucket `kochen` in EU jurisdiction, endpoint
+  `https://<account>.eu.r2.cloudflarestorage.com`.
+- Dokploy backup `db-backups`, nightly 03:00, 30 kept, to the same R2 bucket.
 - DNS: proxied A records for both hosts to `84.247.128.111`. The wildcard still
   points at the old server, so both records are explicit.
 - `kochen.ennio.vip` answers a 301 to `rezepte.ennio.vip` inside the app, so
@@ -151,9 +161,10 @@ Dokploy (Ennio, `84.247.128.111`):
 
 ## Known limits
 
-- Without an AI key the AI surfaces are unavailable by design. Audio-only
-  imports need an ASR model; the current gateway model is text and vision, so
-  video works from frames and captions and audio-only input fails clearly.
+- Without an AI key the vision/text surfaces are unavailable by design. Audio
+  does not depend on it: Parakeet runs separately.
+- Parakeet v3 auto-detects the language and has no German hint. Very short or
+  noisy clips can switch language; the app stores the transcript for review.
 - PDF export renders a worker-side A4 template, not the SPA print route. The
   two layouts share the same rules but can drift; the print route remains the
   preview for browser print.
