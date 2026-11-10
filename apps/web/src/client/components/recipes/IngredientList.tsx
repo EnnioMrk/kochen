@@ -87,7 +87,7 @@ function IngredientRowBody({
       </span>
       <span className="min-w-0 flex-1 text-sm leading-relaxed">
         <span className="text-ink">{item.name}</span>
-        {item.note && <span className="ml-1 text-ink-soft">({item.note})</span>}
+        {item.note && <span className="text-ink-soft"> ({item.note})</span>}
       </span>
     </>
   );

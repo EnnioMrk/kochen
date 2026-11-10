@@ -240,6 +240,10 @@ export function createProvider(): AiProvider {
   return new GeminiProvider();
 }
 
+type OpenAiPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } };
+
 class OpenAiProvider implements AiProvider {
   readonly name = "openai";
   private readonly apiKey: string;
