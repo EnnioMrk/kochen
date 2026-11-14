@@ -7,6 +7,7 @@ import {
   ChefHat,
   Clock,
   ExternalLink,
+  Maximize2,
   Pencil,
   Play,
   Printer,
@@ -24,6 +25,7 @@ import {
   Button,
   Card,
   EmptyState,
+  ImageLightbox,
   MediaImage,
   Modal,
   Skeleton,
@@ -90,6 +92,7 @@ export function RecipeDetailPage() {
   const [shareOpen, setShareOpen] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmAction | null>(null);
   const [showAllTags, setShowAllTags] = useState(false);
+  const [coverOpen, setCoverOpen] = useState(false);
 
   /* The private link token lives in the URL once, then only in sessionStorage.
      api() reads `kochen.link:<id>` and sends it as x-link-token. */
@@ -292,19 +295,36 @@ export function RecipeDetailPage() {
       <Card className="overflow-hidden">
         <div className="grid grid-cols-[minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
           <div className="relative aspect-[16/10] overflow-hidden bg-paper-2 sm:aspect-[16/9] md:aspect-auto md:min-h-80">
-            <MediaImage
-              src={recipe.coverUrl}
-              alt={`Titelbild von ${recipe.title}`}
-              className="absolute inset-0 size-full object-cover"
-              fallback={
-                <div className="paper-grain flex size-full min-h-48 flex-col items-center justify-center gap-3 bg-[linear-gradient(135deg,var(--color-paper-2),var(--color-sage-soft))]">
-                  <ChefHat className="size-16 text-brand/30" strokeWidth={1.2} />
-                  {recipe.canEdit && (
-                    <CoverUpload recipeId={id} label="Foto hinzufügen" />
-                  )}
-                </div>
-              }
-            />
+            {recipe.coverUrl ? (
+              <button
+                type="button"
+                className="group absolute inset-0 size-full cursor-zoom-in"
+                aria-label={`Titelbild von ${recipe.title} in voller Größe öffnen`}
+                onClick={() => setCoverOpen(true)}
+              >
+                <MediaImage
+                  src={recipe.coverUrl}
+                  alt={`Titelbild von ${recipe.title}`}
+                  className="absolute inset-0 size-full object-cover"
+                  fallback={
+                    <div className="paper-grain flex size-full min-h-48 items-center justify-center bg-paper-2">
+                      <ChefHat className="size-16 text-brand/30" strokeWidth={1.2} />
+                    </div>
+                  }
+                />
+                <span className="pointer-events-none absolute right-3 bottom-3 flex items-center gap-1 rounded-full bg-ink/70 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm transition sm:opacity-0 sm:group-hover:opacity-100">
+                  <Maximize2 className="size-3.5" />
+                  Vergrößern
+                </span>
+              </button>
+            ) : (
+              <div className="paper-grain flex size-full min-h-48 flex-col items-center justify-center gap-3 bg-[linear-gradient(135deg,var(--color-paper-2),var(--color-sage-soft))]">
+                <ChefHat className="size-16 text-brand/30" strokeWidth={1.2} />
+                {recipe.canEdit && (
+                  <CoverUpload recipeId={id} label="Foto hinzufügen" />
+                )}
+              </div>
+            )}
           </div>
 
           <div className="min-w-0 p-5 sm:p-7">
@@ -708,6 +728,13 @@ export function RecipeDetailPage() {
           )}
         </aside>
       </div>
+
+      <ImageLightbox
+        open={coverOpen}
+        src={recipe.coverUrl}
+        alt={`Titelbild von ${recipe.title}`}
+        onClose={() => setCoverOpen(false)}
+      />
 
       <Modal
         open={forkOpen}

@@ -628,6 +628,70 @@ export function Modal({
   );
 }
 
+/**
+ * Full-size view of one image. A click anywhere, the close button or Escape
+ * closes it. The page behind keeps its scroll position.
+ */
+export function ImageLightbox({
+  open,
+  src,
+  alt = "",
+  onClose,
+}: {
+  open: boolean;
+  src?: string | null;
+  alt?: string;
+  onClose: () => void;
+}) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const restoreTo = document.activeElement as HTMLElement | null;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      onClose();
+    };
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    closeRef.current?.focus();
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+      restoreTo?.focus?.();
+    };
+  }, [open, onClose]);
+
+  if (!open || !src) return null;
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={alt || "Bild in voller Größe"}
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-ink/90 p-3 sm:p-8"
+      onClick={onClose}
+    >
+      <button
+        ref={closeRef}
+        type="button"
+        aria-label="Schließen"
+        className="absolute top-[calc(0.75rem+var(--safe-top))] right-3 z-10 flex size-11 items-center justify-center rounded-full bg-white/90 text-ink shadow-lg sm:top-6 sm:right-6"
+        onClick={onClose}
+      >
+        <X className="size-5" />
+      </button>
+      <img
+        src={src}
+        alt={alt}
+        className="max-h-[calc(100dvh-1.5rem)] max-w-full rounded-xl object-contain shadow-2xl sm:max-h-[calc(100dvh-4rem)]"
+        onClick={(event) => event.stopPropagation()}
+      />
+    </div>
+  );
+}
+
 /* ---------------------------------------------------------------- toasts */
 
 type ToastAction = { label: string; onClick: () => void };

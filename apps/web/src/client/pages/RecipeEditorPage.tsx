@@ -312,6 +312,29 @@ export function RecipeEditorPage() {
   const ingredientFields = useFieldArray({ control, name: "ingredients" });
   const stepFields = useFieldArray({ control, name: "steps" });
 
+  /* A new step lands at the end of the list. Bring it into view and put the
+     caret in its text field, so the user does not have to scroll. */
+  const stepsCardRef = useRef<HTMLDivElement>(null);
+  const pendingStepFocus = useRef<number | null>(null);
+  const stepCount = stepFields.fields.length;
+
+  useEffect(() => {
+    const index = pendingStepFocus.current;
+    if (index === null) return;
+    pendingStepFocus.current = null;
+    const textarea = stepsCardRef.current?.querySelector<HTMLTextAreaElement>(
+      `textarea[data-step-index="${index}"]`,
+    );
+    if (!textarea) return;
+    textarea.scrollIntoView({ block: "center", behavior: "smooth" });
+    textarea.focus({ preventScroll: true });
+  }, [stepCount]);
+
+  const addStep = () => {
+    pendingStepFocus.current = stepFields.fields.length;
+    stepFields.append({ text: "", minutes: "" });
+  };
+
   const selectedTags = watch("tagNames");
   const selectedCategories = watch("categoryIds");
   const ingredientValues = watch("ingredients");
@@ -842,12 +865,7 @@ export function RecipeEditorPage() {
         <Card className="space-y-4 p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-xl">Schritte</h2>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => stepFields.append({ text: "", minutes: "" })}
-            >
+            <Button type="button" variant="secondary" size="sm" onClick={addStep}>
               <Plus className="size-4" />
               Schritt
             </Button>
@@ -857,7 +875,7 @@ export function RecipeEditorPage() {
             <p className="text-sm text-ink-soft">Noch keine Schritte.</p>
           )}
 
-          <div className="divide-y divide-line/60">
+          <div ref={stepsCardRef} className="divide-y divide-line/60">
             {stepFields.fields.map((field, index) => {
               const rowError =
                 errors.steps?.[index]?.text?.message ??
@@ -871,6 +889,7 @@ export function RecipeEditorPage() {
                     <div className="min-w-0 flex-1 space-y-2">
                       <Textarea
                         {...register(stepPath(index, "text"))}
+                        data-step-index={index}
                         placeholder="Was ist zu tun?"
                         aria-label={`Schritt ${index + 1}`}
                         className="min-h-20"
@@ -918,6 +937,18 @@ export function RecipeEditorPage() {
               );
             })}
           </div>
+
+          {stepFields.fields.length > 0 && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full border-dashed"
+              onClick={addStep}
+            >
+              <Plus className="size-4" />
+              Schritt hinzufügen
+            </Button>
+          )}
         </Card>
 
         <Card className="space-y-5 p-5">
