@@ -14,7 +14,33 @@ tags.use("*", requireUser);
 
 tags.get("/tags", async (c) => {
   const q = (c.req.query("q") ?? "").trim().toLowerCase();
+  const scope = c.req.query("scope");
   const sql = db();
+
+  // The list page shows only tags that its recipes really carry. A deleted
+  // recipe or an archived recipe gives no tag.
+  if (scope === "mine" || scope === "all") {
+    const user = c.get("user");
+    const friends = scope === "all" ? await friendIdsOf(user.id) : [];
+    const visible = scope === "mine"
+      ? sql`r.owner_id = ${user.id}`
+      : sql`(r.owner_id = ${user.id} or (r.visibility <> 'private' and (r.owner_id = any(${friends}::uuid[]) or r.visibility = 'members')))`;
+    const match = q
+      ? sql`and (t.slug like ${`%${q}%`} or t.label ilike ${`%${q}%`} or similarity(t.label, ${q}) > 0.35)`
+      : sql``;
+    const scoped = await sql<{ slug: string; label: string; usage: number }[]>`
+      select t.slug, t.label, count(rt.recipe_id)::int as usage
+      from tags t
+      join recipe_tags rt on rt.tag_id = t.id
+      join recipes r on r.id = rt.recipe_id
+      where r.deleted_at is null and r.archived_at is null and ${visible} ${match}
+      group by t.id
+      order by usage desc, t.label
+      limit 60
+    `;
+    return ok(c, scoped);
+  }
+
   const rows = q
     ? await sql<{ slug: string; label: string; usage: number }[]>`
         select t.slug, t.label, count(rt.recipe_id)::int as usage

@@ -30,6 +30,7 @@ export function TrashPage() {
       toast.push("Rezept wiederhergestellt.", "success");
       void queryClient.invalidateQueries({ queryKey: qk.trash });
       void queryClient.invalidateQueries({ queryKey: ["recipes"] });
+      void queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
     onError: (error) => toast.push(errorText(error), "error"),
   });

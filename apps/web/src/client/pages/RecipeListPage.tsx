@@ -18,8 +18,8 @@ export function RecipeListPage({ scope }: { scope: "mine" | "all" }) {
   const [archived, setArchived] = useState(false);
 
   const tags = useQuery({
-    queryKey: qk.tags(""),
-    queryFn: () => api<Tag[]>("/api/tags"),
+    queryKey: qk.tags(`scope:${scope}`),
+    queryFn: () => api<Tag[]>(`/api/tags?scope=${scope}`),
     staleTime: 120_000,
   });
 

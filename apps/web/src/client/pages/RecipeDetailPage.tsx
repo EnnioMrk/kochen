@@ -137,6 +137,8 @@ export function RecipeDetailPage() {
   const invalidateRecipe = () => {
     void queryClient.invalidateQueries({ queryKey: qk.recipe(id) });
     void queryClient.invalidateQueries({ queryKey: ["recipes"] });
+    // The tag chips on the list show only tags of live recipes.
+    void queryClient.invalidateQueries({ queryKey: ["tags"] });
   };
 
   const cook = useMutation({
@@ -202,6 +204,7 @@ export function RecipeDetailPage() {
       api<{ deleted: boolean }>(`/api/recipes/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["recipes"] });
+      void queryClient.invalidateQueries({ queryKey: ["tags"] });
       setConfirm(null);
       toast.push("Rezept gelöscht.", "success");
       navigate("/");

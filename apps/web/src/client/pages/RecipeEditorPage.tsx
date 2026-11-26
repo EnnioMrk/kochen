@@ -433,6 +433,7 @@ export function RecipeEditorPage() {
     onSuccess: async (saved) => {
       void queryClient.invalidateQueries({ queryKey: qk.recipe(saved.id) });
       void queryClient.invalidateQueries({ queryKey: ["recipes"] });
+      void queryClient.invalidateQueries({ queryKey: ["tags"] });
       if (coverFile) {
         try {
           const [key] = await uploadFiles([coverFile], "photo");
