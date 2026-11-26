@@ -390,6 +390,16 @@ and YouTube. The Link and Video tabs both use it.
    `captionWeak`.
 4. `signals` records what was read. The review shows one badge per signal.
 
+One post address has several shapes: `/p/`, `/reel/`, `/reels/` and `/tv/`,
+with an optional user name before the type. The adapter accepts all of them,
+rewrites the address to one canonical `/reel/<code>/` URL and drops the
+tracking parameters. When `yt-dlp` refuses the media, `publicVideoInfo` reads
+the post page as a crawler: Instagram puts the caption of the requested
+shortcode in the page JSON, so no browser is needed. The captioned embed in
+Chromium is the second fallback. An age-restricted or private post reaches the
+review as `source_blocked` with the reason. It needs cookies that hold a real
+`sessionid`.
+
 The public caption is not a comment. `ExtractionInput.caption` and
 `authorComment` are separate fields; the prompt labels them separately. A
 carousel is a yt-dlp playlist; `carouselThumbnails` picks the largest image of

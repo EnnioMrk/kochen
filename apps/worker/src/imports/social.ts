@@ -3,6 +3,7 @@ import { JobFailure } from "../errors";
 import { assertPublicUrl, fetchPage } from "../fetch-source";
 import { prepareLink, type LinkMaterial } from "./link";
 import { platformOf, type PlatformName } from "./platform-login";
+import { instagramPostUrl } from "./public-video";
 import { prepareVideo, videoSignals, type VideoMaterial } from "./video";
 
 export type SourceMaterial =
@@ -126,7 +127,8 @@ export function isSinglePostUrl(url: string, platform: PlatformName): boolean {
   const host = parsed.hostname.replace(/^www\./i, "").toLowerCase();
   const path = parsed.pathname;
   if (platform === "instagram") {
-    return /^\/(p|reel|tv)\/[A-Za-z0-9_-]+/.test(path);
+    if (/^\/reels\/audio\//.test(path)) return false;
+    return /^\/(?:[^/]+\/)?(p|reel|reels|tv)\/[A-Za-z0-9_-]+/.test(path);
   }
   if (platform === "tiktok") {
     if (host === "vm.tiktok.com" || host === "vt.tiktok.com") return true;
@@ -169,10 +171,10 @@ async function resolveInstagramShare(url: string): Promise<string> {
  * contains a recipe link, the linked page wins: it has structured data.
  */
 export async function prepareSource(inputUrl: string, limits: Limits): Promise<SourceMaterial> {
-  const url = await resolveInstagramShare(inputUrl);
-  const platform = platformOf(url);
+  const resolved = await resolveInstagramShare(inputUrl);
+  const platform = platformOf(resolved);
   if (!platform) {
-    const link = await prepareLink(url);
+    const link = await prepareLink(resolved);
     return {
       kind: "link",
       link,
@@ -183,12 +185,15 @@ export async function prepareSource(inputUrl: string, limits: Limits): Promise<S
     };
   }
 
-  if (!isSinglePostUrl(url, platform)) {
+  if (!isSinglePostUrl(resolved, platform)) {
     throw new JobFailure(
       "invalid_source",
       "Bitte teile einen einzelnen Beitrag. Profile und Übersichten werden nicht importiert.",
     );
   }
+
+  // One canonical address: /reels/ becomes /reel/, and tracking parameters go.
+  const url = platform === "instagram" ? (instagramPostUrl(resolved) ?? resolved) : resolved;
 
   await assertPublicUrl(url);
   const video = await prepareVideo(url, limits);

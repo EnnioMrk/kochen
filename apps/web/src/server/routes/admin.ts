@@ -6,10 +6,10 @@ import {
   PlatformName,
   PlatformTestResult,
 } from "@kochen/contracts";
-import { sealSecret } from "@kochen/core";
+import { sealSecret, cookieSessionProblem } from "@kochen/core";
 import { db } from "@kochen/db";
 import { requireUser } from "../auth";
-import { forbidden, invalid, notFound, ok } from "../errors";
+import { forbidden, invalid, notFound, ok, ApiError } from "../errors";
 import { body, idParam } from "../validate";
 import type { AppEnv } from "../types";
 
@@ -78,6 +78,11 @@ admin.put("/platforms/:platform", async (c) => {
   if (!platform) throw invalid("platform");
   const input = await body(c, PlatformCredentialInput);
   const sql = db();
+
+  if (input.cookies) {
+    const problem = cookieSessionProblem(platform, input.cookies);
+    if (problem) throw new ApiError("validation_failed", 400, problem);
+  }
 
   const [existing] = await sql<{ username: string | null; passwordEnc: string | null; cookiesEnc: string | null }[]>`
     select username, password_enc as "passwordEnc", cookies_enc as "cookiesEnc"

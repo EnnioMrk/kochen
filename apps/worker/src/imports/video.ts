@@ -57,7 +57,15 @@ export async function prepareVideo(url: string, limits: Limits): Promise<VideoMa
     } catch (error) {
       // No media access. A draft from title and description still helps.
       const info = await publicVideoInfo(url);
-      if (!info) throw error;
+      if (!info) {
+        if (platformOf(url) === "instagram") {
+          throw new JobFailure(
+            "source_blocked",
+            "Instagram gibt diesen Beitrag nicht ohne Anmeldung frei. Das Konto ist altersbeschränkt oder privat, oder Instagram drosselt den Abruf. Hinterlege im Admin die Cookies einer angemeldeten Instagram-Sitzung und versuche es erneut.",
+          );
+        }
+        throw error;
+      }
       const text = [info.title, info.description].filter(Boolean).join("\n\n");
       return {
         audio: null,

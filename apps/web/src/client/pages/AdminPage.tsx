@@ -160,7 +160,7 @@ function PlatformCard({
           hint={
             credential.hasCookies
               ? "Cookies sind gespeichert. Leer lassen, um sie zu behalten."
-              : "Netscape-Format. Aus dem Browser exportieren und hier einfügen."
+              : "Netscape-Format. Aus dem Browser exportieren und hier einfügen. Die Datei muss die Anmeldung enthalten, bei Instagram die Zeile sessionid."
           }
         >
           <Textarea

@@ -11,6 +11,9 @@ export type PublicVideoInfo = {
 const UA =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
+/** Instagram serves the post data in the HTML to a crawler, not to a browser. */
+const CRAWLER_UA = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
+
 const ENTITIES: Record<string, string> = {
   amp: "&",
   quot: '"',
@@ -77,6 +80,40 @@ export function metaContent(html: string, key: string): string | null {
   return null;
 }
 
+/**
+ * Instagram writes a post in several shapes: /p/, /reel/, /reels/ and /tv/,
+ * with an optional user name before the type. All of them carry one shortcode.
+ */
+export function instagramShortcode(url: string): string | null {
+  return instagramPost(url)?.code ?? null;
+}
+
+type InstagramPost = { type: string; code: string };
+
+function instagramPost(url: string): InstagramPost | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  const host = parsed.hostname.replace(/^www\./i, "").toLowerCase();
+  if (host !== "instagram.com") return null;
+  const path = parsed.pathname;
+  const match = /^\/(?:[^/]+\/)?(p|reel|reels|tv)\/([A-Za-z0-9_-]{3,})/.exec(path);
+  if (!match) return null;
+  const code = match[2] ?? "";
+  if (!code || code === "audio") return null;
+  const type = match[1] === "reels" ? "reel" : (match[1] ?? "reel");
+  return { type, code };
+}
+
+/** The canonical post URL: no tracking parameters, one path shape. */
+export function instagramPostUrl(url: string): string | null {
+  const post = instagramPost(url);
+  return post ? `https://www.instagram.com/${post.type}/${post.code}/` : null;
+}
+
 /** The `.Caption` block of an Instagram embed: the author link, then the text. */
 export function instagramCaption(html: string): { author: string | null; caption: string } | null {
   const marker = html.indexOf('class="Caption"');
@@ -96,24 +133,114 @@ export function instagramCaption(html: string): { author: string | null; caption
 }
 
 function instagramEmbedUrl(url: string): string | null {
-  const match = /instagram\.com\/(p|reel|tv)\/([A-Za-z0-9_-]+)/i.exec(url);
-  if (!match) return null;
-  return `https://www.instagram.com/${match[1]}/${match[2]}/embed/captioned/`;
+  const post = instagramPost(url);
+  return post ? `https://www.instagram.com/${post.type}/${post.code}/embed/captioned/` : null;
+}
+
+type InstagramMedia = { author: string | null; caption: string };
+
+/**
+ * The post page also serves its data as JSON to a crawler. The media object
+ * with our shortcode holds the caption, so no browser is needed. Instagram
+ * serves a feed of other posts when the requested post is restricted.
+ */
+export function instagramPageCaption(html: string, shortcode: string): InstagramMedia | null {
+  const scripts = html.matchAll(
+    /<script[^>]*type="application\/json"[^>]*>([\s\S]*?)<\/script>/gi,
+  );
+  for (const script of scripts) {
+    let root: unknown;
+    try {
+      root = JSON.parse(script[1] ?? "");
+    } catch {
+      continue;
+    }
+    const found = findInstagramMedia(root, shortcode);
+    if (found) return found;
+  }
+  return null;
+}
+
+function findInstagramMedia(root: unknown, shortcode: string): InstagramMedia | null {
+  const stack: unknown[] = [root];
+  let steps = 0;
+  while (stack.length > 0 && steps < 500_000) {
+    steps += 1;
+    const value = stack.pop();
+    if (!value || typeof value !== "object") continue;
+    if (!Array.isArray(value)) {
+      const node = value as Record<string, unknown>;
+      const code = node.code ?? node.shortcode;
+      const caption = node.caption as { text?: unknown } | undefined;
+      if (
+        (code === shortcode) &&
+        caption &&
+        typeof caption.text === "string" &&
+        caption.text.trim()
+      ) {
+        const user = node.user as { username?: unknown } | undefined;
+        const owner = node.owner as { username?: unknown } | undefined;
+        const author =
+          typeof user?.username === "string"
+            ? user.username
+            : typeof owner?.username === "string"
+              ? owner.username
+              : null;
+        return { author, caption: caption.text.trim() };
+      }
+    }
+    for (const key in value) {
+      stack.push((value as Record<string, unknown>)[key]);
+    }
+  }
+  return null;
+}
+
+/**
+ * A crawler user agent makes Instagram render the post data in the HTML.
+ * A browser user agent only gets an empty shell.
+ */
+async function instagramPage(url: string): Promise<string | null> {
+  const post = instagramPostUrl(url);
+  if (!post) return null;
+  try {
+    const response = await fetch(post, {
+      headers: { "user-agent": CRAWLER_UA, accept: "text/html" },
+      signal: AbortSignal.timeout(12_000),
+    });
+    if (!response.ok) return null;
+    return await response.text();
+  } catch {
+    return null;
+  }
+}
+
+function instagramInfoFrom(media: InstagramMedia): PublicVideoInfo {
+  const firstLine = media.caption.split("\n").map((line) => line.trim()).find(Boolean) ?? null;
+  return {
+    title: firstLine ? firstLine.slice(0, 200) : null,
+    description: media.caption.slice(0, 12_000),
+    author: media.author,
+  };
 }
 
 async function instagramInfo(url: string): Promise<PublicVideoInfo | null> {
+  const code = instagramShortcode(url);
+  if (!code) return null;
+
+  const page = await instagramPage(url);
+  if (page) {
+    const fromPage = instagramPageCaption(page, code);
+    if (fromPage) return instagramInfoFrom(fromPage);
+  }
+
   const embedUrl = instagramEmbedUrl(url);
   if (!embedUrl) return null;
   const html = await renderHtml(embedUrl, 12_000);
   if (!html) return null;
   const parsed = instagramCaption(html);
   if (!parsed) return null;
-  const firstLine = parsed.caption.split("\n").map((line) => line.trim()).find(Boolean) ?? null;
-  return {
-    title: firstLine ? firstLine.slice(0, 200) : null,
-    description: parsed.caption.slice(0, 12_000),
-    author: parsed.author,
-  };
+  return instagramInfoFrom({ author: parsed.author, caption: parsed.caption });
 }
 
 async function tiktokInfo(url: string): Promise<PublicVideoInfo | null> {

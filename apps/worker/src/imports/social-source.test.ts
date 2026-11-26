@@ -112,6 +112,21 @@ describe("prepareSource waterfall", () => {
     expect(prepareVideo).toHaveBeenCalledWith("https://www.instagram.com/reel/abc/", limits);
   });
 
+  it("imports a /reels/ link and drops its tracking parameters", async () => {
+    vi.mocked(prepareVideo).mockResolvedValue(material(FULL));
+
+    const result = await prepareSource(
+      "https://www.instagram.com/reels/Df2nAp7u3xm/?lqvp=NHU1bWNjdGlpNDVx",
+      limits,
+    );
+
+    expect(result.kind).toBe("video");
+    expect(prepareVideo).toHaveBeenCalledWith(
+      "https://www.instagram.com/reel/Df2nAp7u3xm/",
+      limits,
+    );
+  });
+
   it("sends a normal recipe page to the link reader", async () => {
     vi.mocked(prepareLink).mockResolvedValue({
       jsonLd: null,

@@ -73,8 +73,12 @@ describe("social URL detection", () => {
 
   it("accepts one post and rejects a profile or a playlist", () => {
     expect(isSinglePostUrl("https://www.instagram.com/reel/abc/", "instagram")).toBe(true);
+    expect(isSinglePostUrl("https://www.instagram.com/reels/abc/", "instagram")).toBe(true);
+    expect(isSinglePostUrl("https://www.instagram.com/reels/abc/?igsh=x", "instagram")).toBe(true);
+    expect(isSinglePostUrl("https://www.instagram.com/someuser/reel/abc/", "instagram")).toBe(true);
     expect(isSinglePostUrl("https://www.instagram.com/someuser/", "instagram")).toBe(false);
     expect(isSinglePostUrl("https://www.instagram.com/someuser/reels/", "instagram")).toBe(false);
+    expect(isSinglePostUrl("https://www.instagram.com/reels/audio/123/", "instagram")).toBe(false);
     expect(isSinglePostUrl("https://www.tiktok.com/@cook/video/123", "tiktok")).toBe(true);
     expect(isSinglePostUrl("https://www.tiktok.com/@cook", "tiktok")).toBe(false);
     expect(isSinglePostUrl("https://www.youtube.com/watch?v=abc", "youtube")).toBe(true);
