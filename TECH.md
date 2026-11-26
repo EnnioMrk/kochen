@@ -374,6 +374,26 @@ unit tests, before any draft reaches the review:
 - **Order.** Ingredients follow their first mention in the steps. Unused
   ingredients follow in source order. The sort is stable and runs once, so a
   manual order in the review is kept after save.
+
+### Social sources
+
+`apps/worker/src/imports/social.ts` is the source adapter for Instagram, TikTok
+and YouTube. The Link and Video tabs both use it.
+
+1. `prepareVideo` reads the public caption, then media: audio, frames, and
+   carousel slides. A refused audio stream keeps the caption; it does not fail
+   the job.
+2. `captionShape` checks for ingredients, quantities and steps. A caption with
+   no quantities is weak, even when it is long.
+3. A weak caption with no audio or frames and a recipe URL goes to
+   `prepareLink`, which prefers schema.org Recipe. The review shows
+   `captionWeak`.
+4. `signals` records what was read. The review shows one badge per signal.
+
+The public caption is not a comment. `ExtractionInput.caption` and
+`authorComment` are separate fields; the prompt labels them separately. A
+carousel is a yt-dlp playlist; `carouselThumbnails` picks the largest image of
+each slide. The model reads the slide text, so there is no second OCR service.
 - **Durations.** A duration in the step text (`20 Minuten kühlen`,
   `1 Stunde`, `2-3 Minuten`) fills `duration_s` when the model gave none. A
   model duration wins.

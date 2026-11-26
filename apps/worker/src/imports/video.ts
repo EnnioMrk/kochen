@@ -16,14 +16,23 @@ const MB = 1024 * 1024;
 // Audio plus up to 12 frames must stay below the inline model request limit.
 const MAX_INLINE_AUDIO_BYTES = 9 * MB;
 const MAX_FRAMES = 12;
+const MAX_CAROUSEL_SLIDES = 10;
+const MAX_SLIDE_BYTES = 5 * MB;
 const FRAME_INTERVAL_SECONDS = 5;
 const MAX_FRAME_EDGE = 768;
+const UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
 export type VideoMaterial = {
   /** Null when the platform would not serve the media without a login. */
   audio: { data: string; mime: string } | null;
   images: Array<{ data: string; mime: string }>;
+  /** Subtitles or a caption track. Not the public post caption. */
   captions: string | null;
+  /** The public post text under the video or photo. */
+  caption: string | null;
+  /** True when the post is a carousel and its slides were read. */
+  carousel: boolean;
+  /** The author's own comment, when a source can provide it. */
   authorComment: string | null;
   rawText: string | null;
   coverKey: string | null;
@@ -43,7 +52,8 @@ export async function prepareVideo(url: string, limits: Limits): Promise<VideoMa
     const auth = await loginArgs(url, dir);
     let meta: Record<string, unknown>;
     try {
-      meta = await fetchMetadata(url, dir, auth);
+      // A carousel is a playlist. Instagram needs the entries to read slides.
+      meta = await fetchMetadata(url, dir, auth, platformOf(url) === "instagram");
     } catch (error) {
       // No media access. A draft from title and description still helps.
       const info = await publicVideoInfo(url);
@@ -53,7 +63,9 @@ export async function prepareVideo(url: string, limits: Limits): Promise<VideoMa
         audio: null,
         images: [],
         captions: null,
-        authorComment: info.description,
+        caption: info.description,
+        carousel: false,
+        authorComment: null,
         rawText: text || null,
         coverKey: null,
         sourceKeys: [],
@@ -75,18 +87,31 @@ export async function prepareVideo(url: string, limits: Limits): Promise<VideoMa
     const title = typeof meta.title === "string" ? meta.title.slice(0, 200) : null;
 
     const captions = await fetchCaptions(url, dir, warnings, auth);
-    const audioInput = await downloadAudio(url, dir, auth);
-    const audio = await convertAudio(audioInput, dir, warnings);
+
+    // The caption is enough for a draft. A refused audio stream must not lose it.
+    let audio: { data: string; mime: string } | null = null;
+    try {
+      const audioInput = await downloadAudio(url, dir, auth);
+      audio = await convertAudio(audioInput, dir, warnings);
+    } catch (error) {
+      if (error instanceof JobFailure && error.code === "tool_missing") throw error;
+      warnings.push("Die Tonspur konnte nicht geladen werden. Der Entwurf stammt aus Text und Bildern.");
+    }
+
     const videoInput = await downloadVideo(url, dir, warnings, auth);
     const frames = videoInput ? await extractFrames(videoInput, dir, warnings) : [];
-    const coverKey = await saveCover(frames, warnings);
+    const slides = platformOf(url) === "instagram" ? await downloadCarouselImages(meta, warnings) : [];
+    const images = [...frames, ...slides].slice(0, MAX_FRAMES);
+    const coverKey = await saveCover(images, warnings);
 
     return {
       audio,
-      images: frames.map((frame) => ({ data: frame.toString("base64"), mime: "image/jpeg" })),
+      images: images.map((frame) => ({ data: frame.toString("base64"), mime: "image/jpeg" })),
       captions,
-      authorComment: description,
-      rawText: description,
+      caption: description,
+      carousel: slides.length > 0,
+      authorComment: null,
+      rawText: [title, description].filter(Boolean).join("\n\n") || null,
       coverKey,
       sourceKeys: [],
       warnings,
@@ -136,6 +161,8 @@ export async function prepareVideoFile(keys: string[], limits: Limits): Promise<
       audio,
       images: frames.map((frame) => ({ data: frame.toString("base64"), mime: "image/jpeg" })),
       captions: null,
+      caption: null,
+      carousel: false,
       authorComment: null,
       rawText: null,
       coverKey,
@@ -147,6 +174,18 @@ export async function prepareVideoFile(keys: string[], limits: Limits): Promise<
   } finally {
     await rm(dir, { recursive: true, force: true }).catch(() => {});
   }
+}
+
+/** Stable codes for the review screen. They say what the worker read. */
+export function videoSignals(video: VideoMaterial): string[] {
+  const signals: string[] = [];
+  if (video.caption?.trim()) signals.push("caption");
+  if (video.captions?.trim()) signals.push("subtitles");
+  if (video.audio) signals.push("audio");
+  if (video.images.length > 0) signals.push("frames");
+  if (video.carousel) signals.push("carousel");
+  if (video.authorComment?.trim()) signals.push("author-comment");
+  return signals;
 }
 
 function assertDuration(durationS: number | null, limits: Limits): void {
@@ -175,14 +214,19 @@ async function saveCover(frames: Buffer[], warnings: string[]): Promise<string |
   }
 }
 
-async function fetchMetadata(url: string, dir: string, auth: string[]): Promise<Record<string, unknown>> {
+async function fetchMetadata(
+  url: string,
+  dir: string,
+  auth: string[],
+  allowPlaylist: boolean,
+): Promise<Record<string, unknown>> {
   let stdout: string;
   try {
     const result = await runOrFail(
       "yt-dlp",
       [
         "--dump-single-json",
-        "--no-playlist",
+        ...(allowPlaylist ? [] : ["--no-playlist"]),
         "--no-warnings",
         ...YTDLP_JS_ARGS,
         ...auth,
@@ -208,6 +252,84 @@ async function fetchMetadata(url: string, dir: string, auth: string[]): Promise<
   } catch {
     throw new JobFailure("source_unavailable", "Die Videodaten konnten nicht gelesen werden.", true);
   }
+}
+
+function isInstagramCdn(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:") return false;
+    const host = parsed.hostname.toLowerCase();
+    return (
+      host === "cdninstagram.com" ||
+      host.endsWith(".cdninstagram.com") ||
+      host === "fbcdn.net" ||
+      host.endsWith(".fbcdn.net")
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** The largest image URL of every carousel entry, in slide order. */
+export function carouselThumbnails(meta: Record<string, unknown>): string[] {
+  const entries = Array.isArray(meta.entries) ? meta.entries : [];
+  const urls: string[] = [];
+  for (const entry of entries.slice(0, MAX_CAROUSEL_SLIDES)) {
+    if (!entry || typeof entry !== "object") continue;
+    const thumbs = Array.isArray((entry as { thumbnails?: unknown }).thumbnails)
+      ? ((entry as { thumbnails?: unknown }).thumbnails as unknown[])
+      : [];
+    let best: { url: string; area: number } | null = null;
+    for (const thumb of thumbs) {
+      if (!thumb || typeof thumb !== "object") continue;
+      const item = thumb as { url?: unknown; width?: unknown; height?: unknown };
+      if (typeof item.url !== "string" || !isInstagramCdn(item.url)) continue;
+      const width = typeof item.width === "number" ? item.width : 0;
+      const height = typeof item.height === "number" ? item.height : 0;
+      const area = width * height;
+      if (!best || area > best.area) best = { url: item.url, area };
+    }
+    if (best && !urls.includes(best.url)) urls.push(best.url);
+  }
+  return urls;
+}
+
+async function downloadCarouselImages(
+  meta: Record<string, unknown>,
+  warnings: string[],
+): Promise<Buffer[]> {
+  const urls = carouselThumbnails(meta);
+  if (urls.length === 0) return [];
+  const images: Buffer[] = [];
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, {
+        headers: { "user-agent": UA },
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!response.ok) continue;
+      const type = response.headers.get("content-type") ?? "";
+      if (!type.startsWith("image/")) continue;
+      const bytes = Buffer.from(await response.arrayBuffer());
+      if (bytes.byteLength > MAX_SLIDE_BYTES) continue;
+      const resized = await sharp(bytes)
+        .resize({
+          width: MAX_FRAME_EDGE,
+          height: MAX_FRAME_EDGE,
+          fit: "inside",
+          withoutEnlargement: true,
+        })
+        .jpeg({ quality: 80, mozjpeg: true })
+        .toBuffer();
+      images.push(resized);
+    } catch {
+      // One broken slide must not lose the post.
+    }
+  }
+  if (images.length === 0) {
+    warnings.push("Die Bilder des Karussells konnten nicht geladen werden.");
+  }
+  return images;
 }
 
 async function fetchCaptions(url: string, dir: string, warnings: string[], auth: string[]): Promise<string | null> {

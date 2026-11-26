@@ -191,11 +191,14 @@ Dokploy (Ennio, `84.247.128.111`):
   two layouts share the same rules but can drift; the print route remains the
   preview for browser print.
 - YouTube, Instagram and TikTok can block `yt-dlp`. The import tries signed out
-  first. When the media is refused, it reads the public caption instead:
-  YouTube through oEmbed, Instagram through its captioned embed page, TikTok
-  through the rendered page — all in the Chromium the worker already ships.
-  Title and caption become a reviewable draft. A stored login under
-  *Einstellungen → Zugänge* stays the optional add-on, with a test button.
+  first. A social link works in both the *Link* and *Video* tabs. The order is:
+  public caption, then audio and frames, then carousel slides. If the caption
+  is thin, the post has no audio or frames, and it contains a recipe link, the
+  linked page wins when it has schema.org Recipe data. When the media is
+  refused, the caption alone becomes a reviewable draft. The review names what
+  was read: caption, subtitles, audio, frames, carousel, or website. A stored
+  login under *Einstellungen → Zugänge* stays the optional add-on, with a test
+  button.
 - The worker image pins `YTDLP_VERSION`. Bump the pin to fetch a newer binary;
   `latest` alone can stay cached for months. The worker gives `yt-dlp` the
   image's node as JS runtime, which YouTube needs for formats.

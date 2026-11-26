@@ -455,6 +455,10 @@ export const ImportJob = z.object({
       sourceLang: z.string().nullable(),
       /** True when no source value existed and the import estimated the servings. */
       servingsEstimated: z.boolean().default(false),
+      /** What the worker actually read: caption, subtitles, audio, frames, website. */
+      signals: z.array(z.string()).default([]),
+      /** The social caption was too thin to stand alone. */
+      captionWeak: z.boolean().default(false),
     })
     .nullable(),
   createdAt: z.string(),

@@ -42,6 +42,16 @@ const STEP_LABELS: Record<string, string> = {
   failed: "Fehlgeschlagen",
 };
 
+const SIGNAL_LABELS: Record<string, string> = {
+  caption: "Beitragstext",
+  subtitles: "Untertitel",
+  audio: "Tonspur",
+  frames: "Einzelbilder",
+  carousel: "Karussell",
+  website: "Webseite",
+  "author-comment": "Kommentar",
+};
+
 function failedMessage(job: ImportJob): string {
   switch (job.errorCode) {
     case "extraction_failed":
@@ -304,6 +314,21 @@ export function ImportReviewPage() {
         <div className="space-y-4">
           {job.draftMeta?.asksForScreenshot && (
             <ScreenshotPanel reason={failedMessage(job)} onStarted={(newId) => navigate(`/import/${newId}`)} />
+          )}
+          {job.draftMeta && job.draftMeta.signals.length > 0 && (
+            <Card className="p-4">
+              <p className="text-sm font-medium text-ink">Gelesen</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {job.draftMeta.signals.map((signal) => (
+                  <Badge key={signal}>{SIGNAL_LABELS[signal] ?? signal}</Badge>
+                ))}
+              </div>
+              {job.draftMeta.captionWeak && (
+                <p className="mt-2 text-xs leading-relaxed text-ink-soft">
+                  Der Beitragstext war unvollständig. Prüfe die Mengen besonders genau.
+                </p>
+              )}
+            </Card>
           )}
           <DraftForm
             draft={job.draft}

@@ -123,6 +123,7 @@ export class GeminiProvider implements AiProvider {
     }
     const textSource = [
       input.text ? dataFence(input.text) : "",
+      input.caption ? `Beitragstext:\n${dataFence(input.caption)}` : "",
       input.captions ? `Untertitel:\n${dataFence(input.captions)}` : "",
       input.authorComment ? `Kommentar der Autorin:\n${dataFence(input.authorComment)}` : "",
       input.url ? `Quelle: ${input.url}` : "",
@@ -299,6 +300,7 @@ class OpenAiProvider implements AiProvider {
     const parts: OpenAiPart[] = [];
     const textSource = [
       input.text ? dataFence(input.text) : "",
+      input.caption ? `Beitragstext:\n${dataFence(input.caption)}` : "",
       input.captions ? `Untertitel:\n${dataFence(input.captions)}` : "",
       input.authorComment ? `Kommentar der Autorin:\n${dataFence(input.authorComment)}` : "",
       input.url ? `Quelle: ${input.url}` : "",

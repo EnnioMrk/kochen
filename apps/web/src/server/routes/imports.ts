@@ -164,6 +164,8 @@ imports.get("/:id", async (c) => {
     asksForScreenshot?: unknown;
     sourceLang?: unknown;
     servingsEstimated?: unknown;
+    signals?: unknown;
+    captionWeak?: unknown;
     keys?: string[];
   };
   return ok(c, {
@@ -180,6 +182,10 @@ imports.get("/:id", async (c) => {
           asksForScreenshot: Boolean(payload.asksForScreenshot),
           sourceLang: typeof payload.sourceLang === "string" ? payload.sourceLang : null,
           servingsEstimated: Boolean(payload.servingsEstimated),
+          signals: Array.isArray(payload.signals)
+            ? payload.signals.filter((signal): signal is string => typeof signal === "string")
+            : [],
+          captionWeak: Boolean(payload.captionWeak),
         }
       : null,
     createdAt: job.createdAt.toISOString(),

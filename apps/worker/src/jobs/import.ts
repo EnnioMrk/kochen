@@ -14,7 +14,6 @@ import { normalizeDraft, type RawDraft } from "@kochen/core";
 import { logger } from "../config";
 import { JobFailure } from "../errors";
 import { assertPublicUrl } from "../fetch-source";
-import { prepareLink } from "../imports/link";
 import { loadLimits } from "../imports/limits";
 import {
   prepareAudio,
@@ -22,7 +21,8 @@ import {
   preparePhotos,
   type PreparedAudio,
 } from "../imports/media-prepare";
-import { prepareVideo, prepareVideoFile, type VideoMaterial } from "../imports/video";
+import { isSocialUrl, prepareSource, type SourceMaterial } from "../imports/social";
+import { prepareVideo, prepareVideoFile, videoSignals, type VideoMaterial } from "../imports/video";
 import { SCREENSHOT_WARNING, germanWarnings } from "../imports/warnings";
 import { MediaError } from "../media";
 import { failJob, finishJob, setState, type JobRow } from "../queue";
@@ -73,6 +73,144 @@ function truncate(value: string | null | undefined, max = MAX_TEXT): string | nu
   const trimmed = value.trim();
   if (!trimmed) return null;
   return trimmed.length > max ? trimmed.slice(0, max) : trimmed;
+}
+
+type AppliedVideo = {
+  extractionInput: ExtractionInput;
+  rawText: string | null;
+  transcript: string | null;
+  imageKeys: string[];
+  sourceKeys: string[];
+  warnings: string[];
+};
+
+type AppliedSource = {
+  extractionInput: ExtractionInput | null;
+  jsonLdDraft: Record<string, unknown> | null;
+  sourceLang: string | null;
+  rawText: string | null;
+  transcript: string | null;
+  imageKeys: string[];
+  sourceKeys: string[];
+  warnings: string[];
+  sourceUrl: string | null;
+  sourceType: SourceType;
+  signals: string[];
+  captionWeak: boolean;
+};
+
+/**
+ * One social/video material into model input. The caption is the first text,
+ * then subtitles, then the author comment. Speech wins over raw audio; frames
+ * ride along when they exist.
+ */
+async function applyVideoMaterial(
+  video: VideoMaterial,
+  url: string | null,
+): Promise<AppliedVideo> {
+  const warnings = [...video.warnings];
+  const caption = truncate(video.caption);
+  const authorComment = truncate(video.authorComment);
+  const subtitles = truncate(video.captions);
+
+  let videoSpeech: string | null = null;
+  if (transcriber && video.audio) {
+    try {
+      const speech = await transcriber.transcribe(video.audio);
+      videoSpeech = truncate(speech.text);
+    } catch {
+      warnings.push("Die Tonspur konnte nicht verschriftet werden.");
+    }
+  }
+
+  if (!video.audio && !subtitles && !caption && !authorComment && video.images.length === 0) {
+    throw new JobFailure(
+      "source_blocked",
+      "Das Video ließ sich ohne Anmeldung nicht laden. Es gibt auch keine Beschreibung, aus der ein Rezept entstehen könnte.",
+    );
+  }
+
+  let extractionInput: ExtractionInput;
+  if (videoSpeech) {
+    extractionInput = {
+      text: videoSpeech,
+      images: video.images.length > 0 ? video.images : undefined,
+      captions: subtitles ?? undefined,
+      caption: caption ?? undefined,
+      authorComment: authorComment ?? undefined,
+      url: url ?? undefined,
+    };
+  } else if (video.audio) {
+    extractionInput = {
+      audio: video.audio,
+      images: video.images.length > 0 ? video.images : undefined,
+      captions: subtitles ?? undefined,
+      caption: caption ?? undefined,
+      authorComment: authorComment ?? undefined,
+      url: url ?? undefined,
+    };
+  } else {
+    // No speech and no audio: the post text and the frames are all that is left.
+    extractionInput = {
+      text: [video.title, caption, authorComment, subtitles].filter(Boolean).join("\n\n") || undefined,
+      images: video.images.length > 0 ? video.images : undefined,
+      url: url ?? undefined,
+    };
+  }
+
+  return {
+    extractionInput,
+    rawText: video.rawText,
+    transcript: videoSpeech ?? subtitles,
+    imageKeys: video.coverKey ? [video.coverKey] : [],
+    sourceKeys: video.sourceKeys,
+    warnings,
+  };
+}
+
+async function applySourceMaterial(material: SourceMaterial): Promise<AppliedSource> {
+  if (material.kind === "link") {
+    return {
+      extractionInput: material.link.extraction,
+      jsonLdDraft: material.link.jsonLd?.draft ?? null,
+      sourceLang: material.link.jsonLd?.sourceLang ?? null,
+      rawText: material.link.rawText,
+      transcript: null,
+      imageKeys: [],
+      sourceKeys: [],
+      warnings: material.warnings,
+      sourceUrl: material.sourceUrl,
+      sourceType: "link",
+      signals: material.signals,
+      captionWeak: material.captionWeak,
+    };
+  }
+
+  const applied = await applyVideoMaterial(material.video, material.sourceUrl);
+  return {
+    ...applied,
+    jsonLdDraft: null,
+    sourceLang: null,
+    warnings: [...material.warnings, ...applied.warnings],
+    sourceUrl: material.sourceUrl,
+    sourceType: "video",
+    signals: material.signals,
+    captionWeak: material.captionWeak,
+  };
+}
+
+async function applyUploadedVideo(video: VideoMaterial): Promise<AppliedSource> {
+  const applied = await applyVideoMaterial(video, null);
+  return {
+    ...applied,
+    jsonLdDraft: null,
+    sourceLang: null,
+    sourceUrl: null,
+    sourceType: "video",
+    signals: videoSignals(video),
+    captionWeak: false,
+    warnings: applied.warnings,
+  };
 }
 
 function toJobFailure(error: unknown): JobFailure {
@@ -147,6 +285,24 @@ async function processImport(job: JobRow): Promise<void> {
   let sourceLang: string | null = null;
   let imageKeys: string[] = [];
   let sourceKeys: string[] = payload.keys;
+  let sourceSignals: string[] = [];
+  let captionWeak = false;
+  let sourceType: SourceType = SOURCE_TYPES[payload.kind];
+
+  const assignSource = (applied: AppliedSource) => {
+    extractionInput = applied.extractionInput;
+    jsonLdDraft = applied.jsonLdDraft;
+    sourceLang = applied.sourceLang;
+    rawText = applied.rawText;
+    transcript = applied.transcript;
+    imageKeys = applied.imageKeys;
+    sourceKeys = applied.sourceKeys;
+    warnings.push(...applied.warnings);
+    sourceUrl = applied.sourceUrl;
+    sourceType = applied.sourceType;
+    sourceSignals = applied.signals;
+    captionWeak = applied.captionWeak;
+  };
 
   switch (payload.kind) {
     case "photo": {
@@ -172,74 +328,31 @@ async function processImport(job: JobRow): Promise<void> {
       break;
     }
     case "video": {
-      let video: VideoMaterial;
-      if (payload.url) {
+      if (payload.url && isSocialUrl(payload.url)) {
+        assignSource(await applySourceMaterial(await prepareSource(payload.url, limits)));
+      } else if (payload.url) {
         await assertPublicUrl(payload.url);
-        video = await prepareVideo(payload.url, limits);
-        sourceUrl = payload.url;
+        const video = await prepareVideo(payload.url, limits);
+        assignSource(
+          await applySourceMaterial({
+            kind: "video",
+            video,
+            sourceUrl: payload.url,
+            signals: videoSignals(video),
+            warnings: [],
+            captionWeak: false,
+          }),
+        );
       } else if (payload.keys.length > 0) {
-        video = await prepareVideoFile(payload.keys, limits);
+        assignSource(await applyUploadedVideo(await prepareVideoFile(payload.keys, limits)));
       } else {
         throw new JobFailure("invalid_source", "Es wurde kein Video übermittelt.");
       }
-      let videoSpeech: string | null = null;
-      if (transcriber && video.audio) {
-        try {
-          const speech = await transcriber.transcribe(video.audio);
-          videoSpeech = truncate(speech.text);
-          transcript = videoSpeech;
-        } catch (error) {
-          warnings.push("Die Tonspur konnte nicht verschriftet werden.");
-        }
-      }
-      if (!video.audio && !video.captions && !video.authorComment) {
-        throw new JobFailure(
-          "source_blocked",
-          "Das Video ließ sich ohne Anmeldung nicht laden. Es gibt auch keine Beschreibung, aus der ein Rezept entstehen könnte.",
-        );
-      }
-      if (videoSpeech) {
-        extractionInput = {
-          text: videoSpeech,
-          images: video.images.length > 0 ? video.images : undefined,
-          captions: video.captions ?? undefined,
-          authorComment: video.authorComment ?? undefined,
-          url: payload.url ?? undefined,
-        };
-      } else if (video.audio) {
-        extractionInput = {
-          audio: video.audio,
-          images: video.images.length > 0 ? video.images : undefined,
-          captions: video.captions ?? undefined,
-          authorComment: video.authorComment ?? undefined,
-          url: payload.url ?? undefined,
-        };
-      } else {
-        // Blocked media: title, captions and the description are all that is left.
-        extractionInput = {
-          text: [video.title, video.captions, video.authorComment]
-            .filter(Boolean)
-            .join("\n\n"),
-          url: payload.url ?? undefined,
-        };
-      }
-      rawText = video.rawText;
-      transcript = videoSpeech ?? video.captions;
-      imageKeys = video.coverKey ? [video.coverKey] : [];
-      sourceKeys = video.sourceKeys;
-      warnings.push(...video.warnings);
       break;
     }
     case "link": {
       if (!payload.url) throw new JobFailure("invalid_source", "Es wurde keine Adresse übermittelt.");
-      const link = await prepareLink(payload.url);
-      sourceUrl = link.sourceUrl;
-      rawText = link.rawText;
-      extractionInput = link.extraction;
-      if (link.jsonLd) {
-        jsonLdDraft = link.jsonLd.draft;
-        sourceLang = link.jsonLd.sourceLang;
-      }
+      assignSource(await applySourceMaterial(await prepareSource(payload.url, limits)));
       break;
     }
     case "text": {
@@ -293,7 +406,7 @@ async function processImport(job: JobRow): Promise<void> {
   const normalized = normalizeDraft(draftRaw as RawDraft);
   const recipe: RecipeInputType = {
     ...normalized.recipe,
-    sourceType: SOURCE_TYPES[payload.kind],
+    sourceType,
     sourceUrl: sourceUrl ?? normalized.recipe.sourceUrl ?? null,
     rawText: truncate(rawText ?? normalized.recipe.rawText),
     transcript: truncate(transcript ?? resultTranscript ?? normalized.recipe.transcript),
@@ -322,6 +435,8 @@ async function processImport(job: JobRow): Promise<void> {
     sourceLang: parsed.data.originalLang,
     keys: imageKeys,
     sourceKeys,
+    signals: sourceSignals,
+    captionWeak,
   };
   if (parsed.data.rawText) patch.rawText = parsed.data.rawText;
   if (parsed.data.transcript) patch.transcript = parsed.data.transcript;

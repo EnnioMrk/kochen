@@ -14,7 +14,7 @@ import {
   Video,
   X,
 } from "lucide-react";
-import { ApiError, api, qk } from "../lib/api";
+import { api, qk } from "../lib/api";
 import {
   Badge,
   Button,
@@ -222,17 +222,7 @@ export function CapturePage() {
       });
       navigate(`/import/${id}`);
     } catch (caught) {
-      if (
-        options.kind === "video" &&
-        options.url &&
-        caught instanceof ApiError &&
-        caught.code === "validation_failed" &&
-        caught.detail === "files_missing"
-      ) {
-        setError("Video-Links nimmt dieser Server noch nicht an. Bitte lade die Videodatei hoch.");
-      } else {
-        setError(importErrorMessage(caught));
-      }
+      setError(importErrorMessage(caught));
       setPhase(null);
       setBusy(false);
     }
@@ -428,10 +418,15 @@ export function CapturePage() {
             <div>
               <h2 className="text-xl">Link importieren</h2>
               <p className="mt-1 text-sm text-ink-soft">
-                Der Import liest die Rezeptseite. Manche Seiten blockieren das automatische Laden.
+                Der Import liest Instagram, TikTok, YouTube oder eine Rezeptseite. Ist der
+                Beitragstext unvollständig, nutzt er Tonspur, Bilder oder den Link im Beitrag.
               </p>
             </div>
-            <Field label="Link zum Rezept" error={urlError ?? undefined} hint="Zum Beispiel ein Blog, ein Magazin oder eine Rezeptseite.">
+            <Field
+              label="Link zum Rezept"
+              error={urlError ?? undefined}
+              hint="Zum Beispiel ein Instagram-Reel, ein TikTok-Video, ein YouTube-Link oder eine Rezeptseite."
+            >
               <div className="relative">
                 <Link2 className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-soft" />
                 <Input

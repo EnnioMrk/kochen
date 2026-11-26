@@ -6,7 +6,11 @@ export type ExtractionInput = {
   audio?: { data: string; mime: string };
   text?: string;
   url?: string;
+  /** The public post text under the video or photo. */
+  caption?: string;
+  /** The author's own comment, when a source can provide it. */
   authorComment?: string;
+  /** Subtitles or a caption track, not the post caption. */
   captions?: string;
 };
 
