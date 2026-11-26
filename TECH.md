@@ -400,6 +400,13 @@ Chromium is the second fallback. An age-restricted or private post reaches the
 review as `source_blocked` with the reason. It needs cookies that hold a real
 `sessionid`.
 
+When the stored Instagram cookies have no `sessionid`, the worker signs in with
+the stored user name and password and keeps the session in memory for 30 days.
+Instagram often answers a server sign-in with `checkpoint_required`. The import
+then shows that reason. The member confirms the login in the Instagram app or
+browser, and the next import signs in. A cookie export from a signed-in browser
+stays the direct route. The worker never logs the password or a cookie value.
+
 The public caption is not a comment. `ExtractionInput.caption` and
 `authorComment` are separate fields; the prompt labels them separately. A
 carousel is a yt-dlp playlist; `carouselThumbnails` picks the largest image of

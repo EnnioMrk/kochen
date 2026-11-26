@@ -8,6 +8,7 @@ import { getObject, mediaKey, putObject } from "../media";
 import { sniffAudio } from "../media-inspect";
 import { formatMinutes, probeDuration } from "./media-prepare";
 import { loginArgs, platformOf } from "./platform-login";
+import { instagramLoginProblem } from "./instagram-session";
 import { platformLabel, publicVideoInfo } from "./public-video";
 import { YTDLP_JS_ARGS } from "./ytdlp";
 import { run, runOrFail } from "../tools";
@@ -45,6 +46,15 @@ export type VideoMaterial = {
 const MISSING_YTDLP = "Video-Import ist nicht verfügbar: yt-dlp fehlt auf dem Server.";
 const MISSING_FFMPEG = "Video-Import ist nicht verfügbar: ffmpeg fehlt auf dem Server.";
 
+/** The cookie file that loginArgs wrote, so the caption fallback can use it. */
+async function readCookies(dir: string): Promise<string | null> {
+  try {
+    return await readFile(join(dir, "cookies.txt"), "utf8");
+  } catch {
+    return null;
+  }
+}
+
 /** A URL source: metadata first, then the duration limit. Never cut. */
 export async function prepareVideo(url: string, limits: Limits): Promise<VideoMaterial> {
   const dir = await mkdtemp(join(env.tmpRoot, "kochen-video-"));
@@ -56,12 +66,18 @@ export async function prepareVideo(url: string, limits: Limits): Promise<VideoMa
       meta = await fetchMetadata(url, dir, auth, platformOf(url) === "instagram");
     } catch (error) {
       // No media access. A draft from title and description still helps.
-      const info = await publicVideoInfo(url);
+      const cookies = await readCookies(dir);
+      const info = await publicVideoInfo(url, cookies);
       if (!info) {
         if (platformOf(url) === "instagram") {
+          const problem = instagramLoginProblem();
+          const base =
+            "Instagram gibt diesen Beitrag nicht ohne Anmeldung frei. Das Konto ist altersbeschränkt oder privat, oder Instagram drosselt den Abruf.";
           throw new JobFailure(
             "source_blocked",
-            "Instagram gibt diesen Beitrag nicht ohne Anmeldung frei. Das Konto ist altersbeschränkt oder privat, oder Instagram drosselt den Abruf. Hinterlege im Admin die Cookies einer angemeldeten Instagram-Sitzung und versuche es erneut.",
+            problem
+              ? `${base} ${problem}`
+              : `${base} Hinterlege im Admin die Cookies einer angemeldeten Instagram-Sitzung und versuche es erneut.`,
           );
         }
         throw error;

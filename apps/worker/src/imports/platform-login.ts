@@ -2,6 +2,10 @@ import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { openSecret } from "@kochen/core";
 import { db } from "@kochen/db";
+import {
+  hasInstagramSession,
+  instagramCookiesWithSession,
+} from "./instagram-session";
 
 export type PlatformName = "youtube" | "instagram" | "tiktok";
 
@@ -86,9 +90,15 @@ export async function loginArgsFor(platform: PlatformName, dir: string): Promise
   if (!login) return [];
 
   const lines: string[] = [];
-  if (login.cookies) {
+  let cookies = login.cookies;
+  if (platform === "instagram" && !hasInstagramSession(cookies)) {
+    // The stored file may be an export from a signed-out browser. A sign-in
+    // with the stored account gets the session that a restricted post needs.
+    cookies = await instagramCookiesWithSession(login);
+  }
+  if (cookies) {
     const cookieFile = join(dir, "cookies.txt");
-    await writeFile(cookieFile, login.cookies, { mode: 0o600 });
+    await writeFile(cookieFile, cookies, { mode: 0o600 });
     lines.push(`--cookies ${configValue(cookieFile)}`);
   }
   if (login.username) lines.push(`--username ${configValue(login.username)}`);

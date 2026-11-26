@@ -1,4 +1,5 @@
 import { fetchPage } from "../fetch-source";
+import { instagramCookieHeader } from "./instagram-session";
 import { platformOf } from "./platform-login";
 import { renderHtml } from "./render-page";
 
@@ -200,12 +201,15 @@ function findInstagramMedia(root: unknown, shortcode: string): InstagramMedia | 
  * A crawler user agent makes Instagram render the post data in the HTML.
  * A browser user agent only gets an empty shell.
  */
-async function instagramPage(url: string): Promise<string | null> {
+async function instagramPage(url: string, cookies: string | null): Promise<string | null> {
   const post = instagramPostUrl(url);
   if (!post) return null;
   try {
+    const headers: Record<string, string> = { "user-agent": CRAWLER_UA, accept: "text/html" };
+    const cookieHeader = cookies ? instagramCookieHeader(cookies) : "";
+    if (cookieHeader) headers.cookie = cookieHeader;
     const response = await fetch(post, {
-      headers: { "user-agent": CRAWLER_UA, accept: "text/html" },
+      headers,
       signal: AbortSignal.timeout(12_000),
     });
     if (!response.ok) return null;
@@ -224,11 +228,11 @@ function instagramInfoFrom(media: InstagramMedia): PublicVideoInfo {
   };
 }
 
-async function instagramInfo(url: string): Promise<PublicVideoInfo | null> {
+async function instagramInfo(url: string, cookies: string | null): Promise<PublicVideoInfo | null> {
   const code = instagramShortcode(url);
   if (!code) return null;
 
-  const page = await instagramPage(url);
+  const page = await instagramPage(url, cookies);
   if (page) {
     const fromPage = instagramPageCaption(page, code);
     if (fromPage) return instagramInfoFrom(fromPage);
@@ -262,15 +266,19 @@ async function tiktokInfo(url: string): Promise<PublicVideoInfo | null> {
 /**
  * Title and description without media and without a login. YouTube answers
  * oEmbed; Instagram and TikTok need a rendered page, because their HTML for a
- * plain client is a login wall.
+ * plain client is a login wall. `cookies` adds a session for a restricted
+ * Instagram post.
  */
-export async function publicVideoInfo(url: string): Promise<PublicVideoInfo | null> {
+export async function publicVideoInfo(
+  url: string,
+  cookies: string | null = null,
+): Promise<PublicVideoInfo | null> {
   const platform = platformOf(url);
   const embedded = await oembed(url);
   if (embedded) return embedded;
 
   if (platform === "instagram") {
-    const info = await instagramInfo(url);
+    const info = await instagramInfo(url, cookies);
     if (info) return info;
   }
   if (platform === "tiktok") {
