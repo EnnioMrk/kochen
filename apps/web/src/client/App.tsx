@@ -16,6 +16,7 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { AdminPage } from "./pages/AdminPage";
+import { TrashPage } from "./pages/TrashPage";
 import { InvitePage } from "./pages/InvitePage";
 
 const queryClient = new QueryClient({
@@ -47,6 +48,7 @@ export function App() {
               <Route path="erfassen" element={<CapturePage />} />
               <Route path="import/:id" element={<ImportReviewPage />} />
               <Route path="suche" element={<SearchPage />} />
+              <Route path="papierkorb" element={<TrashPage />} />
               <Route path="einkauf" element={<ShoppingPage />} />
               <Route path="freunde" element={<FriendsPage />} />
               <Route path="profil/:id" element={<ProfilePage />} />

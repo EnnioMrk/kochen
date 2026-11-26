@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { RecipeSummary, Tag } from "@kochen/contracts";
 import { useQuery } from "@tanstack/react-query";
-import { Archive, BookOpen, Camera, Plus, Search, SlidersHorizontal } from "lucide-react";
+import { Archive, BookOpen, Camera, Plus, Search, SlidersHorizontal, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, qk } from "../lib/api";
 import { cn, errorText, plural } from "../lib/utils";
@@ -124,6 +124,12 @@ export function RecipeListPage({ scope }: { scope: "mine" | "all" }) {
             <Search className="size-4" />
             Suche
           </Link>
+          {scope === "mine" && (
+            <Link to="/papierkorb" className={linkButton}>
+              <Trash2 className="size-4" />
+              Papierkorb
+            </Link>
+          )}
         </div>
       </div>
 

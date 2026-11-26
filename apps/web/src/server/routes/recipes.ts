@@ -21,6 +21,7 @@ import {
 
 import { attachCategories, attachTags } from "../tags-lib";
 import { createRecipe, bakingText, writeLines } from "../recipe-write";
+import { purgeExpiredRecipes, TRASH_RETENTION_DAYS } from "../trash";
 import type { AppEnv } from "../types";
 import { body, idParam, linkToken, query } from "../validate";
 
@@ -62,6 +63,7 @@ const ImageInput = z.object({
 
 recipes.get("/", async (c) => {
   const user = c.get("user");
+  await purgeExpiredRecipes();
   const q = query(c, ListQuery);
   const sql = db();
   const friends = await friendIdsOf(user.id);
@@ -112,6 +114,19 @@ recipes.post("/", async (c) => {
   const row = await requireRecipeRow(created);
   const access = { view: true, comment: true, edit: true, share: true };
   return ok(c, await detailFor(row, access, user.id), 201);
+});
+
+/** Deleted recipes of the viewer, newest first. The route must precede `/:id`. */
+recipes.get("/trash", async (c) => {
+  const user = c.get("user");
+  await purgeExpiredRecipes();
+  const sql = db();
+  const rows = await sql.unsafe<FlatRecipe[]>(
+    `${RECIPE_SELECT} where r.owner_id = $1 and r.deleted_at is not null order by r.deleted_at desc`,
+    [user.id],
+  );
+  const summaries = await toSummaries(rows.map(mapFlat), user.id);
+  return ok(c, { items: summaries, retentionDays: TRASH_RETENTION_DAYS });
 });
 
 recipes.get("/:id", async (c) => {
@@ -186,6 +201,7 @@ recipes.delete("/:id", async (c) => {
   if (row.ownerId !== user.id) throw forbidden();
   const sql = db();
   // Soft delete. Variations stay readable and show the deleted original marker.
+  // The recipe stays in the trash for TRASH_RETENTION_DAYS.
   await sql`update recipes set deleted_at = now(), archived_at = now() where id = ${row.id}`;
   return ok(c, { deleted: true });
 });

@@ -805,7 +805,7 @@ export function RecipeDetailPage() {
       >
         <p className="text-sm leading-relaxed text-ink-soft">
           {confirm === "delete"
-            ? "Das Rezept wird weich gelöscht und ausgeblendet. Varianten bleiben sichtbar. Löschen ist nicht rückgängig zu machen."
+            ? "Das Rezept landet für 7 Tage im Papierkorb. Danach wird es endgültig gelöscht. Varianten bleiben sichtbar."
             : "Das Rezept verschwindet aus der Liste und landet im Archiv. Du kannst es dort wiederherstellen."}
         </p>
       </Modal>

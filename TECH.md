@@ -184,11 +184,14 @@ Rules that live in the database, not only in code:
 - `ratings.stars` in `(0.5, 1, ..., 5)`; one row per user and recipe.
 - A rating needs a cook. Enforce in the same transaction, and by a trigger
   that rejects a rating without `cook_events`.
-- `cook_events` is append-only. `count` and `last_cooked` are a view or a
-  maintained summary.
+- Delete is `archived_at` or `deleted_at`. A deleted recipe stays in the trash
+  for 7 days. Then a purge hard-deletes it with its rows.
+- `cook_events` is append-only for updates. `count` and `last_cooked` are a
+  view or a maintained summary. A recipe purge may delete its events.
 - `recipes.root_id` and `depth` are set at fork; the chain is a recursive CTE
   on `parent_id`.
-- Delete is `archived_at` or `deleted_at`. No `DELETE` from recipe tables.
+- Delete is `archived_at` or `deleted_at`. A deleted recipe stays in the trash
+  for 7 days. Then a purge hard-deletes it with its rows.
 
 ### Snapshots and diff
 
