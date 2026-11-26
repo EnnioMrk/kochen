@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DEFAULT_LIMITS, type Limits } from "@kochen/contracts";
 import {
@@ -40,8 +40,8 @@ import {
 type Kind = "photo" | "link" | "video" | "text" | "pdf";
 
 const TABS: Array<{ value: Kind; label: string }> = [
-  { value: "photo", label: "Fotos" },
   { value: "link", label: "Link" },
+  { value: "photo", label: "Fotos" },
   { value: "video", label: "Video" },
   { value: "text", label: "Text" },
   { value: "pdf", label: "PDF" },
@@ -137,7 +137,11 @@ function LimitsCard({ limits, failed }: { limits: Limits; failed: boolean }) {
 
 export function CapturePage() {
   const navigate = useNavigate();
-  const [kind, setKind] = useState<Kind>("photo");
+  const [params] = useSearchParams();
+  const [kind, setKind] = useState<Kind>(() => {
+    const art = params.get("art");
+    return TABS.some((tab) => tab.value === art) ? (art as Kind) : "link";
+  });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState<string | null>(null);
@@ -301,7 +305,7 @@ export function CapturePage() {
     <div className="mx-auto max-w-3xl">
       <PageHeader
         title="Rezept erfassen"
-        subtitle="Wähle eine Quelle. Die KI macht daraus einen Entwurf, den du danach prüfst."
+        subtitle="Am schnellsten per Link. Fotos gehen auch. Die KI macht daraus einen Entwurf, den du danach prüfst."
       />
 
       <div className="mb-5 -mx-1 px-1">

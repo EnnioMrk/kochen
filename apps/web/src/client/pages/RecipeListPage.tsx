@@ -1,12 +1,13 @@
 import { useState } from "react";
 import type { RecipeSummary, Tag } from "@kochen/contracts";
 import { useQuery } from "@tanstack/react-query";
-import { Archive, BookOpen, Camera, Plus, Search, SlidersHorizontal, Trash2 } from "lucide-react";
+import { Archive, BookOpen, Link2, Plus, Search, SlidersHorizontal } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, qk } from "../lib/api";
 import { cn, errorText, plural } from "../lib/utils";
 import { Button, EmptyState, PageHeader } from "../components/ui";
 import { RecipeCard, RecipeCardSkeleton } from "../components/recipes/RecipeCard";
+import { CaptureBar } from "../components/capture/CaptureBar";
 
 const linkButton =
   "tap inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-sm font-medium text-ink shadow-sm transition hover:border-ink/30";
@@ -57,18 +58,20 @@ export function RecipeListPage({ scope }: { scope: "mine" | "all" }) {
         }
         actions={
           <>
-            <Button variant="secondary" onClick={() => navigate("/erfassen")}>
-              <Camera className="size-4" />
-              Erfassen
+            <Button onClick={() => navigate("/erfassen")}>
+              <Link2 className="size-4" />
+              Rezept erfassen
             </Button>
-            <Button onClick={() => navigate("/neu")}>
+            <Button variant="secondary" onClick={() => navigate("/neu")}>
               <Plus className="size-4" />
               <span className="sm:hidden">Neu</span>
-              <span className="hidden sm:inline">Neues Rezept</span>
+              <span className="hidden sm:inline">Selbst schreiben</span>
             </Button>
           </>
         }
       />
+
+      {scope === "mine" && <CaptureBar />}
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="no-scrollbar scroll-fade -mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0">
@@ -124,12 +127,6 @@ export function RecipeListPage({ scope }: { scope: "mine" | "all" }) {
             <Search className="size-4" />
             Suche
           </Link>
-          {scope === "mine" && (
-            <Link to="/papierkorb" className={linkButton}>
-              <Trash2 className="size-4" />
-              Papierkorb
-            </Link>
-          )}
         </div>
       </div>
 
@@ -168,7 +165,7 @@ export function RecipeListPage({ scope }: { scope: "mine" | "all" }) {
             filtered
               ? "Ändere den Filter oder sieh im Archiv nach."
               : scope === "mine"
-                ? "Lege dein erstes Rezept an. Du kannst es auch aus einem Foto, Link oder Video erfassen."
+                ? "Füge einen Link ein. Die KI liest das Rezept und du prüfst den Entwurf."
                 : "Sobald Freunde oder Mitglieder Rezepte teilen, erscheinen sie hier."
           }
           icon={<BookOpen className="size-8" />}
@@ -183,12 +180,18 @@ export function RecipeListPage({ scope }: { scope: "mine" | "all" }) {
               >
                 Filter zurücksetzen
               </Button>
-            ) : (
-              <Button onClick={() => navigate("/neu")}>
-                <Plus className="size-4" />
-                Erstes Rezept anlegen
-              </Button>
-            )
+            ) : scope === "mine" ? (
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button onClick={() => navigate("/erfassen")}>
+                  <Link2 className="size-4" />
+                  Rezept per Link erfassen
+                </Button>
+                <Button variant="ghost" onClick={() => navigate("/neu")}>
+                  <Plus className="size-4" />
+                  Selbst schreiben
+                </Button>
+              </div>
+            ) : undefined
           }
         />
       )}

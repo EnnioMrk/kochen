@@ -240,6 +240,20 @@ export function SettingsPage() {
           Keine Suchmaschinen: Die App sendet <code>noindex, nofollow</code> und eine <code>robots.txt</code> mit
           Sperre. Es gibt keine öffentliche Seite.
         </p>
+        <div className="mt-3 flex flex-wrap items-center gap-x-4">
+          <Link
+            to="/installieren"
+            className="tap-target inline-flex min-h-11 items-center text-sm font-medium text-brand underline-offset-4 hover:underline"
+          >
+            App installieren
+          </Link>
+          <Link
+            to="/papierkorb"
+            className="tap-target inline-flex min-h-11 items-center text-sm text-ink-soft underline-offset-4 hover:text-ink hover:underline"
+          >
+            Papierkorb
+          </Link>
+        </div>
       </Card>
 
       <Card className="p-4 sm:p-5">

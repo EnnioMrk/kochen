@@ -1,7 +1,10 @@
 {
+  "id": "/",
   "name": "Kochen",
   "short_name": "Kochen",
+  "description": "Rezepte per Link oder Foto erfassen, prüfen und kochen.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#FAF7F2",
   "theme_color": "#FAF7F2",

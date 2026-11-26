@@ -18,6 +18,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { AdminPage } from "./pages/AdminPage";
 import { TrashPage } from "./pages/TrashPage";
 import { InvitePage } from "./pages/InvitePage";
+import { InstallPage } from "./pages/InstallPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,6 +61,8 @@ export function App() {
             </Route>
             <Route path="/rezept/:id/kochen" element={<CookingPage />} />
             <Route path="/rezept/:id/drucken" element={<PrintPage />} />
+            <Route path="/installieren" element={<InstallPage />} />
+            <Route path="/app" element={<Navigate to="/installieren" replace />} />
           </Routes>
         </BrowserRouter>
       </ToastProvider>

@@ -62,6 +62,9 @@ function searchErrorText(error: unknown): string {
     if (error.code === "rate_limited") {
       return "Zu viele Suchanfragen. Bitte warte einen Moment.";
     }
+    if (error.code === "conflict") {
+      return "Eine neue Suche hat diese Anfrage abgelöst. Bitte erneut suchen.";
+    }
     if (error.code === "validation_failed") {
       return "Die Suche konnte den Wunsch nicht lesen. Formuliere ihn bitte anders.";
     }
@@ -83,7 +86,7 @@ export function SearchPage() {
 
   const search = useQuery({
     queryKey: qk.search(query),
-    queryFn: () => api<SearchResult>("/api/search", { method: "POST", body: { query } }),
+    queryFn: ({ signal }) => api<SearchResult>("/api/search", { method: "POST", body: { query }, signal }),
     enabled: query.length > 0,
     retry: false,
     staleTime: 5 * 60_000,

@@ -16,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { useFieldArray, useForm, type FieldPath } from "react-hook-form";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
 import { api, qk } from "../lib/api";
 import { cn, errorText } from "../lib/utils";
@@ -570,8 +570,7 @@ export function RecipeEditorPage() {
           editing
             ? "Änderungen ersetzen die bisherigen Zutaten und Schritte."
             : "Titel, Zutaten und Schritte eintragen. Speichern nicht vergessen."
-        }
-        actions={
+        }        actions={
           <>
             <Button
               variant="secondary"
@@ -591,6 +590,16 @@ export function RecipeEditorPage() {
           </>
         }
       />
+
+      {!editing && (
+        <p className="rounded-xl border border-line bg-paper-2/60 px-4 py-3 text-sm leading-relaxed text-ink-soft">
+          Meistens geht es schneller über{" "}
+          <Link to="/erfassen" className="font-medium text-brand underline-offset-4 hover:underline">
+            Erfassen
+          </Link>
+          : Link einfügen oder Fotos hochladen. Die KI füllt die Felder, du prüfst den Entwurf.
+        </p>
+      )}
 
       {saveError && (
         <div className="rounded-xl border border-danger/40 bg-danger/[0.07] px-4 py-3 text-sm text-ink">

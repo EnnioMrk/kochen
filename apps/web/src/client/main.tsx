@@ -1,6 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+// Loads the install-prompt listener before the browser fires the event.
+import "./lib/install";
 import "./styles.css";
 
 const root = document.getElementById("root");
