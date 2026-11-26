@@ -1,4 +1,4 @@
-import type { Access } from "@kochen/core";
+import type { Access } from "@rezeptor/core";
 import type {
   Comment,
   CookStatus,
@@ -11,7 +11,7 @@ import type {
   Stars,
   UnitKey,
   Visibility,
-} from "@kochen/contracts";
+} from "@rezeptor/contracts";
 
 export type UserRow = {
   id: string;

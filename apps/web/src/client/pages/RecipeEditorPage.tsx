@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Category, RecipeDetail, Tag, UnitKey } from "@kochen/contracts";
-import { DEFAULT_LIMITS } from "@kochen/contracts";
-import { UNITS } from "@kochen/core";
+import type { Category, RecipeDetail, Tag, UnitKey } from "@rezeptor/contracts";
+import { DEFAULT_LIMITS } from "@rezeptor/contracts";
+import { UNITS } from "@rezeptor/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDown,

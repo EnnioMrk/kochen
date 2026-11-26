@@ -1,4 +1,4 @@
-import type { DiffEntry } from "@kochen/contracts";
+import type { DiffEntry } from "@rezeptor/contracts";
 
 type Line = Record<string, unknown> & { lineageKey: string };
 

@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { CategoryInput } from "@kochen/contracts";
-import { db } from "@kochen/db";
+import { CategoryInput } from "@rezeptor/contracts";
+import { db } from "@rezeptor/db";
 import { requireUser } from "../auth";
 import { conflict, forbidden, notFound, ok } from "../errors";
 import { friendIdsOf, requireVisible } from "../repo";

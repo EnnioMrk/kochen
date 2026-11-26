@@ -1,5 +1,5 @@
 {
-  "name": "kochen",
+  "name": "rezeptor",
   "private": true,
   "type": "module",
   "workspaces": ["packages/*", "apps/*"],

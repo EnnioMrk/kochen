@@ -105,7 +105,7 @@ export function accessState(): Promise<AccessState> {
 
 /* --------------------------------------------------------------- token ---- */
 
-const TOKEN_KEY = "kochen.platformToken";
+const TOKEN_KEY = "rezeptor.platformToken";
 let memory: { token: string; at: number } | null = null;
 
 function stored(): { token: string; at: number } | null {

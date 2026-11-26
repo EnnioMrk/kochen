@@ -12,7 +12,7 @@ export class ApiError extends Error {
 
 import { clearToken, logout as platformLogout, PlatformError, platformToken } from "./platform";
 
-const DEV_TOKEN_KEY = "kochen.devToken";
+const DEV_TOKEN_KEY = "rezeptor.devToken";
 
 export function devToken(): string {
   return localStorage.getItem(DEV_TOKEN_KEY) ?? "dev:local:local@test:Test";
@@ -53,7 +53,7 @@ type ApiOptions = Omit<RequestInit, "body"> & {
 function linkTokenFor(path: string): string | null {
   const match = path.match(/^\/api\/recipes\/([0-9a-f-]{36})/i);
   if (!match?.[1]) return null;
-  return sessionStorage.getItem(`kochen.link:${match[1]}`);
+  return sessionStorage.getItem(`rezeptor.link:${match[1]}`);
 }
 
 export async function api<T>(path: string, options: ApiOptions = {}): Promise<T> {

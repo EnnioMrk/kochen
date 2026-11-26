@@ -1,4 +1,4 @@
-import type { Ingredient, RecipeStep } from "@kochen/contracts";
+import type { Ingredient, RecipeStep } from "@rezeptor/contracts";
 
 /* ------------------------------------------------ servings (never a silent 4) */
 

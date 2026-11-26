@@ -3,10 +3,10 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@kochen/contracts": ["packages/contracts/src/index.ts"],
-      "@kochen/core": ["packages/core/src/index.ts"],
-      "@kochen/db": ["packages/db/src/index.ts"],
-      "@kochen/ai": ["packages/ai/src/index.ts"]
+      "@rezeptor/contracts": ["packages/contracts/src/index.ts"],
+      "@rezeptor/core": ["packages/core/src/index.ts"],
+      "@rezeptor/db": ["packages/db/src/index.ts"],
+      "@rezeptor/ai": ["packages/ai/src/index.ts"]
     }
   },
   "include": ["packages/*/src/**/*", "apps/*/src/**/*", "scripts/**/*", "*.config.ts"]

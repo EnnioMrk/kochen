@@ -22,7 +22,7 @@ export const env = {
   get databaseUrl(): string {
     const url = process.env.DATABASE_URL;
     if (!url && this.production) throw new Error("DATABASE_URL is required");
-    return url ?? "postgres://kochen:kochen@localhost:5432/kochen";
+    return url ?? "postgres://rezeptor:rezeptor@localhost:5432/rezeptor";
   },
   get jwksUrl(): string {
     return process.env.ENNIO_JWKS_URL ?? "https://api.ennio.vip/v1/.well-known/jwks.json";

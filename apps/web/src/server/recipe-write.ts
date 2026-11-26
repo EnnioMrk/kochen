@@ -1,7 +1,7 @@
-import { RecipeInput, type RecipeInput as RecipeInputType } from "@kochen/contracts";
-import { db } from "@kochen/db";
+import { RecipeInput, type RecipeInput as RecipeInputType } from "@rezeptor/contracts";
+import { db } from "@rezeptor/db";
 import { attachCategories, attachTags } from "./tags-lib";
-import type { postgres } from "@kochen/db";
+import type { postgres } from "@rezeptor/db";
 
 type Tx = postgres.TransactionSql<Record<string, unknown>>;
 

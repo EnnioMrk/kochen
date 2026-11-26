@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import type { ErrorCode } from "@kochen/contracts";
+import type { ErrorCode } from "@rezeptor/contracts";
 
 const GERMAN: Record<string, string> = {
   unauthenticated: "Bitte melde dich an.",

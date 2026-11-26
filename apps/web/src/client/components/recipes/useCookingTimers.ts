@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Timer } from "@kochen/contracts";
+import type { Timer } from "@rezeptor/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api";
 import { errorText } from "../../lib/utils";
@@ -94,7 +94,7 @@ export function useCookingTimers(recipeId: string) {
         try {
           new Notification("Zeit abgelaufen", {
             body: "Der Timer für einen Schritt ist fertig.",
-            tag: `kochen-timer-${timer.id}`,
+            tag: `rezeptor-timer-${timer.id}`,
           });
         } catch {
           // Some browsers block the constructor outside a service worker.

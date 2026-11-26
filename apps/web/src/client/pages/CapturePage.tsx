@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { DEFAULT_LIMITS, type Limits } from "@kochen/contracts";
+import { DEFAULT_LIMITS, type Limits } from "@rezeptor/contracts";
 import {
   AlertTriangle,
   Camera,

@@ -1,4 +1,4 @@
-# Kochen — Technology Decisions
+# Rezeptor — Technology Decisions
 
 Deep dive per concern. Each section gives the choice, the reason, the rejected
 alternatives and the risk.
@@ -39,7 +39,7 @@ Hosts:
   canonical host. The spec address keeps working. The redirect runs in the
   app (host check), so both hosts share one deployment and one cookie.
 
-Consequence: Kochen builds no login, no signup and no access-request list.
+Consequence: Rezeptor builds no login, no signup and no access-request list.
 The platform owns them.
 
 ## 1. Shape
@@ -236,7 +236,7 @@ The filter uses the same function. The AI never computes this rule.
 | Friend of a friend in a list | no | no |
 | Member with a private link | no (link cannot open it) | read, comment |
 
-Kochen never returns a private recipe to a non-owner. Not by link, not by
+Rezeptor never returns a private recipe to a non-owner. Not by link, not by
 search, not by count.
 
 ## 6. Auth and access
@@ -361,7 +361,7 @@ operator, not an automatic delete (the spec keeps originals).
 
 ### Import quality
 
-The model output is untrusted. `@kochen/core` repairs it with rules that have
+The model output is untrusted. `@rezeptor/core` repairs it with rules that have
 unit tests, before any draft reaches the review:
 
 - **Units.** A unit stays only when the source states it. A bare count becomes
@@ -586,7 +586,7 @@ hash at rest, no logging of the token, rate limit lookups.
   the record. A missed push loses nothing.
 - Events: comment, reply, friend request, new variation, timer end.
 - Dedupe with `dedupe_key` (for example `timer:<id>`), unique per user.
-- No email. No SMTP code in Kochen.
+- No email. No SMTP code in Rezeptor.
 - Permission is requested after the first useful action (first comment or
   first timer), not on load.
 
@@ -697,7 +697,7 @@ restore cost).
 | SSRF on link import | Scheme allowlist, private-IP DNS check, redirect and size caps |
 | Malicious upload | Magic-byte check, size cap, `sharp` pixel limit, worker sandbox, no execution |
 | XSS in comments or imported text | No HTML render, React escaping, strict CSP |
-| CSRF | Bearer token, not cookies, for Kochen writes; platform writes stay on the platform |
+| CSRF | Bearer token, not cookies, for Rezeptor writes; platform writes stay on the platform |
 | Prompt injection | Data fence, no tools, strict output schema, user confirmation |
 | AI cost abuse | Per-user and per-IP rate limits, hard monthly cap in the provider |
 | Secret leak | Dokploy env, no secrets in the bundle or logs |
@@ -747,7 +747,7 @@ Privacy (DSGVO):
    the snapshot? Assume current, with a drift note.
 6. Export format: PDF only, or PDF plus Markdown/JSON?
 7. Do we keep original media forever, or add an operator-set retention?
-8. Does account deletion start on `ennio.vip` or inside Kochen? The tombstone
+8. Does account deletion start on `ennio.vip` or inside Rezeptor? The tombstone
    works for both; the trigger needs a decision.
 9. Can several timers run at once (one per step), or only one at a time?
    Assume several, one per step.

@@ -1,5 +1,5 @@
-import type { RecipeDetail } from "@kochen/contracts";
-import { formatAmount, presentAmount, unitLabel } from "@kochen/core";
+import type { RecipeDetail } from "@rezeptor/contracts";
+import { formatAmount, presentAmount, unitLabel } from "@rezeptor/core";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Printer } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
@@ -181,7 +181,7 @@ export function PrintPage() {
               <p className="mt-1 break-all">Quelle: {recipe.sourceUrl}</p>
             )}
             <p className="mt-1">
-              Kochen · {host}
+              Rezeptor · {host}
             </p>
           </footer>
         </article>

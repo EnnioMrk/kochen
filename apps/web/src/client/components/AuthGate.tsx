@@ -88,9 +88,9 @@ export function AuthGate({ code, onRetry }: { code: string | undefined; onRetry:
     mode === "login"
       ? "Melde dich mit deinem ennio.vip-Konto an."
       : mode === "signup"
-        ? "Ein Konto reicht für alle privaten Seiten. Der Zugang zu Kochen wird danach freigegeben."
+        ? "Ein Konto reicht für alle privaten Seiten. Der Zugang zu Rezeptor wird danach freigegeben."
         : mode === "request"
-          ? "Dein Konto ist bekannt, aber Kochen ist noch nicht freigegeben. Schreib eine kurze Nachricht – der Betreiber antwortet."
+          ? "Dein Konto ist bekannt, aber Rezeptor ist noch nicht freigegeben. Schreib eine kurze Nachricht – der Betreiber antwortet."
           : "Der Betreiber sieht deine Anfrage. Du bekommst eine E-Mail, sobald sie beantwortet ist.";
 
   return (
@@ -104,7 +104,7 @@ export function AuthGate({ code, onRetry }: { code: string | undefined; onRetry:
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <img src="/icon.svg" alt="" aria-hidden className="mx-auto mb-4 size-16" />
-          <h1 className="text-4xl">Kochen</h1>
+          <h1 className="text-4xl">Rezeptor</h1>
           <p className="mt-2 text-sm text-ink-soft">Rezepte für Familie und Freunde.</p>
         </div>
 
@@ -255,7 +255,7 @@ export function LoadingScreen() {
     <div className="flex min-h-dvh items-center justify-center">
       <div className="flex items-center gap-3 text-ink-soft">
         <Loader2 className="size-5 animate-spin text-brand" />
-        <span className="text-sm">Kochen wird geladen …</span>
+        <span className="text-sm">Rezeptor wird geladen …</span>
       </div>
     </div>
   );

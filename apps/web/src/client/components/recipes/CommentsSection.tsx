@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Comment } from "@kochen/contracts";
+import type { Comment } from "@rezeptor/contracts";
 import { MessageSquare, Reply, Send, Trash2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, qk } from "../../lib/api";

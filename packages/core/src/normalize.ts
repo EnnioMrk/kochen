@@ -1,5 +1,5 @@
-import { RecipeInput } from "@kochen/contracts";
-import type { Ingredient, RecipeInput as RecipeInputType, RecipeStep, Visibility } from "@kochen/contracts";
+import { RecipeInput } from "@rezeptor/contracts";
+import type { Ingredient, RecipeInput as RecipeInputType, RecipeStep, Visibility } from "@rezeptor/contracts";
 import {
   detectBaking,
   durationFromStepText,

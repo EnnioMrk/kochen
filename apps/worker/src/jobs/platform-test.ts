@@ -107,7 +107,7 @@ export async function runPlatformTestJob(job: JobRow): Promise<void> {
     return;
   }
 
-  const dir = await mkdtemp(join(env.tmpRoot, "kochen-test-"));
+  const dir = await mkdtemp(join(env.tmpRoot, "rezeptor-test-"));
   try {
     if (login.unreadable) {
       await finishJob(job.id, "done", {

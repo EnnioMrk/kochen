@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Visibility } from "@kochen/contracts";
+import type { Visibility } from "@rezeptor/contracts";
 import { Copy, Link2, QrCode, Trash2 } from "lucide-react";
 import { toDataURL } from "qrcode";
 import { useMutation } from "@tanstack/react-query";

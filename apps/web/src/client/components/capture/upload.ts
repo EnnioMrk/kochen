@@ -1,4 +1,4 @@
-import type { ImportInput, Limits } from "@kochen/contracts";
+import type { ImportInput, Limits } from "@rezeptor/contracts";
 
 export type UploadKindValue = "photo" | "pdf" | "video" | "audio" | "text" | "link";
 import { ApiError, api, authToken } from "../../lib/api";

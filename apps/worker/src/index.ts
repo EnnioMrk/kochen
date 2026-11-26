@@ -1,4 +1,4 @@
-import { closeDb } from "@kochen/db";
+import { closeDb } from "@rezeptor/db";
 import { env, logger } from "./config";
 import { runExportPdfJob } from "./jobs/export-pdf";
 import { runImportJob } from "./jobs/import";

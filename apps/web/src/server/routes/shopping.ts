@@ -1,7 +1,7 @@
 import { Hono } from "hono";
-import { ShoppingInput } from "@kochen/contracts";
-import { buildShoppingList } from "@kochen/core";
-import { db } from "@kochen/db";
+import { ShoppingInput } from "@rezeptor/contracts";
+import { buildShoppingList } from "@rezeptor/core";
+import { db } from "@rezeptor/db";
 import { requireUser } from "../auth";
 import { notFound, ok } from "../errors";
 import { accessForRecipe, requireRecipeRow } from "../repo";

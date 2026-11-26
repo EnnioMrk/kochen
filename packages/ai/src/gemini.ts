@@ -1,5 +1,5 @@
-import { FilterDsl } from "@kochen/contracts";
-import { normalizeDraft } from "@kochen/core";
+import { FilterDsl } from "@rezeptor/contracts";
+import { normalizeDraft } from "@rezeptor/core";
 import {
   AiExtractionError,
   AiUnavailableError,

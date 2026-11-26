@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { RecipeDetail, RecipeStep } from "@kochen/contracts";
+import type { RecipeDetail, RecipeStep } from "@rezeptor/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -276,7 +276,7 @@ export function CookingPage() {
 
   const [view, setView] = useState<"steps" | "overview">(() => {
     try {
-      const stored = localStorage.getItem("kochen.cookingView");
+      const stored = localStorage.getItem("rezeptor.cookingView");
       if (stored === "steps" || stored === "overview") return stored;
     } catch {
       // Fall through to the server preference.
@@ -286,7 +286,7 @@ export function CookingPage() {
   const [viewTouched, setViewTouched] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [servings, setServings] = useState<number | null>(null);
-  const storageKey = `kochen.cooking:${id}`;
+  const storageKey = `rezeptor.cooking:${id}`;
   const [checked, setChecked] = useSessionList(storageKey);
   const [checkedIngredients, setCheckedIngredients] = useSessionList(`${storageKey}:ingredients`);
 
@@ -294,7 +294,7 @@ export function CookingPage() {
     if (viewTouched) return;
     let stored: string | null = null;
     try {
-      stored = localStorage.getItem("kochen.cookingView");
+      stored = localStorage.getItem("rezeptor.cookingView");
     } catch {
       stored = null;
     }
@@ -322,7 +322,7 @@ export function CookingPage() {
     setView(next);
     setViewTouched(true);
     try {
-      localStorage.setItem("kochen.cookingView", next);
+      localStorage.setItem("rezeptor.cookingView", next);
     } catch {
       // Preference stays in memory only.
     }

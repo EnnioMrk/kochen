@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { DEFAULT_LIMITS, Limits } from "@kochen/contracts";
-import { db } from "@kochen/db";
+import { DEFAULT_LIMITS, Limits } from "@rezeptor/contracts";
+import { db } from "@rezeptor/db";
 import { requireUser } from "../auth";
 import { forbidden, invalid, ok } from "../errors";
 import type { AppEnv } from "../types";

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import type { RecipeSummary } from "@kochen/contracts";
+import type { RecipeSummary } from "@rezeptor/contracts";
 import { ChefHat } from "lucide-react";
 import { Badge, MediaImage, Stars } from "../ui";
 import { cn } from "../../lib/utils";

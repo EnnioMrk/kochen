@@ -11,7 +11,7 @@ function num(value: string | undefined, fallback: number): number {
  */
 export const logger = pino({
   level: process.env.LOG_LEVEL ?? "info",
-  base: { service: "kochen-worker" },
+  base: { service: "rezeptor-worker" },
   timestamp: pino.stdTimeFunctions.isoTime,
   formatters: {
     level: (label) => ({ level: label }),
@@ -43,7 +43,7 @@ export const env = {
   get databaseUrl(): string {
     const url = process.env.DATABASE_URL;
     if (!url && this.production) throw new Error("DATABASE_URL is required");
-    return url ?? "postgres://kochen:kochen@localhost:5432/kochen";
+    return url ?? "postgres://rezeptor:rezeptor@localhost:5432/rezeptor";
   },
   /** Canonical web origin, used for push deep links and printed recipes. */
   get appOrigin(): string {

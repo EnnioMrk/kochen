@@ -1,4 +1,4 @@
-import type { ExtractionInput } from "@kochen/ai";
+import type { ExtractionInput } from "@rezeptor/ai";
 import { JobFailure } from "../errors";
 import { fetchPage, parseRecipeJsonLd, readableText } from "../fetch-source";
 

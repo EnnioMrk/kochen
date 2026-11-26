@@ -11,16 +11,16 @@
       },
     },
     "apps/web": {
-      "name": "@kochen/web",
+      "name": "@rezeptor/web",
       "version": "0.1.0",
       "dependencies": {
         "@aws-sdk/client-s3": "^3.717.0",
         "@aws-sdk/s3-request-presigner": "^3.717.0",
         "@hookform/resolvers": "^3.10.0",
-        "@kochen/ai": "workspace:*",
-        "@kochen/contracts": "workspace:*",
-        "@kochen/core": "workspace:*",
-        "@kochen/db": "workspace:*",
+        "@rezeptor/ai": "workspace:*",
+        "@rezeptor/contracts": "workspace:*",
+        "@rezeptor/core": "workspace:*",
+        "@rezeptor/db": "workspace:*",
         "@tanstack/react-query": "^5.62.11",
         "fraction.js": "^5.2.0",
         "hono": "^4.6.16",
@@ -44,16 +44,16 @@
       },
     },
     "apps/worker": {
-      "name": "@kochen/worker",
+      "name": "@rezeptor/worker",
       "version": "0.1.0",
       "dependencies": {
         "@aws-sdk/client-s3": "^3.1165.0",
         "@aws-sdk/s3-request-presigner": "^3.1165.0",
-        "@kochen/ai": "workspace:*",
-        "@kochen/contracts": "workspace:*",
-        "@kochen/core": "workspace:*",
-        "@kochen/db": "workspace:*",
         "@mozilla/readability": "^0.5.0",
+        "@rezeptor/ai": "workspace:*",
+        "@rezeptor/contracts": "workspace:*",
+        "@rezeptor/core": "workspace:*",
+        "@rezeptor/db": "workspace:*",
         "heic-convert": "^2.1.0",
         "jsdom": "^25.0.1",
         "pino": "^9.6.0",
@@ -67,35 +67,35 @@
       },
     },
     "packages/ai": {
-      "name": "@kochen/ai",
+      "name": "@rezeptor/ai",
       "version": "0.1.0",
       "dependencies": {
-        "@kochen/contracts": "workspace:*",
-        "@kochen/core": "workspace:*",
+        "@rezeptor/contracts": "workspace:*",
+        "@rezeptor/core": "workspace:*",
         "zod": "^3.24.1",
       },
     },
     "packages/contracts": {
-      "name": "@kochen/contracts",
+      "name": "@rezeptor/contracts",
       "version": "0.1.0",
       "dependencies": {
         "zod": "^3.24.1",
       },
     },
     "packages/core": {
-      "name": "@kochen/core",
+      "name": "@rezeptor/core",
       "version": "0.1.0",
       "dependencies": {
-        "@kochen/contracts": "workspace:*",
+        "@rezeptor/contracts": "workspace:*",
         "fraction.js": "^5.2.0",
         "zod": "^3.24.1",
       },
     },
     "packages/db": {
-      "name": "@kochen/db",
+      "name": "@rezeptor/db",
       "version": "0.1.0",
       "dependencies": {
-        "@kochen/contracts": "workspace:*",
+        "@rezeptor/contracts": "workspace:*",
         "drizzle-orm": "^0.38.3",
         "postgres": "^3.4.5",
       },
@@ -294,21 +294,21 @@
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
 
-    "@kochen/ai": ["@kochen/ai@workspace:packages/ai"],
-
-    "@kochen/contracts": ["@kochen/contracts@workspace:packages/contracts"],
-
-    "@kochen/core": ["@kochen/core@workspace:packages/core"],
-
-    "@kochen/db": ["@kochen/db@workspace:packages/db"],
-
-    "@kochen/web": ["@kochen/web@workspace:apps/web"],
-
-    "@kochen/worker": ["@kochen/worker@workspace:apps/worker"],
-
     "@mozilla/readability": ["@mozilla/readability@0.5.0", "", {}, "sha512-Z+CZ3QaosfFaTqvhQsIktyGrjFjSC0Fa4EMph4mqKnWhmyoGICsV/8QK+8HpXut6zV7zwfWwqDmEjtk1Qf6EgQ=="],
 
     "@pinojs/redact": ["@pinojs/redact@0.4.0", "", {}, "sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg=="],
+
+    "@rezeptor/ai": ["@rezeptor/ai@workspace:packages/ai"],
+
+    "@rezeptor/contracts": ["@rezeptor/contracts@workspace:packages/contracts"],
+
+    "@rezeptor/core": ["@rezeptor/core@workspace:packages/core"],
+
+    "@rezeptor/db": ["@rezeptor/db@workspace:packages/db"],
+
+    "@rezeptor/web": ["@rezeptor/web@workspace:apps/web"],
+
+    "@rezeptor/worker": ["@rezeptor/worker@workspace:apps/worker"],
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.0-beta.27", "", {}, "sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA=="],
 

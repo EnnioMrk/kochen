@@ -1,7 +1,7 @@
 import { Hono } from "hono";
-import { FilterDsl, SearchInput } from "@kochen/contracts";
-import { compileFilter, FilterValidationError, personTokens } from "@kochen/core";
-import { db } from "@kochen/db";
+import { FilterDsl, SearchInput } from "@rezeptor/contracts";
+import { compileFilter, FilterValidationError, personTokens } from "@rezeptor/core";
+import { db } from "@rezeptor/db";
 import { requireUser } from "../auth";
 import { aiCall, rateLimit } from "../ai";
 import { ApiError, invalid, ok } from "../errors";

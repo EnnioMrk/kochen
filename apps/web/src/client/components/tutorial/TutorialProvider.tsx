@@ -14,7 +14,7 @@ import { api, qk } from "../../lib/api";
 import { TutorialOverlay } from "./TutorialOverlay";
 
 /** Local mirror of `users.tutorial_done_at`, in case the call fails. */
-const LOCAL_DONE_KEY = "kochen.tour.done";
+const LOCAL_DONE_KEY = "rezeptor.tour.done";
 
 type TutorialContextValue = { start: () => void };
 

@@ -4,13 +4,13 @@ import {
   createProvider,
   createTranscriber,
   type ExtractionInput,
-} from "@kochen/ai";
+} from "@rezeptor/ai";
 import {
   RecipeInput,
   type RecipeInput as RecipeInputType,
   type SourceType,
-} from "@kochen/contracts";
-import { normalizeDraft, sourceCacheKey, type RawDraft } from "@kochen/core";
+} from "@rezeptor/contracts";
+import { normalizeDraft, sourceCacheKey, type RawDraft } from "@rezeptor/core";
 import { logger } from "../config";
 import { JobFailure } from "../errors";
 import { assertPublicUrl } from "../fetch-source";

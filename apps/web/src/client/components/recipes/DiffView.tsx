@@ -1,5 +1,5 @@
-import type { DiffEntry, RecipeDiff } from "@kochen/contracts";
-import { formatIngredient } from "@kochen/core";
+import type { DiffEntry, RecipeDiff } from "@rezeptor/contracts";
+import { formatIngredient } from "@rezeptor/core";
 import { cn } from "../../lib/utils";
 import { durationLabel } from "./format";
 

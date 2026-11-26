@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import type { FilterDsl, SearchResult } from "@kochen/contracts";
+import type { FilterDsl, SearchResult } from "@rezeptor/contracts";
 import { AlertTriangle, Search, Sparkles } from "lucide-react";
 import { ApiError, api, qk } from "../lib/api";
 import {

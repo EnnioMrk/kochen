@@ -2,7 +2,7 @@ import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import heicConvert from "heic-convert";
 import sharp from "sharp";
-import type { Limits } from "@kochen/contracts";
+import type { Limits } from "@rezeptor/contracts";
 import { env } from "../config";
 import { JobFailure } from "../errors";
 import { derivedKey, getObject, putObject } from "../media";
@@ -159,7 +159,7 @@ export async function preparePdf(keys: string[], limits: Limits): Promise<Prepar
     throw new JobFailure("invalid_source", "Die Datei ist kein gültiges PDF.");
   }
 
-  const dir = await mkdtemp(join(env.tmpRoot, "kochen-pdf-"));
+  const dir = await mkdtemp(join(env.tmpRoot, "rezeptor-pdf-"));
   try {
     const pdfPath = join(dir, "source.pdf");
     await writeFile(pdfPath, bytes);
@@ -237,7 +237,7 @@ export async function prepareAudio(keys: string[], limits: Limits): Promise<Prep
   }
 
   const warnings: string[] = [];
-  const dir = await mkdtemp(join(env.tmpRoot, "kochen-audio-"));
+  const dir = await mkdtemp(join(env.tmpRoot, "rezeptor-audio-"));
   try {
     const inputPath = join(dir, `source.${info.extension}`);
     await writeFile(inputPath, bytes);

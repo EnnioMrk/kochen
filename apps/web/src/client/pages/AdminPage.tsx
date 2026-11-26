@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { PlatformCredential, PlatformName, PlatformTestStatus } from "@kochen/contracts";
+import type { PlatformCredential, PlatformName, PlatformTestStatus } from "@rezeptor/contracts";
 import { KeyRound } from "lucide-react";
 import { api, qk } from "../lib/api";
 import { useMe } from "../lib/session";

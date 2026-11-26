@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import type { RecipeInput, UnitKey } from "@kochen/contracts";
+import type { RecipeInput, UnitKey } from "@rezeptor/contracts";
 import { AlertTriangle, ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { Badge, Button, Card, Field, IconButton, Input, Select, Textarea } from "../ui";
 

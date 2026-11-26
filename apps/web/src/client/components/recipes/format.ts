@@ -1,4 +1,4 @@
-import type { SourceType, Visibility } from "@kochen/contracts";
+import type { SourceType, Visibility } from "@rezeptor/contracts";
 
 export const VISIBILITY_LABEL: Record<Visibility, string> = {
   private: "Privat",

@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import type { Profile } from "@kochen/contracts";
-import { db } from "@kochen/db";
+import type { Profile } from "@rezeptor/contracts";
+import { db } from "@rezeptor/db";
 import { requireUser } from "../auth";
 import { env } from "../env";
 import { forbidden, invalid, notFound, ok } from "../errors";

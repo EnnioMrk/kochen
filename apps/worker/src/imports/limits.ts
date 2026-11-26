@@ -1,5 +1,5 @@
-import { DEFAULT_LIMITS, Limits } from "@kochen/contracts";
-import { db } from "@kochen/db";
+import { DEFAULT_LIMITS, Limits } from "@rezeptor/contracts";
+import { db } from "@rezeptor/db";
 import { logger } from "../config";
 
 /** Operator-editable limits, read before a job starts. */

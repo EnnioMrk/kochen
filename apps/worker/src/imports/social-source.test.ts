@@ -1,4 +1,4 @@
-import type { Limits } from "@kochen/contracts";
+import type { Limits } from "@rezeptor/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { VideoMaterial } from "./video";
 

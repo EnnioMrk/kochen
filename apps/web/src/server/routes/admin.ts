@@ -5,9 +5,9 @@ import {
   PlatformCredentialInput,
   PlatformName,
   PlatformTestResult,
-} from "@kochen/contracts";
-import { sealSecret, cookieSessionProblem } from "@kochen/core";
-import { db } from "@kochen/db";
+} from "@rezeptor/contracts";
+import { sealSecret, cookieSessionProblem } from "@rezeptor/core";
+import { db } from "@rezeptor/db";
 import { requireUser } from "../auth";
 import { forbidden, invalid, notFound, ok, ApiError } from "../errors";
 import { body, idParam } from "../validate";

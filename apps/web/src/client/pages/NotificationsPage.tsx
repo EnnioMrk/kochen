@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Notification as AppNotification } from "@kochen/contracts";
+import type { Notification as AppNotification } from "@rezeptor/contracts";
 import {
   Bell,
   Check,

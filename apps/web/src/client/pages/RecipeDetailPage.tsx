@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { RecipeDetail, RecipeDiff } from "@kochen/contracts";
+import type { RecipeDetail, RecipeDiff } from "@rezeptor/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Archive,
@@ -95,13 +95,13 @@ export function RecipeDetailPage() {
   const [coverOpen, setCoverOpen] = useState(false);
 
   /* The private link token lives in the URL once, then only in sessionStorage.
-     api() reads `kochen.link:<id>` and sends it as x-link-token. */
+     api() reads `rezeptor.link:<id>` and sends it as x-link-token. */
   useEffect(() => {
     if (!id) return;
     const token = searchParams.get("link");
     if (token) {
       try {
-        sessionStorage.setItem(`kochen.link:${id}`, token);
+        sessionStorage.setItem(`rezeptor.link:${id}`, token);
       } catch {
         // Storage can be blocked; the request then fails with a clear message.
       }

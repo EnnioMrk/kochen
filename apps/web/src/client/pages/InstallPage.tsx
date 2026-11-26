@@ -58,7 +58,7 @@ export function InstallPage() {
       <div className="mt-8 flex items-center gap-3">
         <img src="/icon.svg" alt="" aria-hidden className="size-14" />
         <div>
-          <h1 className="text-3xl leading-tight">Kochen als App</h1>
+          <h1 className="text-3xl leading-tight">Rezeptor als App</h1>
           <p className="mt-1 text-sm text-ink-soft">Auf dem Home-Bildschirm. Ohne App Store.</p>
         </div>
       </div>
@@ -71,7 +71,7 @@ export function InstallPage() {
               Die App ist installiert.
             </p>
             <p className="text-sm leading-relaxed text-ink-soft">
-              Öffne Kochen über das Symbol auf dem Home-Bildschirm. Die Seite hier kannst du schließen.
+              Öffne Rezeptor über das Symbol auf dem Home-Bildschirm. Die Seite hier kannst du schließen.
             </p>
             <Button className="w-full" onClick={() => navigate("/")}>
               App öffnen
@@ -94,7 +94,7 @@ export function InstallPage() {
             {available ? (
               <p className="text-sm leading-relaxed text-ink-soft">
                 Ein Tipp auf den Knopf öffnet das Installationsfenster des Browsers. Danach steht
-                Kochen im App-Menü und auf dem Home-Bildschirm.
+                Rezeptor im App-Menü und auf dem Home-Bildschirm.
               </p>
             ) : ios ? (
               <div className="space-y-2">

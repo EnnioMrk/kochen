@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { DEFAULT_LIMITS, type Limits } from "@kochen/contracts";
+import { DEFAULT_LIMITS, type Limits } from "@rezeptor/contracts";
 import { Camera } from "lucide-react";
 import { api, qk } from "../../lib/api";
 import { cn } from "../../lib/utils";

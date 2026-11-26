@@ -1,11 +1,16 @@
 // App shell only. No recipe data is cached: offline is out of scope.
-const SHELL = "kochen-shell-v1";
+const SHELL = "rezeptor-shell-v1";
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(SHELL).then((cache) => cache.addAll(["/", "/manifest.webmanifest", "/icon.svg"])));
   self.skipWaiting();
 });
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((key) => key.startsWith("kochen-")).map((key) => caches.delete(key))))
+      .then(() => self.clients.claim()),
+  );
 });
 self.addEventListener("fetch", (event) => {
   const request = event.request;
@@ -15,7 +20,7 @@ self.addEventListener("fetch", (event) => {
   );
 });
 self.addEventListener("push", (event) => {
-  let data = { title: "Kochen", body: "Neues Ereignis", url: "/" };
+  let data = { title: "Rezeptor", body: "Neues Ereignis", url: "/" };
   try { data = { ...data, ...event.data.json() }; } catch {}
   event.waitUntil(
     self.registration.showNotification(data.title, {

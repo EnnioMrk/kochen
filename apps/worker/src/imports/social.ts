@@ -1,4 +1,4 @@
-import type { Limits } from "@kochen/contracts";
+import type { Limits } from "@rezeptor/contracts";
 import { JobFailure } from "../errors";
 import { assertPublicUrl, fetchPage } from "../fetch-source";
 import { prepareLink, type LinkMaterial } from "./link";

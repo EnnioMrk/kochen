@@ -1,4 +1,4 @@
-import { db } from "@kochen/db";
+import { db } from "@rezeptor/db";
 import webpush from "web-push";
 import { env, logger } from "../config";
 import { failJob, finishJob, type JobRow } from "../queue";
@@ -76,10 +76,10 @@ export function pushText(kind: string, payload: Record<string, unknown>): PushTe
       };
     default:
       return {
-        title: "Kochen",
+        title: "Rezeptor",
         body: "Es gibt etwas Neues für dich.",
         url: `${env.appOrigin}/benachrichtigungen`,
-        tag: "kochen",
+        tag: "rezeptor",
       };
   }
 }

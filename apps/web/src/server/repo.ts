@@ -1,6 +1,6 @@
-import { accessFor, type Access } from "@kochen/core";
-import type { RecipeDetail, RecipeSummary, Comment } from "@kochen/contracts";
-import { db } from "@kochen/db";
+import { accessFor, type Access } from "@rezeptor/core";
+import type { RecipeDetail, RecipeSummary, Comment } from "@rezeptor/contracts";
+import { db } from "@rezeptor/db";
 import { sha256hex } from "./crypto";
 import { notFound } from "./errors";
 import { signedGet } from "./media";

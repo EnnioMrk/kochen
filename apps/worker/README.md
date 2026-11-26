@@ -1,4 +1,4 @@
-# Kochen worker
+# Rezeptor worker
 
 Background worker for imports, PDF export, timers and Web Push. It claims jobs
 from Postgres (`jobs`), does the media and AI work, and writes the result back.
@@ -39,7 +39,7 @@ tokens, recipe text, transcripts or job payloads.
 ```bash
 # from the repository root
 bun install
-DATABASE_URL=postgres://kochen:kochen@localhost:5432/kochen \
+DATABASE_URL=postgres://rezeptor:rezeptor@localhost:5432/rezeptor \
 APP_ORIGIN=http://localhost:5173 \
 bun run apps/worker/src/index.ts
 ```

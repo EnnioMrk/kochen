@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { RecipeInput, ForkInput, CommentInput, Visibility, type Stars } from "@kochen/contracts";
-import { assertRating, canRate, diffLines, INGREDIENT_DIFF_FIELDS, STEP_DIFF_FIELDS, scaleAmount } from "@kochen/core";
-import { db } from "@kochen/db";
+import { RecipeInput, ForkInput, CommentInput, Visibility, type Stars } from "@rezeptor/contracts";
+import { assertRating, canRate, diffLines, INGREDIENT_DIFF_FIELDS, STEP_DIFF_FIELDS, scaleAmount } from "@rezeptor/core";
+import { db } from "@rezeptor/db";
 import { requireUser } from "../auth";
 import { ApiError, conflict, forbidden, invalid, notFound, ok } from "../errors";
 import { randomToken, sha256hex } from "../crypto";

@@ -1,4 +1,4 @@
-# Kochen
+# Rezeptor
 
 A private German recipe PWA for a family and their friends. Members capture
 recipes from photos, links, video or text, cook them with timers, keep
@@ -51,9 +51,9 @@ Prerequisites: Bun 1.4+, PostgreSQL 17, Node 22 for the worker.
 
 ```bash
 bun install
-createdb kochen
+createdb rezeptor
 
-export DATABASE_URL=postgres://kochen:kochen@localhost:5432/kochen
+export DATABASE_URL=postgres://rezeptor:rezeptor@localhost:5432/rezeptor
 bun run scripts/migrate.ts
 
 # API on :3000, dev auth enabled

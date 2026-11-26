@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { PushSubscriptionInput, TimerInput } from "@kochen/contracts";
-import { db } from "@kochen/db";
+import { PushSubscriptionInput, TimerInput } from "@rezeptor/contracts";
+import { db } from "@rezeptor/db";
 import { requireUser } from "../auth";
 import { env } from "../env";
 import { invalid, notFound, ok } from "../errors";

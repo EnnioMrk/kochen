@@ -6,7 +6,7 @@ import type { LookupAddress } from "node:dns";
 import { brotliDecompressSync, gunzipSync, inflateSync } from "node:zlib";
 import { Readability } from "@mozilla/readability";
 import { JSDOM } from "jsdom";
-import { parseAmount, detectBaking } from "@kochen/core";
+import { parseAmount, detectBaking } from "@rezeptor/core";
 import { JobFailure } from "./errors";
 
 const MAX_BYTES = 5 * 1024 * 1024;

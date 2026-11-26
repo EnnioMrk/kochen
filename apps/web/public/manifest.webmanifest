@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Kochen",
-  "short_name": "Kochen",
+  "name": "Rezeptor",
+  "short_name": "Rezeptor",
   "description": "Rezepte per Link oder Foto erfassen, prüfen und kochen.",
   "start_url": "/",
   "scope": "/",

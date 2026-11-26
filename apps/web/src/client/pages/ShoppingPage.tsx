@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import type { RecipeSummary, ShoppingList } from "@kochen/contracts";
+import type { RecipeSummary, ShoppingList } from "@rezeptor/contracts";
 import { AlertTriangle, Check, Info, Plus, Search, ShoppingBasket, Trash2, X } from "lucide-react";
 import { ApiError, api, qk } from "../lib/api";
 import {
@@ -18,7 +18,7 @@ import {
 import { Stepper } from "../components/social/Stepper";
 import { cn } from "../lib/utils";
 
-const STORAGE_KEY = "kochen.shopping";
+const STORAGE_KEY = "rezeptor.shopping";
 
 type Selection = { recipeId: string; title: string; owner: string; servings: number };
 type ShoppingItem = ShoppingList["items"][number];

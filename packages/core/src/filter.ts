@@ -1,4 +1,4 @@
-import type { FilterDsl } from "@kochen/contracts";
+import type { FilterDsl } from "@rezeptor/contracts";
 
 export class FilterValidationError extends Error {
   constructor(message: string) {

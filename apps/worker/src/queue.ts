@@ -1,4 +1,4 @@
-import { db } from "@kochen/db";
+import { db } from "@rezeptor/db";
 import { logger } from "./config";
 import { isRetryableCode } from "./errors";
 

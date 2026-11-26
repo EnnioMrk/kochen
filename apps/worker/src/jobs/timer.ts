@@ -1,4 +1,4 @@
-import { db, tx } from "@kochen/db";
+import { db, tx } from "@rezeptor/db";
 import { logger } from "../config";
 import { failJob, finishJob, type JobRow } from "../queue";
 

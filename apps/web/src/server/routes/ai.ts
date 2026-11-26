@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { AiQuestion } from "@kochen/contracts";
-import { db } from "@kochen/db";
+import { AiQuestion } from "@rezeptor/contracts";
+import { db } from "@rezeptor/db";
 import { requireUser } from "../auth";
 import { aiCall, rateLimit } from "../ai";
 import { notFound, ok } from "../errors";
@@ -16,7 +16,7 @@ ai.post("/answer", async (c) => {
   const user = c.get("user");
   const input = await body(c, AiQuestion);
   rateLimit(`ai-answer:${user.id}`, 20);
-  let recipe: { title: string; servings: number; description: string | null; ingredients: import("@kochen/contracts").Ingredient[]; steps: import("@kochen/contracts").RecipeStep[] } | undefined;
+  let recipe: { title: string; servings: number; description: string | null; ingredients: import("@rezeptor/contracts").Ingredient[]; steps: import("@rezeptor/contracts").RecipeStep[] } | undefined;
   if (input.recipeId) {
     const visible = await requireVisible(user.id, input.recipeId, linkToken(c));
     const { ingredients, steps, ...rest } = await (await import("../repo")).detailFor(visible.row, visible.access, user.id);

@@ -1,4 +1,4 @@
-import type { RecipeSummary } from "@kochen/contracts";
+import type { RecipeSummary } from "@rezeptor/contracts";
 import { ChefHat, Lock, UtensilsCrossed } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Avatar, Badge, Card, MediaImage, Skeleton, Stars } from "../ui";

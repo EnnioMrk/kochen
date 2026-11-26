@@ -1,4 +1,4 @@
-import { FilterDsl, type RecipeDetail } from "@kochen/contracts";
+import { FilterDsl, type RecipeDetail } from "@rezeptor/contracts";
 
 export type ExtractionInput = {
   /** Images as base64 JPEG/PNG, or one audio clip, or plain text. */

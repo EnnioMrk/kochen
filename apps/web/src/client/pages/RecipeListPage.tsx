@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { RecipeSummary, Tag } from "@kochen/contracts";
+import type { RecipeSummary, Tag } from "@rezeptor/contracts";
 import { useQuery } from "@tanstack/react-query";
 import { Archive, BookOpen, Link2, Plus, Search, SlidersHorizontal } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";

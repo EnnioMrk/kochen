@@ -1,7 +1,7 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { openSecret } from "@kochen/core";
-import { db } from "@kochen/db";
+import { openSecret } from "@rezeptor/core";
+import { db } from "@rezeptor/db";
 import {
   hasInstagramSession,
   instagramCookiesWithSession,

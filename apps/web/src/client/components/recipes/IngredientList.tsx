@@ -1,10 +1,10 @@
-import type { Ingredient } from "@kochen/contracts";
+import type { Ingredient } from "@rezeptor/contracts";
 import {
   formatAmount,
   presentAmount,
   scaleAmount,
   unitLabel,
-} from "@kochen/core";
+} from "@rezeptor/core";
 import { Check, Minus, Plus } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { IconButton } from "../ui";

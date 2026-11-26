@@ -1,4 +1,4 @@
-import type { postgres } from "@kochen/db";
+import type { postgres } from "@rezeptor/db";
 
 type Tx = postgres.TransactionSql<Record<string, unknown>>;
 

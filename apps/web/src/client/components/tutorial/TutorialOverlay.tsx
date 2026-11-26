@@ -248,8 +248,8 @@ export function TutorialOverlay({ onClose }: { onClose: () => void }) {
         ref={cardRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="kochen-tour-title"
-        aria-describedby="kochen-tour-body"
+        aria-labelledby="rezeptor-tour-title"
+        aria-describedby="rezeptor-tour-body"
         tabIndex={-1}
         className="tap absolute max-h-[calc(100dvh-32px)] overflow-y-auto rounded-[var(--radius-card)] border border-line bg-paper p-5 shadow-2xl outline-none"
         style={cardStyle}
@@ -257,10 +257,10 @@ export function TutorialOverlay({ onClose }: { onClose: () => void }) {
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft">
           Tour · {index + 1} von {TOUR_STEPS.length}
         </p>
-        <h2 id="kochen-tour-title" className="mt-1 text-xl leading-tight">
+        <h2 id="rezeptor-tour-title" className="mt-1 text-xl leading-tight">
           {step?.title}
         </h2>
-        <p id="kochen-tour-body" aria-live="polite" className="mt-2 text-sm leading-relaxed text-ink-soft">
+        <p id="rezeptor-tour-body" aria-live="polite" className="mt-2 text-sm leading-relaxed text-ink-soft">
           {step?.body}
         </p>
 

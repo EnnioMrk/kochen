@@ -1,5 +1,5 @@
 {
-  "name": "@kochen/worker",
+  "name": "@rezeptor/worker",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,10 +10,10 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1165.0",
     "@aws-sdk/s3-request-presigner": "^3.1165.0",
-    "@kochen/ai": "workspace:*",
-    "@kochen/contracts": "workspace:*",
-    "@kochen/core": "workspace:*",
-    "@kochen/db": "workspace:*",
+    "@rezeptor/ai": "workspace:*",
+    "@rezeptor/contracts": "workspace:*",
+    "@rezeptor/core": "workspace:*",
+    "@rezeptor/db": "workspace:*",
     "@mozilla/readability": "^0.5.0",
     "heic-convert": "^2.1.0",
     "jsdom": "^25.0.1",

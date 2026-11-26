@@ -11,7 +11,7 @@ export default {
 console.log(
   JSON.stringify({
     level: "info",
-    message: "kochen_started",
+    message: "rezeptor_started",
     port: env.port,
     production: env.production,
     devAuth: env.devAuth,

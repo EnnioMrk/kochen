@@ -1,7 +1,7 @@
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import sharp from "sharp";
-import type { Limits } from "@kochen/contracts";
+import type { Limits } from "@rezeptor/contracts";
 import { env } from "../config";
 import { JobFailure } from "../errors";
 import { getObject, mediaKey, putObject } from "../media";
@@ -57,7 +57,7 @@ async function readCookies(dir: string): Promise<string | null> {
 
 /** A URL source: metadata first, then the duration limit. Never cut. */
 export async function prepareVideo(url: string, limits: Limits): Promise<VideoMaterial> {
-  const dir = await mkdtemp(join(env.tmpRoot, "kochen-video-"));
+  const dir = await mkdtemp(join(env.tmpRoot, "rezeptor-video-"));
   try {
     const auth = await loginArgs(url, dir);
     let meta: Record<string, unknown>;
@@ -167,7 +167,7 @@ export async function prepareVideoFile(keys: string[], limits: Limits): Promise<
     );
   }
 
-  const dir = await mkdtemp(join(env.tmpRoot, "kochen-video-"));
+  const dir = await mkdtemp(join(env.tmpRoot, "rezeptor-video-"));
   try {
     const input = join(dir, `source.${info.extension}`);
     await writeFile(input, bytes);

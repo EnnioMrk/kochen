@@ -12,9 +12,9 @@ export type TourStep = {
 
 export const TOUR_STEPS: TourStep[] = [
   {
-    title: "Willkommen bei Kochen",
+    title: "Willkommen bei Rezeptor",
     body:
-      "Kochen sammelt deine Rezepte an einem Ort. Die Tour zeigt dir die wichtigsten Stellen in einer Minute. Du kannst sie jederzeit überspringen.",
+      "Rezeptor sammelt deine Rezepte an einem Ort. Die Tour zeigt dir die wichtigsten Stellen in einer Minute. Du kannst sie jederzeit überspringen.",
   },
   {
     target: "capture",

@@ -1,4 +1,4 @@
-import { db } from "@kochen/db";
+import { db } from "@rezeptor/db";
 import { deleteObject } from "./media";
 
 /** A deleted recipe stays restorable for this many days. */

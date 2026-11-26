@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
-import { db } from "@kochen/db";
+import { db } from "@rezeptor/db";
 import { env } from "./env";
 import { errorResponse, notFound } from "./errors";
 import { recipes } from "./routes/recipes";

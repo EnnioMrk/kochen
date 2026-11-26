@@ -1,4 +1,4 @@
-import { createProvider, AiUnavailableError, type AiProvider } from "@kochen/ai";
+import { createProvider, AiUnavailableError, type AiProvider } from "@rezeptor/ai";
 import { aiUnavailable, rateLimited } from "./errors";
 
 let provider: AiProvider | null = null;

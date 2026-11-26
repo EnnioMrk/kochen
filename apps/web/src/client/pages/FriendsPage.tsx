@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { PublicUser } from "@kochen/contracts";
+import type { PublicUser } from "@rezeptor/contracts";
 import { Check, Copy, QrCode, RefreshCw, UserPlus, Users, X } from "lucide-react";
 import { ApiError, api, qk } from "../lib/api";
 import { useMe } from "../lib/session";

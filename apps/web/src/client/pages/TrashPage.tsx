@@ -1,4 +1,4 @@
-import type { RecipeSummary } from "@kochen/contracts";
+import type { RecipeSummary } from "@rezeptor/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { RotateCcw, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";

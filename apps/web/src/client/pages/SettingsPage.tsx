@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Limits } from "@kochen/contracts";
+import type { Limits } from "@rezeptor/contracts";
 import { LogOut, Shield, Sparkles } from "lucide-react";
 import { api, logout, qk } from "../lib/api";
 import { useMe } from "../lib/session";
@@ -227,7 +227,7 @@ export function SettingsPage() {
         <dl className="mt-2 space-y-2 text-sm">
           <div className="flex flex-wrap justify-between gap-2">
             <dt className="text-ink-soft">Name</dt>
-            <dd className="text-ink">Kochen</dd>
+            <dd className="text-ink">Rezeptor</dd>
           </div>
           <div className="flex flex-wrap justify-between gap-2">
             <dt className="text-ink-soft">Version</dt>

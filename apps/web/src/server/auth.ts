@@ -1,6 +1,6 @@
 import type { MiddlewareHandler } from "hono";
 import { createRemoteJWKSet, jwtVerify } from "jose";
-import { db } from "@kochen/db";
+import { db } from "@rezeptor/db";
 import { env } from "./env";
 import { notMember, unauthenticated } from "./errors";
 

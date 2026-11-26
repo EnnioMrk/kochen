@@ -1,6 +1,6 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { db } from "@kochen/db";
+import { db } from "@rezeptor/db";
 import { logger, env } from "../config";
 import { JobFailure } from "../errors";
 import { escapeHtml } from "../media-inspect";
@@ -101,7 +101,7 @@ async function processExport(job: JobRow): Promise<void> {
   }
 
   const html = renderRecipeHtml(recipe, ingredients, steps, coverUrl);
-  const dir = await mkdtemp(join(env.tmpRoot, "kochen-export-"));
+  const dir = await mkdtemp(join(env.tmpRoot, "rezeptor-export-"));
   try {
     const htmlPath = join(dir, "recipe.html");
     const pdfPath = join(dir, "recipe.pdf");

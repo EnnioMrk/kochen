@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { DEFAULT_LIMITS, ImportInput, Limits, PresignInput, RecipeInput } from "@kochen/contracts";
-import { db } from "@kochen/db";
+import { DEFAULT_LIMITS, ImportInput, Limits, PresignInput, RecipeInput } from "@rezeptor/contracts";
+import { db } from "@rezeptor/db";
 import { requireUser } from "../auth";
 import { forbidden, invalid, limitExceeded, notFound, ok } from "../errors";
 import { presignPut, mediaKey, signedGet, deleteObject } from "../media";
@@ -257,7 +257,7 @@ import { env } from "../env";
 import { readFile, writeFile, mkdir, unlink } from "node:fs/promises";
 import { join } from "node:path";
 
-const devDir = "/tmp/opencode/kochen-media";
+const devDir = "/tmp/opencode/rezeptor-media";
 
 export const devMedia = new Hono();
 

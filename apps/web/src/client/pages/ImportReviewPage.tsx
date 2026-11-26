@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ImportJob, JobState, RecipeInput } from "@kochen/contracts";
+import type { ImportJob, JobState, RecipeInput } from "@rezeptor/contracts";
 import { AlertTriangle, Check, Clock, ImagePlus, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { api, qk } from "../lib/api";
 import {

@@ -1,6 +1,6 @@
-import type { ShoppingItem } from "@kochen/contracts";
+import type { ShoppingItem } from "@rezeptor/contracts";
 import type { z } from "zod";
-import { ShoppingItem as ShoppingItemSchema } from "@kochen/contracts";
+import { ShoppingItem as ShoppingItemSchema } from "@rezeptor/contracts";
 import { mergeAmount, presentAmount, scaleAmount, unitOf } from "./units";
 
 export type ShoppingSource = {

@@ -1,7 +1,7 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import type { Profile } from "@kochen/contracts";
+import type { Profile } from "@rezeptor/contracts";
 import { BookOpen, ChevronLeft, Settings, UserPlus, Users } from "lucide-react";
 import { api, qk } from "../lib/api";
 import { useMe } from "../lib/session";
