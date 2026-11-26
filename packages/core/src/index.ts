@@ -5,6 +5,7 @@ export * from "./diff";
 export * from "./filter";
 export * from "./shopping";
 export * from "./normalize";
+export * from "./source-cache";
 export * from "./import-quality";
 export * from "./secrets";
 export * from "./platform-cookies";

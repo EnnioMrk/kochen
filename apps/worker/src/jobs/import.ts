@@ -10,10 +10,11 @@ import {
   type RecipeInput as RecipeInputType,
   type SourceType,
 } from "@kochen/contracts";
-import { normalizeDraft, type RawDraft } from "@kochen/core";
+import { normalizeDraft, sourceCacheKey, type RawDraft } from "@kochen/core";
 import { logger } from "../config";
 import { JobFailure } from "../errors";
 import { assertPublicUrl } from "../fetch-source";
+import { readAnalysisCache, writeAnalysisCache } from "../imports/analysis-cache";
 import { loadLimits } from "../imports/limits";
 import {
   prepareAudio,
@@ -274,6 +275,36 @@ async function processImport(job: JobRow): Promise<void> {
   const limits = await loadLimits();
   const warnings: string[] = [];
 
+  // One link is read once. A known link skips fetch, download and the model.
+  const cacheKey = payload.url ? sourceCacheKey(payload.url) : null;
+  if (cacheKey) {
+    const cached = await readAnalysisCache(cacheKey);
+    const parsedCached = cached ? RecipeInput.safeParse(cached.draft) : null;
+    if (cached && parsedCached?.success) {
+      await setState(job.id, "understanding", 90);
+      const cachedPatch: Record<string, unknown> = {
+        draft: parsedCached.data,
+        warnings: cached.warnings,
+        asksForScreenshot: cached.asksForScreenshot,
+        servingsEstimated: cached.servingsEstimated,
+        sourceLang: cached.sourceLang,
+        keys: [],
+        sourceKeys: [],
+        signals: cached.signals,
+        captionWeak: cached.captionWeak,
+        cached: true,
+      };
+      if (cached.rawText) cachedPatch.rawText = cached.rawText;
+      if (cached.transcript) cachedPatch.transcript = cached.transcript;
+      await finishJob(job.id, "needs_review", cachedPatch);
+      logger.info(
+        { jobId: job.id, kind: job.kind, state: "needs_review", cached: true },
+        "import_finished",
+      );
+      return;
+    }
+  }
+
   await setState(job.id, "fetching", 10);
 
   let audio: PreparedAudio | null = null;
@@ -441,7 +472,25 @@ async function processImport(job: JobRow): Promise<void> {
   if (parsed.data.rawText) patch.rawText = parsed.data.rawText;
   if (parsed.data.transcript) patch.transcript = parsed.data.transcript;
 
+  // Keep the result for the next import of the same link.
+  if (cacheKey && sourceUrl) {
+    await writeAnalysisCache({
+      urlKey: cacheKey,
+      sourceUrl,
+      draft: parsed.data,
+      warnings: allWarnings,
+      asksForScreenshot: normalized.asksForScreenshot,
+      servingsEstimated: normalized.servingsEstimated,
+      sourceLang: parsed.data.originalLang ?? null,
+      signals: sourceSignals,
+      captionWeak,
+      rawText: typeof patch.rawText === "string" ? patch.rawText : null,
+      transcript: typeof patch.transcript === "string" ? patch.transcript : null,
+    });
+  }
+
   await finishJob(job.id, "needs_review", patch);
+
   logger.info(
     {
       jobId: job.id,

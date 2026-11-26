@@ -50,13 +50,19 @@ social.patch("/me", async (c) => {
     z.object({
       friendListVisible: z.boolean().optional(),
       cookingView: z.enum(["steps", "overview"]).optional(),
+      tutorialDone: z.boolean().optional(),
     }),
   );
   const sql = db();
   await sql`
     update users set
       friend_list_visible = coalesce(${input.friendListVisible ?? null}, friend_list_visible),
-      cooking_view = coalesce(${input.cookingView ?? null}, cooking_view)
+      cooking_view = coalesce(${input.cookingView ?? null}, cooking_view),
+      tutorial_done_at = case
+        when ${input.tutorialDone === undefined} then tutorial_done_at
+        when ${input.tutorialDone === true} then now()
+        else null
+      end
     where id = ${user.id}
   `;
   return ok(c, { updated: true });

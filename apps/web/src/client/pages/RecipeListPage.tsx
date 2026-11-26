@@ -7,7 +7,6 @@ import { api, qk } from "../lib/api";
 import { cn, errorText, plural } from "../lib/utils";
 import { Button, EmptyState, PageHeader } from "../components/ui";
 import { RecipeCard, RecipeCardSkeleton } from "../components/recipes/RecipeCard";
-import { CaptureBar } from "../components/capture/CaptureBar";
 
 const linkButton =
   "tap inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-sm font-medium text-ink shadow-sm transition hover:border-ink/30";
@@ -58,76 +57,60 @@ export function RecipeListPage({ scope }: { scope: "mine" | "all" }) {
         }
         actions={
           <>
-            <Button onClick={() => navigate("/erfassen")}>
-              <Link2 className="size-4" />
-              Rezept erfassen
+            <Button
+              variant={archived ? "sage" : "secondary"}
+              size="sm"
+              aria-pressed={archived}
+              onClick={() => setArchived((current) => !current)}
+            >
+              <Archive className="size-4" />
+              Archiv
             </Button>
-            <Button variant="secondary" onClick={() => navigate("/neu")}>
-              <Plus className="size-4" />
-              <span className="sm:hidden">Neu</span>
-              <span className="hidden sm:inline">Selbst schreiben</span>
-            </Button>
+            <Link to="/suche" className={cn(linkButton, "max-sm:hidden")}>
+              <Search className="size-4" />
+              Suche
+            </Link>
           </>
         }
       />
 
-      {scope === "mine" && <CaptureBar />}
-
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="no-scrollbar scroll-fade -mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0">
-          <span className="mr-1 inline-flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-[0.1em] text-ink-soft">
-            <SlidersHorizontal className="size-3.5" />
-            Tags
-          </span>
-          {visibleTags.length === 0 && (
-            <span className="shrink-0 text-xs text-ink-soft">Noch keine Tags.</span>
-          )}
-          {visibleTags.map((tag) => {
-            const active = selectedTags.includes(tag.slug);
-            return (
-              <button
-                key={tag.slug}
-                type="button"
-                aria-pressed={active}
-                onClick={() => toggleTag(tag.slug)}
-                className={cn(
-                  "tap tap-target min-h-9 shrink-0 rounded-full border px-3 text-xs font-medium transition",
-                  active
-                    ? "border-ink bg-ink text-white"
-                    : "border-line bg-white text-ink-soft hover:border-ink/30 hover:text-ink",
-                )}
-              >
-                {tag.label}
-              </button>
-            );
-          })}
-          {selectedTags.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="shrink-0 text-xs"
-              onClick={() => setSelectedTags([])}
+      <div className="no-scrollbar scroll-fade -mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0">
+        <span className="mr-1 inline-flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-[0.1em] text-ink-soft">
+          <SlidersHorizontal className="size-3.5" />
+          Tags
+        </span>
+        {visibleTags.length === 0 && (
+          <span className="shrink-0 text-xs text-ink-soft">Noch keine Tags.</span>
+        )}
+        {visibleTags.map((tag) => {
+          const active = selectedTags.includes(tag.slug);
+          return (
+            <button
+              key={tag.slug}
+              type="button"
+              aria-pressed={active}
+              onClick={() => toggleTag(tag.slug)}
+              className={cn(
+                "tap tap-target min-h-9 shrink-0 rounded-full border px-3 text-xs font-medium transition",
+                active
+                  ? "border-ink bg-ink text-white"
+                  : "border-line bg-white text-ink-soft hover:border-ink/30 hover:text-ink",
+              )}
             >
-              Filter zurücksetzen
-            </Button>
-          )}
-        </div>
-
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {tag.label}
+            </button>
+          );
+        })}
+        {selectedTags.length > 0 && (
           <Button
-            variant={archived ? "sage" : "secondary"}
+            variant="ghost"
             size="sm"
-            aria-pressed={archived}
-            onClick={() => setArchived((current) => !current)}
+            className="shrink-0 text-xs"
+            onClick={() => setSelectedTags([])}
           >
-            <Archive className="size-4" />
-            Archiv
+            Filter zurücksetzen
           </Button>
-          <Link to="/suche" className={cn(linkButton, "max-sm:hidden")}>
-            <Search className="size-4" />
-            Suche
-          </Link>
-        </div>
+        )}
       </div>
 
       {archived && (
@@ -182,7 +165,7 @@ export function RecipeListPage({ scope }: { scope: "mine" | "all" }) {
               </Button>
             ) : scope === "mine" ? (
               <div className="flex flex-wrap items-center justify-center gap-2">
-                <Button onClick={() => navigate("/erfassen")}>
+                <Button onClick={() => navigate("/erfassen")} data-tour="capture">
                   <Link2 className="size-4" />
                   Rezept per Link erfassen
                 </Button>

@@ -13,6 +13,7 @@ export type LocalUser = {
   avatarUrl: string | null;
   friendListVisible: boolean;
   cookingView: "steps" | "overview";
+  tutorialDone: boolean;
   deletedAt: string | null;
 };
 
@@ -101,6 +102,7 @@ export async function upsertUser(claims: TokenClaims): Promise<LocalUser> {
               avatar_url as "avatarUrl",
               friend_list_visible as "friendListVisible",
               cooking_view as "cookingView",
+              (tutorial_done_at is not null) as "tutorialDone",
               deleted_at as "deletedAt"
   `;
   const user = rows[0];

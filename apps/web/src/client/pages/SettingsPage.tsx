@@ -18,6 +18,7 @@ import {
   useToast,
 } from "../components/ui";
 import { PushControl } from "../components/social/PushControl";
+import { useTutorial } from "../components/tutorial/TutorialProvider";
 
 type Settings = { limits: Limits; features: Record<string, boolean>; appOrigin: string };
 type LimitForm = Record<keyof Limits, string>;
@@ -52,6 +53,7 @@ export function SettingsPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
   const me = useMe();
+  const tutorial = useTutorial();
 
   const [cookingView, setCookingView] = useState<"steps" | "overview">("steps");
   const [friendListVisible, setFriendListVisible] = useState(true);
@@ -247,6 +249,13 @@ export function SettingsPage() {
           >
             App installieren
           </Link>
+          <button
+            type="button"
+            onClick={tutorial.start}
+            className="tap-target inline-flex min-h-11 items-center text-sm font-medium text-brand underline-offset-4 hover:underline"
+          >
+            Tutorial erneut ansehen
+          </button>
           <Link
             to="/papierkorb"
             className="tap-target inline-flex min-h-11 items-center text-sm text-ink-soft underline-offset-4 hover:text-ink hover:underline"

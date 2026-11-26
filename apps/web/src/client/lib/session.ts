@@ -10,6 +10,7 @@ export type SessionUser = {
   avatarUrl: string | null;
   friendListVisible: boolean;
   cookingView: "steps" | "overview";
+  tutorialDone: boolean;
   unreadNotifications?: number;
   friendRequests?: number;
   deletedAt: string | null;
