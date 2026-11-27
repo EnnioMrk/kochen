@@ -16,6 +16,7 @@ import { notifications } from "./routes/notifications";
 import { settings } from "./routes/settings";
 import { admin } from "./routes/admin";
 import { mediaRoutes } from "./routes/media";
+import { preview } from "./preview";
 import { serveStatic } from "hono/bun";
 
 export const app = new Hono();
@@ -46,7 +47,16 @@ app.use("*", secureHeaders({
 app.use("*", async (c, next) => {
   await next();
   c.header("x-robots-tag", "noindex, nofollow, noarchive");
-  c.header("cache-control", c.req.path.startsWith("/api/") ? "private, no-store" : "no-cache");
+  // A route that chose its own caching keeps it: the share card is public and
+  // a chat app may fetch it long after the message.
+  if (c.res.headers.has("cache-control")) return;
+  const path = c.req.path;
+  const cache = path.startsWith("/api/")
+    ? "private, no-store"
+    : path.startsWith("/og/")
+      ? "public, max-age=86400"
+      : "no-cache";
+  c.header("cache-control", cache);
 });
 
 app.use("/api/*", cors({
@@ -98,6 +108,10 @@ app.route("/api/admin", admin);
 app.all("/api/*", () => {
   throw notFound();
 });
+
+// Chat crawlers take the metatags from the first HTML answer. These routes
+// must come before the static SPA fallback.
+app.route("/", preview);
 
 // One process serves the API and the built SPA.
 if (env.production) {

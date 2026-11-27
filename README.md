@@ -18,6 +18,7 @@ The app has no public page. Only approved `ennio.vip` accounts reach it.
 | Cook state | Per person: untested, count, last cooked. A rating needs a cook event. Half stars. One rating per person and recipe. |
 | Variations | Fork keeps `lineage_key` per line. Unlimited chain. Side-by-side diff. Predecessor drift banner. |
 | Social | QR friend invite with two-sided confirmation. Profiles, friend list visibility, comments with one reply level, private links (login required, read and comment only). |
+| Link previews | A shared recipe or invite link shows its title, description and cover in WhatsApp, Telegram and iMessage. The bare site link shows a 1200x630 brand card. |
 | Search | One natural-language field. The model emits a strict filter DSL. Code compiles it to parameterized SQL. No keyword fallback. |
 | Shopping | Several recipes and servings. The member's own latest variation supplies the amounts. Equal units merge; teaspoon and tablespoon stay apart. |
 | Notifications | Web Push + bell list. Comment, reply, friend request, accepted request, new variation, timer end. No email. |
@@ -103,6 +104,21 @@ The script writes the policy and reads it back. The policy allows `PUT`,
 `GET` and `HEAD` from `APP_ORIGIN`, `https://rezeptor.ennio.vip` and
 `http://localhost:5173`, with the `content-type` header and a one-hour cache.
 The dashboard does the same job.
+
+### Link previews
+
+`apps/web/src/server/preview.ts` fills the Open Graph tags for the two routes a
+member shares: `/r/<id>?link=<token>` and `/f/<token>`. It replaces the marked
+block in the built page, so the crawl sees the recipe title and a cover card.
+A crawler has no session, so the link token is the credential and it is checked
+again for `/r/<id>/preview.jpg`.
+
+The static card lives in `apps/web/public/og/`. Regenerate it after a brand
+change:
+
+```bash
+cd apps/web && bun run scripts/og-cards.mjs   # needs Chromium
+```
 
 ### Tests
 

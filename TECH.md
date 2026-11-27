@@ -573,6 +573,20 @@ it); a keyword box next to the AI field (the spec forbids it).
 **Risk:** a private link is a bearer capability. Treat it like a password:
 hash at rest, no logging of the token, rate limit lookups.
 
+### Link previews
+
+A chat app reads the first HTML answer. `apps/web/src/server/preview.ts` serves
+`/r/:id?link=` and `/f/:token` with the marked og block replaced from the row
+the link points at, then `/r/:id/preview.jpg?link=` returns the cover cropped
+to 1200x630. The token is checked again for the image, and the same private
+cache rules apply. Without a valid token, or without a cover, the answer is
+the static card in `apps/web/public/og/`. The site link uses that card from the
+static `index.html`. An invite shows the inviter's name.
+
+**Risk:** the crawler of a chat app is an unauthenticated client. The preview
+must never show a title the token does not already open, so the fallback is the
+site card and not a teaser.
+
 ## 12. Notifications
 
 **Decision:** Web Push with VAPID (`web-push`), plus a notifications table.
@@ -694,6 +708,7 @@ restore cost).
 | Stolen or forged token | Ed25519 verify, `aud` check, 5-min life, HTTPS only |
 | IDOR on recipes, links, comments | One `canView` policy, tests per route, no client-side filtering |
 | Private link leak | 32-byte token, hash at rest, no logs, revocable, login required |
+| Preview leak | A recipe card is built only for a live link token; every other crawler gets the site card |
 | SSRF on link import | Scheme allowlist, private-IP DNS check, redirect and size caps |
 | Malicious upload | Magic-byte check, size cap, `sharp` pixel limit, worker sandbox, no execution |
 | XSS in comments or imported text | No HTML render, React escaping, strict CSP |
