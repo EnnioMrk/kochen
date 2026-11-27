@@ -124,9 +124,10 @@ export function durationFromStepText(text: string): number | null {
 
 /* ------------------------------------------------------------ baking detection */
 
-const TEMPERATURE_PATTERN = /(?<![\d,.])(\d{2,3})\s*(?:°\s*C|grad(?:\s+cel[sz]ius)?)/gi;
+const TEMPERATURE_PATTERN =
+  /(?<![\d,.])(\d{2,3})\s*(?:°\s*([CF])|(?:grad|degrees?)(?:\s+(cel[sz]ius|fahrenheit))?)/gi;
 const MINUTES_PATTERN = /(?<![\d,.])(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?\s*min(?:uten|\.)?/gi;
-const BAKING_CONTEXT = /back|vorheiz|ofen|gebacken/i;
+const BAKING_CONTEXT = /back|bak(?:e|ing)|vorheiz|gebacken|ofen|oven|preheat|roast/i;
 
 const HEAT_MODES: Array<[RegExp, string]> = [
   [/ober[\s\-/]*unter[\s\-]*hitze/i, "Ober-/Unterhitze"],
@@ -150,12 +151,43 @@ function contextNear(text: string, start: number, end: number, radius = 120): st
   return text.slice(Math.max(0, start - radius), Math.min(text.length, end + radius));
 }
 
+/** Round a Celsius value to the nearest multiple of 5. */
+function roundCelsius(value: number): number {
+  return Math.round(value / 5) * 5;
+}
+
+/**
+ * Convert a Fahrenheit oven temperature to Celsius, rounded to 5 °C so the
+ * result reads like a German recipe setting ("350 °F" → "175 °C").
+ */
+export function celsiusFromFahrenheit(fahrenheit: number): number {
+  return roundCelsius(((fahrenheit - 32) * 5) / 9);
+}
+
+function isFahrenheit(scaleLetter?: string, scaleWord?: string): boolean {
+  if (scaleLetter) return scaleLetter.toUpperCase() === "F";
+  return scaleWord ? scaleWord.toLowerCase().startsWith("f") : false;
+}
+
 function findBakingTemperature(text: string): string | null {
   TEMPERATURE_PATTERN.lastIndex = 0;
   let match: RegExpExecArray | null;
   while ((match = TEMPERATURE_PATTERN.exec(text)) !== null) {
-    const degrees = Number(match[1]);
-    if (!Number.isFinite(degrees) || degrees < 50 || degrees > 300) continue;
+    const stated = Number(match[1]);
+    if (!Number.isFinite(stated)) continue;
+    const scaleLetter = match[2];
+    const scaleWord = match[3];
+    let degrees: number;
+    if (isFahrenheit(scaleLetter, scaleWord)) {
+      degrees = celsiusFromFahrenheit(stated);
+    } else if (!scaleLetter && !scaleWord && stated > 300) {
+      // "350 Grad" without a scale: a Celsius oven never goes above 300,
+      // so a US source means Fahrenheit.
+      degrees = celsiusFromFahrenheit(stated);
+    } else {
+      degrees = stated;
+    }
+    if (degrees < 50 || degrees > 300) continue;
     if (!BAKING_CONTEXT.test(contextNear(text, match.index, match.index + match[0].length))) continue;
     const mode = heatModeNear(text, match.index, match.index + match[0].length);
     return `${degrees} °C${mode ? ` ${mode}` : ""}`.slice(0, 80);
@@ -181,8 +213,9 @@ function findBakingTime(text: string): string | null {
  * Find baking temperature and time in any of the given texts.
  *
  * Deterministic and conservative: the temperature needs a 2-3 digit number
- * right next to °C/Grad *and* a baking word (backen/Backofen/vorheizen)
- * nearby, so "180 g Mehl" or a room temperature note never counts. The time
+ * right next to °C/°F/Grad *and* a baking word (backen/Backofen/vorheizen)
+ * nearby, so "180 g Mehl" or a room temperature note never counts. A
+ * Fahrenheit value is converted to Celsius and rounded to 5 °C. The time
  * needs minutes next to a baking word. Anything unsure stays null.
  */
 export function detectBaking(...texts: string[]): {

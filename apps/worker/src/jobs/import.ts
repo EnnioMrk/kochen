@@ -436,7 +436,12 @@ async function processImport(job: JobRow): Promise<void> {
     resultSourceLang = result.sourceLang ?? sourceLang;
   }
 
-  const normalized = normalizeDraft(draftRaw as RawDraft);
+  // The spoken word is a source too: a temperature said in the video must
+  // reach the detector even when no step repeats it.
+  const normalized = normalizeDraft({
+    ...(draftRaw as RawDraft),
+    transcript: transcript ?? resultTranscript ?? (draftRaw as RawDraft).transcript,
+  });
   const recipe: RecipeInputType = {
     ...normalized.recipe,
     sourceType,

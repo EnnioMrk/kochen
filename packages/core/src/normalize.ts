@@ -265,7 +265,13 @@ export function normalizeDraft(raw: RawDraft, options?: { visibility?: Visibilit
       : estimateServings(orderedIngredients, steps);
 
   const rawText = cleanText(raw.rawText, 200_000);
-  const baking = detectBaking(...steps.map((step) => step.text), rawText ?? "");
+  const transcript = cleanText(raw.transcript, 200_000);
+  // A temperature that is only spoken lives in the transcript, not in a step.
+  const baking = detectBaking(
+    ...steps.map((step) => step.text),
+    rawText ?? "",
+    transcript ?? "",
+  );
 
   const tags = [...new Set(
     asArray(raw.tags)
@@ -289,7 +295,7 @@ export function normalizeDraft(raw: RawDraft, options?: { visibility?: Visibilit
     sourceType: "text" as const,
     sourceUrl: null,
     rawText,
-    transcript: cleanText(raw.transcript, 200_000),
+    transcript,
     originalLang: sourceLang,
     visibility: options?.visibility ?? ("friends" as Visibility),
     tagNames: tags,

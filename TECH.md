@@ -431,8 +431,10 @@ each slide. The model reads the slide text, so there is no second OCR service.
   `1 Stunde`, `2-3 Minuten`) fills `duration_s` when the model gave none. A
   model duration wins.
 - **Baking.** A conservative scan finds `180 °C Ober-/Unterhitze` and
-  `35 Min.` only next to a baking word. Both fields stay null when the source
-  is silent.
+  `35 Min.` only next to a baking word. It reads step texts, raw text and the
+  transcript, so a temperature that is only spoken still reaches the recipe.
+  A Fahrenheit value becomes Celsius, rounded to 5 °C (`350 °F` → `175 °C`).
+  Both fields stay null when the source is silent.
 
 The prompt states the same rules, but the code enforces them. A prompt change
 alone cannot break the shape.

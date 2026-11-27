@@ -228,8 +228,10 @@ Dokploy (Ennio, `84.247.128.111`):
   worker.
 - The servings estimate is a heuristic from the number of ingredients and
   steps. It is marked `geschätzt` in the review; correct it before you save.
-- Baking temperature and baking time come from the source text. The import
-  fills them only when the source states them; leave them empty otherwise.
+- Baking temperature and baking time come from the source text, including a
+  temperature that is only spoken in a video. Fahrenheit becomes Celsius,
+  rounded to 5 °C. The import fills both fields only when the source states
+  them; leave them empty otherwise.
 - Uploaded originals are kept. Use an R2 lifecycle rule or an operator decision
   to remove old originals.
 

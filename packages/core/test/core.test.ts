@@ -19,6 +19,7 @@ import { diffLines } from "../src/diff";
 import { compileFilter, FilterValidationError, personTokens } from "../src/filter";
 import { normalizeDraft, normalizeUnit, parseAmount } from "../src/normalize";
 import {
+  celsiusFromFahrenheit,
   detectBaking,
   durationFromStepText,
   estimateServings,
@@ -438,5 +439,29 @@ describe("import quality", () => {
     });
     expect(result.recipe.bakingTemperature).toBe("180 °C Umluft");
     expect(result.recipe.bakingTime).toBe("35 Min.");
+  });
+
+  it("converts Fahrenheit to Celsius and rounds to 5", () => {
+    expect(celsiusFromFahrenheit(350)).toBe(175);
+    expect(celsiusFromFahrenheit(400)).toBe(205);
+    expect(celsiusFromFahrenheit(375)).toBe(190);
+
+    expect(detectBaking("Bake at 350 °F for 20 minutes.").bakingTemperature).toBe("175 °C");
+    expect(detectBaking("Im Ofen bei 400 Grad Fahrenheit backen.").bakingTemperature).toBe("205 °C");
+    // No scale named: 350 is above any Celsius oven, so it means Fahrenheit.
+    expect(detectBaking("Bei 350 Grad backen.").bakingTemperature).toBe("175 °C");
+    // A Celsius value above the oven range stays unknown, not clamped.
+    expect(detectBaking("Bei 350 °C backen.").bakingTemperature).toBeNull();
+  });
+
+  it("finds a temperature that is only in the transcript", () => {
+    const result = normalizeDraft({
+      title: "T",
+      servings: 2,
+      ingredients: ["Mehl"],
+      steps: ["Den Ofen vorheizen und den Teig backen."],
+      transcript: "Heize den Backofen auf 180 Grad Ober-/Unterhitze vor.",
+    });
+    expect(result.recipe.bakingTemperature).toBe("180 °C Ober-/Unterhitze");
   });
 });
