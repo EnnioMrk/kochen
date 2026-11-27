@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Check, Download, Share, Smartphone, SquarePlus } from "lucide-react";
 import { Button, Card, useToast } from "../components/ui";
-import { BrandWordmark } from "../components/Brand";
+import { BrandMark, BrandWordmark } from "../components/Brand";
 import {
   installPromptAvailable,
   isIosDevice,
@@ -57,7 +57,7 @@ export function InstallPage() {
       </Link>
 
       <div className="mt-8 flex items-center gap-3">
-        <img src="/icon.svg?v=2" alt="" aria-hidden className="size-14" />
+        <BrandMark className="h-14 w-auto" />
         <div>
           <h1 className="text-3xl leading-tight">
             <BrandWordmark className="inline-block h-6 w-auto align-[-2px] text-ink" label="Rezeptor" /> als App

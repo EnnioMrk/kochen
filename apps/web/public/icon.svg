@@ -1,11 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Rezeptor">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="40 40 432 432" width="512" height="512" role="img" aria-label="Rezeptor">
   <defs>
     <clipPath id="lens-clip">
       <rect x="190" y="120" width="132" height="80" />
     </clipPath>
   </defs>
-
-  <rect width="512" height="512" rx="112" fill="#3f5d63" />
 
   <g transform="translate(256, 256) scale(1.22) translate(-256, -212)">
     <g fill="none" stroke="#b4552d" stroke-width="11" stroke-linecap="round">
@@ -13,29 +11,29 @@
       <path d="M 298 90 A 68 68 0 0 1 366 158" />
     </g>
 
-    <path d="M 150 200 Q 166 187 182 185 L 182 200 Z" fill="#f3f1dc" />
-    <path d="M 362 200 Q 346 187 330 185 L 330 200 Z" fill="#f3f1dc" />
+    <path d="M 150 200 Q 166 187 182 185 L 182 200 Z" fill="#211c16" />
+    <path d="M 362 200 Q 346 187 330 185 L 330 200 Z" fill="#211c16" />
 
     <path d="M 194 198 L 194 156 Q 194 140 210 140 L 222 140 Q 230 140 234 132 Q 238 124 246 124 L 266 124 Q 274 124 278 132 Q 282 140 290 140 L 302 140 Q 318 140 318 156 L 318 198" fill="none" stroke="#b4552d" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
 
     <g clip-path="url(#lens-clip)">
-      <circle cx="256" cy="180" r="25" fill="#2b4246" stroke="#b4552d" stroke-width="11" />
+      <circle cx="256" cy="180" r="25" fill="#211c16" fill-opacity="0.3" stroke="#b4552d" stroke-width="11" />
       <path d="M 244 176 A 14 14 0 0 1 256 166" fill="none" stroke="#b4552d" stroke-width="5" stroke-linecap="round" />
     </g>
 
     <circle cx="298" cy="158" r="5.5" fill="#b4552d" />
 
-    <path d="M 322 226 L 346.5 226 L 346.5 294 Q 346.5 324.5 316 324.5 L 296 324.5 Q 322 324.5 322 294 Z" fill="#2b4246" />
+    <path d="M 322 226 L 346.5 226 L 346.5 294 Q 346.5 324.5 316 324.5 L 296 324.5 Q 322 324.5 322 294 Z" fill="#211c16" fill-opacity="0.16" />
 
-    <g fill="none" stroke="#f3f1dc" stroke-width="14" stroke-linecap="round">
+    <g fill="none" stroke="#211c16" stroke-width="14" stroke-linecap="round">
       <path d="M 154 248 Q 134 242 118 239" />
       <path d="M 358 248 Q 378 242 394 239" />
     </g>
 
-    <path d="M 158 222 L 158 294 Q 158 332 196 332 L 316 332 Q 354 332 354 294 L 354 222" fill="none" stroke="#f3f1dc" stroke-width="15" stroke-linejoin="round" />
+    <path d="M 158 222 L 158 294 Q 158 332 196 332 L 316 332 Q 354 332 354 294 L 354 222" fill="none" stroke="#211c16" stroke-width="15" stroke-linejoin="round" />
 
-    <rect x="138" y="210" width="236" height="16" rx="8" fill="#f3f1dc" />
+    <rect x="138" y="210" width="236" height="16" rx="8" fill="#211c16" />
 
-    <path d="M 184 244 L 184 292 Q 184 306 196 310" fill="none" stroke="#f3f1dc" stroke-width="11" stroke-linecap="round" />
+    <path d="M 184 244 L 184 292 Q 184 306 196 310" fill="none" stroke="#211c16" stroke-width="11" stroke-linecap="round" />
   </g>
 </svg>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button, Field, Input, Textarea } from "./ui";
-import { BrandWordmark } from "./Brand";
+import { BrandMark, BrandWordmark } from "./Brand";
 import {
   accessState,
   login as platformLogin,
@@ -104,7 +104,7 @@ export function AuthGate({ code, onRetry }: { code: string | undefined; onRetry:
     >
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <img src="/icon.svg?v=2" alt="" aria-hidden className="mx-auto mb-3 size-16" />
+          <BrandMark className="mx-auto mb-3 h-16 w-auto" />
           <h1 className="flex justify-center">
             <BrandWordmark className="h-9 w-auto text-ink" label="Rezeptor" />
           </h1>

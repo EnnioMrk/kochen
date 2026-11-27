@@ -54,3 +54,74 @@ export function BrandWordmark({ className, label }: Props) {
     </svg>
   );
 }
+
+/**
+ * Rezeptor mark: the camera and pot, drawn on a transparent ground.
+ * The pot follows the text colour and the camera takes the brand colour.
+ * The pot shade and the lens glass are the text colour at low alpha, so no
+ * surface colour shows through them.
+ */
+export function BrandMark({ className }: { className?: string }) {
+  const clipId = `mark-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const stroke = { stroke: "var(--color-brand)" } as const;
+  const fill = { fill: "var(--color-brand)" } as const;
+
+  return (
+    <svg
+      viewBox="73 94 366 324"
+      className={className}
+      aria-hidden="true"
+      focusable="false"
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x="190" y="120" width="132" height="80" />
+        </clipPath>
+      </defs>
+      <g transform="translate(256, 256) scale(1.22) translate(-256, -212)">
+        <g fill="none" strokeWidth="11" strokeLinecap="round" style={stroke}>
+          <path d="M 298 112 A 46 46 0 0 1 344 158" />
+          <path d="M 298 90 A 68 68 0 0 1 366 158" />
+        </g>
+
+        <path d="M 150 200 Q 166 187 182 185 L 182 200 Z" fill="currentColor" />
+        <path d="M 362 200 Q 346 187 330 185 L 330 200 Z" fill="currentColor" />
+
+        <path
+          d="M 194 198 L 194 156 Q 194 140 210 140 L 222 140 Q 230 140 234 132 Q 238 124 246 124 L 266 124 Q 274 124 278 132 Q 282 140 290 140 L 302 140 Q 318 140 318 156 L 318 198"
+          fill="none"
+          strokeWidth="11"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={stroke}
+        />
+
+        <g clipPath={`url(#${clipId})`}>
+          <circle cx="256" cy="180" r="25" fill="currentColor" fillOpacity="0.3" strokeWidth="11" style={stroke} />
+          <path d="M 244 176 A 14 14 0 0 1 256 166" fill="none" strokeWidth="5" strokeLinecap="round" style={stroke} />
+        </g>
+
+        <circle cx="298" cy="158" r="5.5" style={fill} />
+
+        <path d="M 322 226 L 346.5 226 L 346.5 294 Q 346.5 324.5 316 324.5 L 296 324.5 Q 322 324.5 322 294 Z" fill="currentColor" fillOpacity="0.16" />
+
+        <g fill="none" stroke="currentColor" strokeWidth="14" strokeLinecap="round">
+          <path d="M 154 248 Q 134 242 118 239" />
+          <path d="M 358 248 Q 378 242 394 239" />
+        </g>
+
+        <path
+          d="M 158 222 L 158 294 Q 158 332 196 332 L 316 332 Q 354 332 354 294 L 354 222"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="15"
+          strokeLinejoin="round"
+        />
+
+        <rect x="138" y="210" width="236" height="16" rx="8" fill="currentColor" />
+
+        <path d="M 184 244 L 184 292 Q 184 306 196 310" fill="none" stroke="currentColor" strokeWidth="11" strokeLinecap="round" />
+      </g>
+    </svg>
+  );
+}

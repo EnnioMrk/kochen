@@ -1,14 +1,14 @@
 // App shell only. No recipe data is cached: offline is out of scope.
-const SHELL = "rezeptor-shell-v2";
+const SHELL = "rezeptor-shell-v3";
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(SHELL).then((cache) => cache.addAll(["/", "/manifest.webmanifest", "/icon.svg?v=2", "/icon-192.png?v=2", "/badge-96.png?v=2"])));
+  event.waitUntil(caches.open(SHELL).then((cache) => cache.addAll(["/", "/manifest.webmanifest", "/icon.svg?v=3", "/icon-192.png?v=3", "/badge-96.png?v=3"])));
   self.skipWaiting();
 });
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((key) => key.startsWith("kochen-") || key === "rezeptor-shell-v1").map((key) => caches.delete(key))))
+      .then((keys) => Promise.all(keys.filter((key) => key.startsWith("kochen-") || (key.startsWith("rezeptor-shell-") && key !== SHELL)).map((key) => caches.delete(key))))
       .then(() => self.clients.claim()),
   );
 });
@@ -25,8 +25,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: "/icon-192.png?v=2",
-      badge: "/badge-96.png?v=2",
+      icon: "/icon-192.png?v=3",
+      badge: "/badge-96.png?v=3",
       data: { url: data.url },
       tag: data.tag || undefined,
     }),
