@@ -4,6 +4,7 @@ import { RecipeInput, ForkInput, CommentInput, Visibility, type Stars } from "@r
 import { assertRating, canRate, diffLines, INGREDIENT_DIFF_FIELDS, STEP_DIFF_FIELDS, scaleAmount } from "@rezeptor/core";
 import { db } from "@rezeptor/db";
 import { requireUser } from "../auth";
+import { env } from "../env";
 import { ApiError, conflict, forbidden, invalid, notFound, ok } from "../errors";
 import { randomToken, sha256hex } from "../crypto";
 import { notify } from "../notify";
@@ -531,7 +532,7 @@ recipes.post("/:id/links", async (c) => {
     c,
     {
       id: link.id,
-      url: `https://rezepte.ennio.vip/r/${row.id}?link=${token}`,
+      url: `${env.appOrigin}/r/${row.id}?link=${token}`,
       createdAt: link.createdAt.toISOString(),
       revokedAt: null,
     },

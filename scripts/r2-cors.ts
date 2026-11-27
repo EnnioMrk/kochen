@@ -11,9 +11,9 @@
  *
  * Run from the repo root:
  *   CLOUDFLARE_ACCOUNT_ID=... CLOUDFLARE_API_TOKEN=... R2_BUCKET=kochen \
- *   APP_ORIGIN=https://rezepte.ennio.vip bun run r2:cors
+ *   APP_ORIGIN=https://rezeptor.ennio.vip bun run r2:cors
  */
-const FIXED_ORIGINS = ["https://rezepte.ennio.vip", "https://kochen.ennio.vip", "http://localhost:5173"];
+const FIXED_ORIGINS = ["https://rezeptor.ennio.vip", "https://rezeptor.ennio.vip", "https://kochen.ennio.vip", "http://localhost:5173"];
 const ALLOWED_METHODS = ["PUT", "GET", "HEAD"];
 const ALLOWED_HEADERS = ["content-type", "authorization", "*"];
 const EXPOSE_HEADERS = ["etag"];

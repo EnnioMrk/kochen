@@ -38,7 +38,7 @@ The app has no public page. Only approved `ennio.vip` accounts reach it.
 
 ```
 phone / tablet / laptop
-  React PWA  ──Bearer JWT──►  rezepte.ennio.vip  (Bun + Hono)
+  React PWA  ──Bearer JWT──►  rezeptor.ennio.vip  (Bun + Hono)
       │                          │        │
       │                          │        └── Postgres
       │                          └──────────► R2 or a mounted media volume
@@ -96,13 +96,14 @@ rights:
 
 ```bash
 CLOUDFLARE_ACCOUNT_ID=... CLOUDFLARE_API_TOKEN=... R2_BUCKET=kochen \
-APP_ORIGIN=https://rezepte.ennio.vip bun run r2:cors
+APP_ORIGIN=https://rezeptor.ennio.vip bun run r2:cors
 ```
 
 The script writes the policy and reads it back. The policy allows `PUT`,
-`GET` and `HEAD` from `APP_ORIGIN`, `https://rezepte.ennio.vip`,
-`https://kochen.ennio.vip` and `http://localhost:5173`, with the
-`content-type` header and a one-hour cache. The dashboard does the same job.
+`GET` and `HEAD` from `APP_ORIGIN`, `https://rezeptor.ennio.vip`,
+`https://rezepte.ennio.vip`, `https://kochen.ennio.vip` and
+`http://localhost:5173`, with the `content-type` header and a one-hour cache.
+The dashboard does the same job.
 
 ### Tests
 
@@ -119,8 +120,8 @@ API smoke test: start the API with a real database and use the endpoints in
 | Variable | Purpose |
 | --- | --- |
 | `DATABASE_URL` | PostgreSQL connection string |
-| `APP_ORIGIN` | Canonical origin, `https://rezepte.ennio.vip` |
-| `CANONICAL_HOST` | `rezepte.ennio.vip`; every other host answers 301 |
+| `APP_ORIGIN` | Canonical origin, `https://rezeptor.ennio.vip` |
+| `CANONICAL_HOST` | `rezeptor.ennio.vip`; every other host answers 301 |
 | `ENNIO_JWKS_URL` | Platform JWKS |
 | `ENNIO_AUD` | `kochen` |
 | `DEV_AUTH` | Local only; `true` enables `dev:` tokens |
@@ -152,7 +153,8 @@ Dokploy (Ennio, `84.247.128.111`):
 - Project `Kochen`.
 - `PostgreSQL` service with a volume and a daily backup.
 - Application `web`: Git source, Dockerfile target `web`, port 3000, domains
-  `rezepte.ennio.vip` and `kochen.ennio.vip`, health check `/healthz`.
+  `rezeptor.ennio.vip`, `rezepte.ennio.vip` and `kochen.ennio.vip`, health
+  check `/healthz`.
   The container applies SQL migrations at boot, then serves API and SPA.
 - Application `worker`: same repository, Dockerfile target `worker`, no domain.
   One replica. Chromium and ffmpeg need memory.
@@ -165,10 +167,11 @@ Dokploy (Ennio, `84.247.128.111`):
   `bun run r2:cors` (see Local development). A new host needs a new origin in
   that policy.
 - Dokploy backup `db-backups`, nightly 03:00, 30 kept, to the same R2 bucket.
-- DNS: proxied A records for both hosts to `84.247.128.111`. The wildcard still
-  points at the old server, so both records are explicit.
-- `kochen.ennio.vip` answers a 301 to `rezepte.ennio.vip` inside the app, so
-  both hosts share one deployment and one session.
+- DNS: proxied A records for all three hosts to `84.247.128.111`. The wildcard
+  still points at the old server, so each record is explicit.
+- `rezepte.ennio.vip` and `kochen.ennio.vip` answer a 301 to
+  `rezeptor.ennio.vip` inside the app, so all hosts share one deployment and
+  one session.
 
 ## Security notes
 

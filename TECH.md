@@ -25,19 +25,20 @@ These facts are verified against the live platform and the `portfolio` source.
   `ennio.vip` admin. `projects` in the token lists the granted slugs.
 - `kochen` is not yet a registered project. `GET /v1/projects/kochen` answers
   404. Registration is a setup task: slug `kochen`, `requires_auth = true`,
-  `gated = true`, subdomain `rezepte.ennio.vip`.
-- The API allows the origins `https://rezepte.ennio.vip` and
-  `https://kochen.ennio.vip` with credentials.
+  `gated = true`, subdomain `rezeptor.ennio.vip`.
+- The API allows the origins `https://rezeptor.ennio.vip`,
+  `https://rezepte.ennio.vip` and `https://kochen.ennio.vip` with credentials.
 - Wildcard `*.ennio.vip` still points to the old server. A new subdomain
   needs an explicit proxied A record to `84.247.128.111`.
 
 Hosts:
 
-- `rezepte.ennio.vip` is the canonical host. All links, QR codes, private
+- `rezeptor.ennio.vip` is the canonical host. All links, QR codes, private
   links and tokens use it.
-- `kochen.ennio.vip` stays available and answers a 301 redirect to the
-  canonical host. The spec address keeps working. The redirect runs in the
-  app (host check), so both hosts share one deployment and one cookie.
+- `rezepte.ennio.vip` and `kochen.ennio.vip` stay available and answer a 301
+  redirect to the canonical host. The old addresses keep working. The redirect
+  runs in the app (host check), so all hosts share one deployment and one
+  cookie.
 
 Consequence: Rezeptor builds no login, no signup and no access-request list.
 The platform owns them.
@@ -46,7 +47,7 @@ The platform owns them.
 
 ```
 phone / tablet / laptop
-  React PWA  ──Bearer JWT──►  rezepte.ennio.vip  (Bun + Hono)
+  React PWA  ──Bearer JWT──►  rezeptor.ennio.vip  (Bun + Hono)
       │                          │        │
       │                          │        └── Postgres (Dokploy service)
       │                          └──────────► R2 (media)
@@ -548,7 +549,7 @@ it); a keyword box next to the AI field (the spec forbids it).
 ## 11. Friends, profiles, links, comments
 
 - Friend invite: 32 random bytes, stored as SHA-256, 7-day expiry, one use.
-  QR encodes `https://rezepte.ennio.vip/f/<token>`. Both sides confirm: scan
+  QR encodes `https://rezeptor.ennio.vip/f/<token>`. Both sides confirm: scan
   creates `pending`, the target confirms in the app.
 - QR render: `qrcode`. QR scan: `BarcodeDetector` where present, `zxing-wasm`
   fallback for iOS Safari.
@@ -622,30 +623,30 @@ concurrency of 1 keep memory flat. The worker image is built once per release.
 
 - Dokploy on Ennio (`84.247.128.111`), project `Kochen`:
   - application `web` (Swarm service), port 3000, domains
-    `rezepte.ennio.vip` and `kochen.ennio.vip`;
+    `rezeptor.ennio.vip`, `rezepte.ennio.vip` and `kochen.ennio.vip`;
   - application `worker`, no domain;
   - PostgreSQL service with a volume;
   - a daily backup job.
-- Canonical host: `rezepte.ennio.vip`. The app answers a 301 from
-  `kochen.ennio.vip` to the canonical host on every route except `/healthz`.
-  One cookie, one session, one set of links.
+- Canonical host: `rezeptor.ennio.vip`. The app answers a 301 from
+  `rezepte.ennio.vip` and `kochen.ennio.vip` to the canonical host on every
+  route except `/healthz`. One cookie, one session, one set of links.
 - Use Dokploy applications, not compose with Traefik labels. Swarm services
   use the file provider and do not go stale and answer 502 after a redeploy.
   (Known issue: compose routes hold a container address.)
 - R2 bucket `kochen` in EU jurisdiction with the CORS policy from
   `bun run r2:cors`. Without it, browser uploads fail on every device.
-- DNS: explicit proxied A records for `rezepte.ennio.vip` and
-  `kochen.ennio.vip` to `84.247.128.111`. The wildcard still points to the old
-  server, so both records are required.
+- DNS: explicit proxied A records for `rezeptor.ennio.vip`,
+  `rezepte.ennio.vip` and `kochen.ennio.vip` to `84.247.128.111`. The wildcard
+  still points to the old server, so each record is required.
 - One Dockerfile, two targets: `web` (Bun, small) and `worker` (Node 22 +
   ffmpeg + poppler + Chromium). Build in CI, push to a registry, Dokploy pulls.
 - Environment: `DATABASE_URL`, `R2_*`, `AI_*`, `VAPID_*`,
-  `APP_ORIGIN=https://rezepte.ennio.vip`, `CANONICAL_HOST=rezepte.ennio.vip`,
+  `APP_ORIGIN=https://rezeptor.ennio.vip`, `CANONICAL_HOST=rezeptor.ennio.vip`,
   `ENNIO_JWKS_URL`, `ENNIO_AUD=kochen`. Secrets stay in Dokploy. Never in the
   client bundle; only `VAPID_PUBLIC_KEY` is public.
-- Allowed origins: the API accepts `https://rezepte.ennio.vip` and
-  `https://kochen.ennio.vip` for CORS. The CSP `connect-src` names both, plus
-  `https://api.ennio.vip` and the R2 host.
+- Allowed origins: the API accepts `https://rezeptor.ennio.vip`,
+  `https://rezepte.ennio.vip` and `https://kochen.ennio.vip` for CORS. The CSP
+  `connect-src` names all three, plus `https://api.ennio.vip` and the R2 host.
 - Health: `/healthz` checks the database and returns 200. Dokploy health check
   and the existing Traefik watchdog cover the rest.
 - Backups: nightly `pg_dump` to R2 (30 daily, 12 monthly), encrypted with

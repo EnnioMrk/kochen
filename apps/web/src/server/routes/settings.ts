@@ -3,6 +3,7 @@ import { DEFAULT_LIMITS, Limits } from "@rezeptor/contracts";
 import { db } from "@rezeptor/db";
 import { requireUser } from "../auth";
 import { forbidden, invalid, ok } from "../errors";
+import { env } from "../env";
 import type { AppEnv } from "../types";
 import { body } from "../validate";
 
@@ -19,7 +20,7 @@ settings.get("/", async (c) => {
   return ok(c, {
     limits: limits.success ? limits.data : DEFAULT_LIMITS,
     features: (byKey.get("features") as Record<string, boolean> | undefined) ?? { ai: true, video: true },
-    appOrigin: "https://rezepte.ennio.vip",
+    appOrigin: env.appOrigin,
   });
 });
 

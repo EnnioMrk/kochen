@@ -63,6 +63,7 @@ export const env = {
   },
   get allowedOrigins(): string[] {
     return [
+      "https://rezeptor.ennio.vip",
       "https://rezepte.ennio.vip",
       "https://kochen.ennio.vip",
       this.appOrigin,

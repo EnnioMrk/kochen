@@ -30,7 +30,7 @@ app.use("*", secureHeaders({
     scriptSrc: ["'self'", "https://api.ennio.vip"],
     styleSrc: ["'self'", "'unsafe-inline'"],
     imgSrc: ["'self'", "data:", "blob:", "https:"],
-    connectSrc: ["'self'", "https://api.ennio.vip", "https://rezepte.ennio.vip", "https://kochen.ennio.vip", env.r2.endpoint || "https://*.r2.cloudflarestorage.com"],
+    connectSrc: ["'self'", "https://api.ennio.vip", "https://rezeptor.ennio.vip", "https://rezepte.ennio.vip", "https://kochen.ennio.vip", env.r2.endpoint || "https://*.r2.cloudflarestorage.com"],
     fontSrc: ["'self'", "data:"],
     frameSrc: ["https://api.ennio.vip"],
     workerSrc: ["'self'", "blob:"],

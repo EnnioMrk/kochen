@@ -12,7 +12,7 @@ Entry point: `src/index.ts`.
 | Variable | Required | Meaning |
 | --- | --- | --- |
 | `DATABASE_URL` | yes | Postgres connection string. |
-| `APP_ORIGIN` | yes | Canonical origin for push deep links, e.g. `https://rezepte.ennio.vip`. |
+| `APP_ORIGIN` | yes | Canonical origin for push deep links, e.g. `https://rezeptor.ennio.vip`. |
 | `R2_ENDPOINT` | yes | S3-compatible endpoint of the bucket. |
 | `R2_BUCKET` | yes | Bucket name (default `kochen`). |
 | `R2_ACCESS_KEY_ID` | yes | R2 access key. |
