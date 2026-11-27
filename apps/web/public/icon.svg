@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="40 40 432 432" width="512" height="512" role="img" aria-label="Rezeptor">
+  <rect x="40" y="40" width="432" height="432" fill="#faf7f2" />
   <defs>
     <clipPath id="lens-clip">
       <rect x="190" y="120" width="132" height="80" />
