@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "./ui";
-import { appBuildId, fetchBuildId, isStale } from "../lib/version";
+import { fetchLiveAssets, isStale, runningAssets } from "../lib/version";
 
 const CHECK_MS = 5 * 60_000;
 
@@ -17,10 +17,11 @@ export function UpdateBanner() {
 
   useEffect(() => {
     let stopped = false;
+    const running = runningAssets(document);
     const check = async () => {
       if (document.visibilityState !== "visible") return;
-      const latest = await fetchBuildId().catch(() => null);
-      if (!stopped && isStale(appBuildId, latest)) setStale(true);
+      const live = await fetchLiveAssets().catch(() => null);
+      if (!stopped && isStale(running, live)) setStale(true);
     };
 
     void check();

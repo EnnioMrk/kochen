@@ -98,11 +98,12 @@ Tailwind CSS v4 + Radix primitives (shadcn style) + `lucide-react` icons.
   `localize` path open.
 - Styling: Tailwind tokens in CSS variables. Print styles live in the same
   stylesheet (see §13).
-- Updates: Vite writes the build id into the bundle and into
-  `dist/version.json`. The app reads the live id on mount, every 5 minutes and
-  when it returns to the foreground. A different id shows a strip under the
-  header with one reload button. The reload goes through the network-first
-  service worker, so the new `index.html` and its hashed assets load.
+- Updates: client files carry a content hash in the file name. The page reads
+  the live `index.html` on mount, every 5 minutes and when it returns to the
+  foreground, and compares its own script and style names with the names in
+  that answer. A reload strip shows only when the client bundle is older. A
+  change to the server, the worker, the docs or the manifest does not raise
+  it. The reload goes through the network-first service worker.
 
 **Rejected:** Next.js; Redux (no need); component libraries with their own
 design language (the app must look like one product); runtime i18n.

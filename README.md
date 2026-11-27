@@ -25,7 +25,7 @@ The app has no public page. Only approved `ennio.vip` accounts reach it.
 | Print and export | A4 print route, Chromium PDF in the worker, Markdown export. |
 | Theme | Five palettes and a custom one from four colours. Runtime tokens, no raw colour in a component. Dark mode follows the paper. The choice follows the account. |
 | Hardening | `noindex` on every response, `robots.txt` disallow, one visibility policy, soft delete, German only. |
-| Updates | Each build writes its id to `/version.json`. An open page compares itself with the live id and shows a reload strip when a newer build is live. |
+| Updates | A loaded page compares its script and style names with the live HTML. A reload strip shows only when a newer client bundle is live; server, worker, docs and manifest changes do not raise it. |
 
 ## Stack
 
