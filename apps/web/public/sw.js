@@ -1,7 +1,7 @@
 // App shell only. No recipe data is cached: offline is out of scope.
 const SHELL = "rezeptor-shell-v1";
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(SHELL).then((cache) => cache.addAll(["/", "/manifest.webmanifest", "/icon.svg"])));
+  event.waitUntil(caches.open(SHELL).then((cache) => cache.addAll(["/", "/manifest.webmanifest", "/icon.svg", "/icon-192.png", "/badge-96.png"])));
   self.skipWaiting();
 });
 self.addEventListener("activate", (event) => {
@@ -25,8 +25,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: "/icon.svg",
-      badge: "/icon.svg",
+      icon: "/icon-192.png",
+      badge: "/badge-96.png",
       data: { url: data.url },
       tag: data.tag || undefined,
     }),

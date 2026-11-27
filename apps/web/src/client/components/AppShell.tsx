@@ -18,6 +18,7 @@ import { useMe } from "../lib/session";
 import { logout } from "../lib/api";
 import { Avatar, Button } from "./ui";
 import { AuthGate, LoadingScreen } from "./AuthGate";
+import { BrandWordmark } from "./Brand";
 import { TutorialProvider } from "./tutorial/TutorialProvider";
 
 type NavItem = {
@@ -83,7 +84,7 @@ export function AppShell() {
           <div className="mx-auto flex min-h-16 max-w-6xl items-center gap-3 px-4 sm:px-6">
             <Link to="/" className="mr-2 flex items-center gap-2" aria-label="Zur Rezeptliste">
               <img src="/icon.svg" alt="" aria-hidden className="size-9" />
-              <span className="display hidden text-xl tracking-tight sm:block" aria-hidden>Rezeptor</span>
+              <BrandWordmark className="hidden h-6 w-auto text-ink lg:block" />
             </Link>
             <nav className="hidden items-center gap-1 md:flex">
               {nav.map((item) => (

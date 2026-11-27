@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Check, Download, Share, Smartphone, SquarePlus } from "lucide-react";
 import { Button, Card, useToast } from "../components/ui";
+import { BrandWordmark } from "../components/Brand";
 import {
   installPromptAvailable,
   isIosDevice,
@@ -58,7 +59,9 @@ export function InstallPage() {
       <div className="mt-8 flex items-center gap-3">
         <img src="/icon.svg" alt="" aria-hidden className="size-14" />
         <div>
-          <h1 className="text-3xl leading-tight">Rezeptor als App</h1>
+          <h1 className="text-3xl leading-tight">
+            <BrandWordmark className="inline-block h-6 w-auto align-[-2px] text-ink" label="Rezeptor" /> als App
+          </h1>
           <p className="mt-1 text-sm text-ink-soft">Auf dem Home-Bildschirm. Ohne App Store.</p>
         </div>
       </div>

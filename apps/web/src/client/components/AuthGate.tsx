@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button, Field, Input, Textarea } from "./ui";
+import { BrandWordmark } from "./Brand";
 import {
   accessState,
   login as platformLogin,
@@ -103,8 +104,10 @@ export function AuthGate({ code, onRetry }: { code: string | undefined; onRetry:
     >
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <img src="/icon.svg" alt="" aria-hidden className="mx-auto mb-4 size-16" />
-          <h1 className="text-4xl">Rezeptor</h1>
+          <img src="/icon.svg" alt="" aria-hidden className="mx-auto mb-3 size-16" />
+          <h1 className="flex justify-center">
+            <BrandWordmark className="h-9 w-auto text-ink" label="Rezeptor" />
+          </h1>
           <p className="mt-2 text-sm text-ink-soft">Rezepte für Familie und Freunde.</p>
         </div>
 
@@ -255,7 +258,8 @@ export function LoadingScreen() {
     <div className="flex min-h-dvh items-center justify-center">
       <div className="flex items-center gap-3 text-ink-soft">
         <Loader2 className="size-5 animate-spin text-brand" />
-        <span className="text-sm">Rezeptor wird geladen …</span>
+        <BrandWordmark className="h-5 w-auto" label="Rezeptor" />
+        <span className="text-sm">wird geladen …</span>
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import { Link, useParams } from "react-router-dom";
 import { api, qk } from "../lib/api";
 import { errorText, formatDate } from "../lib/utils";
 import { Button, EmptyState, Skeleton } from "../components/ui";
+import { BrandWordmark } from "../components/Brand";
 import {
   SOURCE_LABEL,
   durationLabel,
@@ -180,8 +181,9 @@ export function PrintPage() {
             {recipe.sourceUrl && (
               <p className="mt-1 break-all">Quelle: {recipe.sourceUrl}</p>
             )}
-            <p className="mt-1">
-              Rezeptor · {host}
+            <p className="mt-1 flex items-center gap-1.5">
+              <BrandWordmark className="h-4 w-auto text-ink" label="Rezeptor" />
+              <span>· {host}</span>
             </p>
           </footer>
         </article>
