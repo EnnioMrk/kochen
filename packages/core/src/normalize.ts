@@ -1,6 +1,7 @@
 import { RecipeInput } from "@rezeptor/contracts";
 import type { Ingredient, RecipeInput as RecipeInputType, RecipeStep, Visibility } from "@rezeptor/contracts";
 import {
+  convertTemperaturesToCelsius,
   detectBaking,
   durationFromStepText,
   estimateServings,
@@ -200,7 +201,7 @@ function normalizeIngredient(raw: unknown, position: number): Ingredient | null 
 
 function normalizeStep(raw: unknown, position: number): RecipeStep | null {
   if (typeof raw === "string") {
-    const text = raw.trim();
+    const text = convertTemperaturesToCelsius(raw.trim());
     if (!text) return null;
     return {
       position,
@@ -211,8 +212,9 @@ function normalizeStep(raw: unknown, position: number): RecipeStep | null {
   }
   if (!raw || typeof raw !== "object") return null;
   const item = raw as Record<string, unknown>;
-  const text = cleanText(item.text ?? item.step ?? item.instruction ?? item.description, 4000);
-  if (!text) return null;
+  const cleaned = cleanText(item.text ?? item.step ?? item.instruction ?? item.description, 4000);
+  if (!cleaned) return null;
+  const text = convertTemperaturesToCelsius(cleaned);
   let durationS: number | null = null;
   if (typeof item.durationS === "number" && item.durationS > 0) durationS = Math.round(item.durationS);
   else if (typeof item.duration === "number" && item.duration > 0) durationS = Math.round(item.duration * 60);
@@ -284,9 +286,11 @@ export function normalizeDraft(raw: RawDraft, options?: { visibility?: Visibilit
   const asksForScreenshot = orderedIngredients.length === 0 && steps.length === 0;
   if (asksForScreenshot) warnings.push("kein_rezept_gefunden");
 
+  const description = cleanText(raw.description, 4000);
+
   const candidate = {
     title: title ?? "",
-    description: cleanText(raw.description, 4000),
+    description: description ? convertTemperaturesToCelsius(description) : null,
     servings,
     bakingTemperature: baking.bakingTemperature,
     bakingTime: baking.bakingTime,

@@ -169,24 +169,51 @@ function isFahrenheit(scaleLetter?: string, scaleWord?: string): boolean {
   return scaleWord ? scaleWord.toLowerCase().startsWith("f") : false;
 }
 
+/** Celsius oven values top out near 300, so anything higher cannot be Celsius. */
+const MAX_CELSIUS_OVEN = 300;
+
+type TemperatureReading = { degrees: number; converted: boolean };
+
+/**
+ * Read one temperature mention. A named Fahrenheit scale converts. A bare
+ * "350 Grad"/"350 degrees" is read as Fahrenheit when the number is too high
+ * for a Celsius oven, because many English sources leave the scale implicit.
+ */
+function readTemperature(stated: number, scaleLetter?: string, scaleWord?: string): TemperatureReading {
+  if (isFahrenheit(scaleLetter, scaleWord)) {
+    return { degrees: celsiusFromFahrenheit(stated), converted: true };
+  }
+  if (!scaleLetter && !scaleWord && stated > MAX_CELSIUS_OVEN) {
+    return { degrees: celsiusFromFahrenheit(stated), converted: true };
+  }
+  return { degrees: stated, converted: false };
+}
+
+/**
+ * Rewrite each temperature that must be converted, and keep every other
+ * mention as it is. Steps and descriptions pass through this, so a German
+ * recipe never shows a bare Fahrenheit value.
+ */
+export function convertTemperaturesToCelsius(text: string): string {
+  if (typeof text !== "string" || !text) return text;
+  return text.replace(
+    TEMPERATURE_PATTERN,
+    (full: string, value: string, scaleLetter?: string, scaleWord?: string) => {
+      const stated = Number(value);
+      if (!Number.isFinite(stated)) return full;
+      const reading = readTemperature(stated, scaleLetter, scaleWord);
+      return reading.converted ? `${reading.degrees} °C` : full;
+    },
+  );
+}
+
 function findBakingTemperature(text: string): string | null {
   TEMPERATURE_PATTERN.lastIndex = 0;
   let match: RegExpExecArray | null;
   while ((match = TEMPERATURE_PATTERN.exec(text)) !== null) {
     const stated = Number(match[1]);
     if (!Number.isFinite(stated)) continue;
-    const scaleLetter = match[2];
-    const scaleWord = match[3];
-    let degrees: number;
-    if (isFahrenheit(scaleLetter, scaleWord)) {
-      degrees = celsiusFromFahrenheit(stated);
-    } else if (!scaleLetter && !scaleWord && stated > 300) {
-      // "350 Grad" without a scale: a Celsius oven never goes above 300,
-      // so a US source means Fahrenheit.
-      degrees = celsiusFromFahrenheit(stated);
-    } else {
-      degrees = stated;
-    }
+    const degrees = readTemperature(stated, match[2], match[3]).degrees;
     if (degrees < 50 || degrees > 300) continue;
     if (!BAKING_CONTEXT.test(contextNear(text, match.index, match.index + match[0].length))) continue;
     const mode = heatModeNear(text, match.index, match.index + match[0].length);

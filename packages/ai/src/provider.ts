@@ -94,7 +94,8 @@ export const EXTRACTION_RULES = `- Einheiten nur nennen, wenn die Quelle sie nen
 - servings nur setzen, wenn die Quelle eine Portionszahl nennt. Sonst null.
 - bakingTemperature und bakingTime nur setzen, wenn die Quelle sie nennt (z. B. "180 °C Ober-/Unterhitze", "35 Min."). Sonst null.
 - Eine Temperatur, die nur gesprochen wird (Transkript), ist genannt. Nimm sie auf.
-- bakingTemperature immer in Celsius: Fahrenheit umrechnen und auf 5 °C runden (z. B. "350 °F" → "175 °C", "400 °F" → "205 °C").`;
+- bakingTemperature immer in Celsius: Fahrenheit umrechnen und auf 5 °C runden (z. B. "350 °F" → "175 °C", "400 °F" → "205 °C").
+- Steht nur "Grad" oder "degrees" ohne Skala und ist die Zahl über 300, ist Fahrenheit gemeint: umrechnen und auf 5 °C runden. Auch Schritte und Beschreibung in Celsius schreiben.`;
 
 /**
  * The shape every provider interpolates into its extraction prompt. The rules

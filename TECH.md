@@ -434,6 +434,8 @@ each slide. The model reads the slide text, so there is no second OCR service.
   `35 Min.` only next to a baking word. It reads step texts, raw text and the
   transcript, so a temperature that is only spoken still reaches the recipe.
   A Fahrenheit value becomes Celsius, rounded to 5 °C (`350 °F` → `175 °C`).
+  A bare `350 Grad`/`350 degrees` counts as Fahrenheit when the number is too
+  high for a Celsius oven. Steps and description carry the converted value.
   Both fields stay null when the source is silent.
 
 The prompt states the same rules, but the code enforces them. A prompt change

@@ -20,6 +20,7 @@ import { compileFilter, FilterValidationError, personTokens } from "../src/filte
 import { normalizeDraft, normalizeUnit, parseAmount } from "../src/normalize";
 import {
   celsiusFromFahrenheit,
+  convertTemperaturesToCelsius,
   detectBaking,
   durationFromStepText,
   estimateServings,
@@ -463,5 +464,22 @@ describe("import quality", () => {
       transcript: "Heize den Backofen auf 180 Grad Ober-/Unterhitze vor.",
     });
     expect(result.recipe.bakingTemperature).toBe("180 °C Ober-/Unterhitze");
+  });
+
+  it("reads a bare high degree value as Fahrenheit in the text", () => {
+    expect(convertTemperaturesToCelsius("Bei 350 Grad backen.")).toBe("Bei 175 °C backen.");
+    expect(convertTemperaturesToCelsius("Bake at 400 °F.")).toBe("Bake at 205 °C.");
+    // 250 fits a Celsius oven, so the scale stays implicit.
+    expect(convertTemperaturesToCelsius("Bei 250 Grad backen.")).toBe("Bei 250 Grad backen.");
+    expect(convertTemperaturesToCelsius("Bei 180 Grad Umluft backen.")).toBe("Bei 180 Grad Umluft backen.");
+
+    const result = normalizeDraft({
+      title: "T",
+      servings: 2,
+      ingredients: ["Mehl"],
+      steps: ["Bei 350 degrees 20 Minuten backen."],
+    });
+    expect(result.recipe.steps[0]?.text).toBe("Bei 175 °C 20 Minuten backen.");
+    expect(result.recipe.bakingTemperature).toBe("175 °C");
   });
 });
