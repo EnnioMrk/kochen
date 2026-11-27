@@ -303,6 +303,13 @@ the worker; `sharp` + `ffmpeg` + `yt-dlp`.
 - Worker steps: `queued → fetching → normalizing → understanding →
   needs_review → done | failed`. Each step writes state, so the UI can show
   progress.
+- Share target: the manifest points `/teilen` at the app. A link shared from
+  another app opens the app, which queues the link at once and goes to the
+  review page. The share may arrive as `url`, `text` or `title`, so
+  `client/lib/share.ts` finds the one http(s) link.
+- The worker owns the queue, so a capture continues after the app closes. On
+  `needs_review` the worker writes an `import_ready` notification and a push
+  job. The push opens `/import/<id>`.
 - Images: HEIC/HEIF from iPhone is converted to JPEG. Use `sharp` with a
   libheif build; fall back to `heic-convert` when the build cannot read HEIC.
   EXIF is stripped. Long edge is capped at 2048 px for the model, and 1600 px
@@ -598,7 +605,8 @@ site card and not a teaser.
   caches the app shell only. No recipe data is cached (offline is out of V1).
 - Bell list reads the same `notifications` rows. Push is a hint; the list is
   the record. A missed push loses nothing.
-- Events: comment, reply, friend request, new variation, timer end.
+- Events: comment, reply, friend request, new variation, timer end, finished
+  import.
 - Dedupe with `dedupe_key` (for example `timer:<id>`), unique per user.
 - No email. No SMTP code in Rezeptor.
 - Permission is requested after the first useful action (first comment or

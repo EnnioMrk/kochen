@@ -74,6 +74,16 @@ export function pushText(kind: string, payload: Record<string, unknown>): PushTe
         url: recipeId ? `${env.appOrigin}/rezept/${recipeId}/kochen` : `${env.appOrigin}/`,
         tag: recipeId ? `timer:${recipeId}` : "timer",
       };
+    case "import_ready": {
+      const jobId = asString(payload.jobId);
+      const title = asString(payload.title);
+      return {
+        title: "Import fertig",
+        body: title ? `„${title}“ ist bereit zur Prüfung.` : "Dein Entwurf ist bereit zur Prüfung.",
+        url: jobId ? `${env.appOrigin}/import/${jobId}` : `${env.appOrigin}/`,
+        tag: jobId ? `import:${jobId}` : "import",
+      };
+    }
     default:
       return {
         title: "Rezeptor",

@@ -27,6 +27,7 @@ import { prepareVideo, prepareVideoFile, videoSignals, type VideoMaterial } from
 import { SCREENSHOT_WARNING, germanWarnings } from "../imports/warnings";
 import { MediaError } from "../media";
 import { failJob, finishJob, setState, type JobRow } from "../queue";
+import { notifyImportReady } from "./import-notify";
 import { MissingToolError, ToolError } from "../tools";
 
 const MAX_TEXT = 200_000;
@@ -297,6 +298,7 @@ async function processImport(job: JobRow): Promise<void> {
       if (cached.rawText) cachedPatch.rawText = cached.rawText;
       if (cached.transcript) cachedPatch.transcript = cached.transcript;
       await finishJob(job.id, "needs_review", cachedPatch);
+      await notifyImportReady(job, parsedCached.data.title);
       logger.info(
         { jobId: job.id, kind: job.kind, state: "needs_review", cached: true },
         "import_finished",
@@ -490,6 +492,7 @@ async function processImport(job: JobRow): Promise<void> {
   }
 
   await finishJob(job.id, "needs_review", patch);
+  await notifyImportReady(job, parsed.data.title);
 
   logger.info(
     {

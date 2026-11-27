@@ -8,7 +8,8 @@ export type NotifyKind =
   | "friend_request"
   | "friend_accepted"
   | "variation"
-  | "timer";
+  | "timer"
+  | "import_ready";
 
 /**
  * One row per event and person. `dedupeKey` makes delivery idempotent.

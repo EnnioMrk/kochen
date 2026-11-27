@@ -5,6 +5,7 @@ import {
   Bell,
   Check,
   Clock,
+  FileCheck,
   GitBranch,
   MessageCircle,
   UserCheck,
@@ -70,6 +71,14 @@ function infoFor(notification: AppNotification): Info {
         detail: text(notification.payload, "recipeTitle"),
         to: recipeId ? `/rezept/${recipeId}/kochen` : null,
       };
+    case "import_ready": {
+      const jobId = text(notification.payload, "jobId");
+      return {
+        title: "Ein Import ist fertig",
+        detail: text(notification.payload, "title"),
+        to: jobId ? `/import/${jobId}` : "/erfassen",
+      };
+    }
     default:
       return { title: "Neues Ereignis", detail: null, to: null };
   }
@@ -89,6 +98,8 @@ function KindIcon({ kind }: { kind: AppNotification["kind"] }) {
       return <GitBranch className={className} />;
     case "timer":
       return <Clock className={className} />;
+    case "import_ready":
+      return <FileCheck className={className} />;
     default:
       return <Bell className={className} />;
   }
@@ -131,7 +142,7 @@ export function NotificationsPage() {
     <div className="mx-auto max-w-3xl">
       <PageHeader
         title="Benachrichtigungen"
-        subtitle="Kommentare, Freundschaften, Varianten und Timer. Push ist nur ein Hinweis, diese Liste ist der Verlauf."
+        subtitle="Kommentare, Freundschaften, Varianten, Timer und fertige Importe. Push ist nur ein Hinweis, diese Liste ist der Verlauf."
         actions={
           <Button
             variant="secondary"
@@ -177,7 +188,7 @@ export function NotificationsPage() {
             <div className="p-2">
               <EmptyState
                 title="Keine Benachrichtigungen"
-                body="Hier erscheinen Kommentare zu deinen Rezepten, Freundschaftsanfragen, neue Varianten und abgelaufene Timer."
+                body="Hier erscheinen Kommentare zu deinen Rezepten, Freundschaftsanfragen, neue Varianten, abgelaufene Timer und fertige Importe."
                 icon={<Bell className="size-8" />}
               />
             </div>

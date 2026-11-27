@@ -20,6 +20,7 @@ import { AdminPage } from "./pages/AdminPage";
 import { TrashPage } from "./pages/TrashPage";
 import { InvitePage } from "./pages/InvitePage";
 import { InstallPage } from "./pages/InstallPage";
+import { ShareTargetPage } from "./pages/ShareTargetPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,6 +59,7 @@ export function App() {
                 <Route path="benachrichtigungen" element={<NotificationsPage />} />
                 <Route path="einstellungen" element={<SettingsPage />} />
                 <Route path="verwaltung" element={<AdminPage />} />
+                <Route path="teilen" element={<ShareTargetPage />} />
                 <Route path="f/:token" element={<InvitePage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Route>

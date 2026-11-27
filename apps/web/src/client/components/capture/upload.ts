@@ -285,7 +285,12 @@ export async function uploadFiles(
 }
 
 export async function startImport(input: ImportInput): Promise<string> {
-  const job = await api<{ id: string }>("/api/imports", { method: "POST", body: input });
+  // `keepalive` lets the request finish when the shared link closes the app.
+  const job = await api<{ id: string }>("/api/imports", {
+    method: "POST",
+    body: input,
+    keepalive: true,
+  });
   return job.id;
 }
 

@@ -542,6 +542,7 @@ export const NotificationKind = z.enum([
   "friend_accepted",
   "variation",
   "timer",
+  "import_ready",
 ]);
 export const Notification = z.object({
   id: z.string().uuid(),

@@ -69,7 +69,9 @@ export function AppShell() {
 
   const onCooking = /^\/rezept\/[^/]+\/kochen/.test(location.pathname);
   const onPrint = /\/drucken$/.test(location.pathname);
-  if (onCooking || onPrint) return <Outlet />;
+  // The share target starts the capture at once; the app chrome would only delay it.
+  const onShare = /^\/teilen\/?$/.test(location.pathname);
+  if (onCooking || onPrint || onShare) return <Outlet />;
 
   const isAdmin = me.role === "admin" || me.role === "owner";
   const nav = isAdmin ? [...NAV, { to: "/verwaltung", label: "Zugänge", icon: KeyRound }] : NAV;
