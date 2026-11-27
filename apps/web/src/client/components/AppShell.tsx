@@ -20,6 +20,7 @@ import { Avatar, Button } from "./ui";
 import { AuthGate, LoadingScreen } from "./AuthGate";
 import { BrandMark, BrandWordmark } from "./Brand";
 import { TutorialProvider } from "./tutorial/TutorialProvider";
+import { UpdateBanner } from "./UpdateBanner";
 
 type NavItem = {
   to: string;
@@ -146,6 +147,8 @@ export function AppShell() {
             </div>
           </div>
         </header>
+
+        <UpdateBanner />
 
         <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
           <Outlet context={{ me }} />
