@@ -55,7 +55,9 @@ social.patch("/me", async (c) => {
     }),
   );
   const sql = db();
-  const themeJson = input.theme === undefined || input.theme === null ? null : JSON.stringify(input.theme);
+  // `sql.json` sends OID 3802. A text parameter with a ::jsonb cast would be
+  // JSON-encoded twice by the driver and arrive as a jsonb string.
+  const themeValue = input.theme === undefined || input.theme === null ? null : sql.json(input.theme);
   await sql`
     update users set
       friend_list_visible = coalesce(${input.friendListVisible ?? null}, friend_list_visible),
@@ -67,7 +69,7 @@ social.patch("/me", async (c) => {
       end,
       theme = case
         when ${input.theme === undefined} then theme
-        else ${themeJson}::jsonb
+        else ${themeValue}
       end
     where id = ${user.id}
   `;

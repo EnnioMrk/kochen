@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api, qk } from "../lib/api";
 import { useMe, type SessionUser } from "../lib/session";
 import { useToast } from "./ui";
+import { errorText } from "../lib/utils";
 import {
   DEFAULT_THEME,
   THEME_PRESETS,
@@ -105,11 +106,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         await api<{ updated: boolean }>("/api/me", { method: "PATCH", body: { theme: next } });
         queryClient.setQueryData<SessionUser>(qk.me, (old) => (old ? { ...old, theme: next } : old));
         return true;
-      } catch {
+      } catch (error) {
         saved.current = previous;
         setChoice(previous);
         show(previous, true);
-        if (!options?.silent) toast.push("Das Farbschema konnte nicht gespeichert werden.", "error");
+        if (!options?.silent) toast.push(errorText(error) || "Das Farbschema konnte nicht gespeichert werden.", "error");
         return false;
       } finally {
         setSaving(false);
