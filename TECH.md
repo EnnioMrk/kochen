@@ -26,8 +26,7 @@ These facts are verified against the live platform and the `portfolio` source.
 - `kochen` is not yet a registered project. `GET /v1/projects/kochen` answers
   404. Registration is a setup task: slug `kochen`, `requires_auth = true`,
   `gated = true`, subdomain `rezeptor.ennio.vip`.
-- The API allows the origins `https://rezeptor.ennio.vip`,
-  `https://rezepte.ennio.vip` and `https://kochen.ennio.vip` with credentials.
+- The API allows the origin `https://rezeptor.ennio.vip` with credentials.
 - Wildcard `*.ennio.vip` still points to the old server. A new subdomain
   needs an explicit proxied A record to `84.247.128.111`.
 
@@ -644,9 +643,9 @@ concurrency of 1 keep memory flat. The worker image is built once per release.
   `APP_ORIGIN=https://rezeptor.ennio.vip`, `CANONICAL_HOST=rezeptor.ennio.vip`,
   `ENNIO_JWKS_URL`, `ENNIO_AUD=kochen`. Secrets stay in Dokploy. Never in the
   client bundle; only `VAPID_PUBLIC_KEY` is public.
-- Allowed origins: the API accepts `https://rezeptor.ennio.vip`,
-  `https://rezepte.ennio.vip` and `https://kochen.ennio.vip` for CORS. The CSP
-  `connect-src` names all three, plus `https://api.ennio.vip` and the R2 host.
+- Allowed origins: the API accepts `https://rezeptor.ennio.vip` for CORS, plus
+  `APP_ORIGIN`. The CSP `connect-src` names it too, plus `https://api.ennio.vip`
+  and the R2 host.
 - Health: `/healthz` checks the database and returns 200. Dokploy health check
   and the existing Traefik watchdog cover the rest.
 - Backups: nightly `pg_dump` to R2 (30 daily, 12 monthly), encrypted with

@@ -100,8 +100,7 @@ APP_ORIGIN=https://rezeptor.ennio.vip bun run r2:cors
 ```
 
 The script writes the policy and reads it back. The policy allows `PUT`,
-`GET` and `HEAD` from `APP_ORIGIN`, `https://rezeptor.ennio.vip`,
-`https://rezepte.ennio.vip`, `https://kochen.ennio.vip` and
+`GET` and `HEAD` from `APP_ORIGIN`, `https://rezeptor.ennio.vip` and
 `http://localhost:5173`, with the `content-type` header and a one-hour cache.
 The dashboard does the same job.
 
