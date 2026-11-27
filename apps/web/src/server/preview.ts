@@ -122,7 +122,7 @@ export function sitePreview(origin: string): LinkPreview {
     description:
       "Eigene Rezepte per Link oder Foto erfassen, prüfen und Schritt für Schritt kochen. Freunde lesen und kommentieren mit.",
     url: `${origin}/`,
-    image: `${origin}/og/site.jpg?v=3`,
+    image: `${origin}/og/site-v3.jpg`,
     imageAlt: "Rezeptor – Rezepte, die bleiben.",
     type: "website",
   };
@@ -189,7 +189,7 @@ export async function recipePreview(
     title: shorten(row.title, 90),
     description: shorten(row.description?.trim() || parts.join(" · "), 180),
     url: `${origin}/r/${recipeId}${link}`,
-    image: cover ? `${origin}/r/${recipeId}/preview.jpg${link}` : `${origin}/og/site.jpg?v=3`,
+    image: cover ? `${origin}/r/${recipeId}/preview.jpg${link}` : `${origin}/og/site-v3.jpg`,
     imageAlt: `Rezept: ${shorten(row.title, 80)}`,
     type: "article",
   };
@@ -213,7 +213,7 @@ export async function invitePreview(
     description:
       "Rezepte sammeln, mit Freunden teilen und Schritt für Schritt kochen. Deine Einladung wartet.",
     url: `${origin}/f/${encodeURIComponent(token)}`,
-    image: `${origin}/og/site.jpg?v=3`,
+    image: `${origin}/og/site-v3.jpg`,
     imageAlt: `${name} lädt dich zu Rezeptor ein`,
     type: "website",
   };
@@ -252,8 +252,8 @@ export async function renderCoverCard(key: string): Promise<Buffer> {
 let cardFile: Promise<Buffer> | null = null;
 
 export function siteCard(): Promise<Buffer> {
-  cardFile ??= readFile(new URL("../../public/og/site.jpg", import.meta.url)).catch(() =>
-    readFile(new URL("../../dist/og/site.jpg", import.meta.url)),
+  cardFile ??= readFile(new URL("../../public/og/site-v3.jpg", import.meta.url)).catch(() =>
+    readFile(new URL("../../dist/og/site-v3.jpg", import.meta.url)),
   );
   return cardFile;
 }
