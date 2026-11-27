@@ -83,7 +83,7 @@ export function AppShell() {
         >
           <div className="mx-auto flex min-h-16 max-w-6xl items-center gap-3 px-4 sm:px-6">
             <Link to="/" className="mr-2 flex items-center gap-2" aria-label="Zur Rezeptliste">
-              <img src="/icon.svg" alt="" aria-hidden className="size-9" />
+              <img src="/icon.svg?v=2" alt="" aria-hidden className="size-9" />
               <BrandWordmark className="hidden h-6 w-auto text-ink lg:block" />
             </Link>
             <nav className="hidden items-center gap-1 md:flex">

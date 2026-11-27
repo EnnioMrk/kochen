@@ -57,7 +57,7 @@ export function InstallPage() {
       </Link>
 
       <div className="mt-8 flex items-center gap-3">
-        <img src="/icon.svg" alt="" aria-hidden className="size-14" />
+        <img src="/icon.svg?v=2" alt="" aria-hidden className="size-14" />
         <div>
           <h1 className="text-3xl leading-tight">
             <BrandWordmark className="inline-block h-6 w-auto align-[-2px] text-ink" label="Rezeptor" /> als App

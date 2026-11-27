@@ -104,7 +104,7 @@ export function AuthGate({ code, onRetry }: { code: string | undefined; onRetry:
     >
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <img src="/icon.svg" alt="" aria-hidden className="mx-auto mb-3 size-16" />
+          <img src="/icon.svg?v=2" alt="" aria-hidden className="mx-auto mb-3 size-16" />
           <h1 className="flex justify-center">
             <BrandWordmark className="h-9 w-auto text-ink" label="Rezeptor" />
           </h1>
