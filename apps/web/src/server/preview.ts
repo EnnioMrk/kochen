@@ -26,7 +26,6 @@ export const OG_END = "<!-- og:end -->";
 
 const CARD_WIDTH = 1200;
 const CARD_HEIGHT = 630;
-const CARD_MAX_AGE_S = 3_600;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -259,15 +258,9 @@ export function siteCard(): Promise<Buffer> {
   return cardFile;
 }
 
-function imageResponse(
-  c: Context<AppEnv>,
-  bytes: Buffer,
-  type: string,
-  maxAge: number,
-  scope: "public" | "private" = "public",
-) {
+function imageResponse(c: Context<AppEnv>, bytes: Buffer, type: string, cache: string) {
   c.header("content-type", type);
-  c.header("cache-control", `${scope}, max-age=${maxAge}`);
+  c.header("cache-control", cache);
   return c.body(new Uint8Array(bytes));
 }
 
@@ -287,12 +280,13 @@ preview.get("/r/:id/preview.jpg", async (c) => {
   const token = c.req.query("link") ?? "";
   try {
     const key = await previewCoverKey(id, token);
-    // The URL carries the link token, so a shared cache must not keep it.
-    if (key) return imageResponse(c, await renderCoverCard(key), "image/jpeg", CARD_MAX_AGE_S, "private");
+    // The URL carries the link token: no shared cache may keep it, and a
+    // revoked link must stop serving the cover at once.
+    if (key) return imageResponse(c, await renderCoverCard(key), "image/jpeg", "private, no-store");
   } catch {
     // A broken cover never blocks the fallback card.
   }
-  return imageResponse(c, await siteCard(), "image/jpeg", 3_600);
+  return imageResponse(c, await siteCard(), "image/jpeg", "public, max-age=3600");
 });
 
 preview.get("/r/:id", async (c) => {

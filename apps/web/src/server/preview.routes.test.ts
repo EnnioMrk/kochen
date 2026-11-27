@@ -101,7 +101,7 @@ describe("cover card", () => {
     const response = await get(`/r/${ID}/preview.jpg?link=${TOKEN}`);
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("image/jpeg");
-    expect(response.headers.get("cache-control")).toContain("private");
+    expect(response.headers.get("cache-control")).toContain("no-store");
     const bytes = Buffer.from(await response.arrayBuffer());
     const meta = await sharp(bytes).metadata();
     expect(meta.width).toBe(1200);
