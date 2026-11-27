@@ -14,6 +14,8 @@ type Spot = { cx: number; cy: number; r: number };
 const HOLE_PADDING = 8;
 /** Darkening around the circle at the end of the zoom. Kept low on purpose. */
 const SPOT_ALPHA = 0.3;
+/** Blur of the page outside the circle, in pixels. */
+const BLUR_PX = 6;
 /** Darkening for a step without a circle. */
 const PLAIN_ALPHA = 0.55;
 /** Distance between the circle edge and the text card, in pixels. */
@@ -132,12 +134,19 @@ export function TutorialOverlay({ onClose }: { onClose: () => void }) {
     if (!current || !shade) return;
     let cancelled = false;
 
+    /** Shade opacity the running animation left on the element. */
+    const shadeOpacity = (): number => {
+      const value = Number.parseFloat(shade.style.opacity);
+      return Number.isFinite(value) ? value : 0;
+    };
+
     const fade = (to: number, duration: number) => {
       const started = performance.now();
+      const from = shadeOpacity();
       const tick = (now: number) => {
         if (cancelled) return;
         const t = Math.min(1, (now - started) / duration);
-        shade.style.opacity = String(to * t);
+        shade.style.opacity = String(from + (to - from) * t * t * t);
         if (t < 1) rafRef.current = requestAnimationFrame(tick);
       };
       rafRef.current = requestAnimationFrame(tick);
@@ -150,13 +159,15 @@ export function TutorialOverlay({ onClose }: { onClose: () => void }) {
 
     const zoom = (cx: number, cy: number, from: number, to: number) => {
       const started = performance.now();
+      const fromOpacity = shadeOpacity();
       const tick = (now: number) => {
         if (cancelled) return;
         const t = Math.min(1, (now - started) / ZOOM_MS);
-        const eased = 1 - Math.pow(1 - t, 3);
-        setMask(shade, maskFor(cx, cy, from + (to - from) * eased));
-        // Nothing at the start, a little at the end.
-        shade.style.opacity = String(SPOT_ALPHA * eased);
+        // The circle settles quickly; the darkness builds in slowly.
+        const zoomEase = 1 - Math.pow(1 - t, 3);
+        const shadeEase = t * t * t;
+        setMask(shade, maskFor(cx, cy, from + (to - from) * zoomEase));
+        shade.style.opacity = String(fromOpacity + (SPOT_ALPHA - fromOpacity) * shadeEase);
         if (t < 1) rafRef.current = requestAnimationFrame(tick);
       };
       rafRef.current = requestAnimationFrame(tick);
@@ -237,8 +248,8 @@ export function TutorialOverlay({ onClose }: { onClose: () => void }) {
         style={{
           opacity: 0,
           background: "rgba(20, 16, 12, 1)",
-          backdropFilter: "blur(3px)",
-          WebkitBackdropFilter: "blur(3px)",
+          backdropFilter: `blur(${BLUR_PX}px)`,
+          WebkitBackdropFilter: `blur(${BLUR_PX}px)`,
         }}
       />
 
