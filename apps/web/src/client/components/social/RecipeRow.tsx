@@ -72,7 +72,7 @@ export function RecipeCard({ recipe, className }: { recipe: RecipeSummary; class
     <Link
       to={`/rezept/${recipe.id}`}
       className={cn(
-        "tap group flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-white/80 transition hover:border-ink/20 min-w-0",
+        "tap group flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface/80 transition hover:border-ink/20 min-w-0",
         className,
       )}
     >

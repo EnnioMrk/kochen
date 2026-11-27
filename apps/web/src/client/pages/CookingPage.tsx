@@ -495,7 +495,7 @@ export function CookingPage() {
 
       {total > 0 && view === "steps" && currentStep && (
         <div className="mx-auto flex w-full max-w-4xl flex-col px-4 pb-4 pt-4">
-          <details className="mb-3 rounded-[var(--radius-card)] border border-line bg-white/80">
+          <details className="mb-3 rounded-[var(--radius-card)] border border-line bg-surface/80">
             <summary className="tap flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-sm font-medium [&::-webkit-details-marker]:hidden">
               <span className="inline-flex items-center gap-2">
                 <ChefHat className="size-4 text-ink-soft" />
@@ -644,7 +644,7 @@ export function CookingPage() {
         <div className="mx-auto w-full max-w-6xl px-4 pb-4 pt-4">
           <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[20rem_minmax(0,1fr)]">
             <aside className="min-w-0 space-y-3">
-              <details className="rounded-[var(--radius-card)] border border-line bg-white/80 lg:hidden">
+              <details className="rounded-[var(--radius-card)] border border-line bg-surface/80 lg:hidden">
                 <summary className="tap flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
                   <span className="inline-flex items-center gap-2">
                     <ChefHat className="size-4 text-ink-soft" />
@@ -697,7 +697,7 @@ export function CookingPage() {
                   <li
                     key={stepId}
                     className={cn(
-                      "rounded-[var(--radius-card)] border border-line bg-white/80 p-4 transition",
+                      "rounded-[var(--radius-card)] border border-line bg-surface/80 p-4 transition",
                       done && "opacity-60",
                     )}
                   >
@@ -710,8 +710,8 @@ export function CookingPage() {
                         className={cn(
                           "tap mt-0.5 flex size-11 shrink-0 items-center justify-center rounded-full border text-sm font-semibold transition",
                           done
-                            ? "border-sage bg-sage text-white"
-                            : "border-line bg-white text-ink-soft",
+                            ? "border-sage bg-sage text-on-sage"
+                            : "border-line bg-surface text-ink-soft",
                         )}
                       >
                         {done ? <Check className="size-5" /> : index + 1}
@@ -748,7 +748,7 @@ export function CookingPage() {
             </ol>
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] border border-line bg-white/80 px-4 py-3">
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] border border-line bg-surface/80 px-4 py-3">
             <span className="text-sm text-ink-soft">
               {doneCount} von {total} Schritten erledigt
             </span>
@@ -776,7 +776,7 @@ export function CookingPage() {
                     "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm",
                     expired
                       ? "border-danger/40 bg-danger/10 text-danger"
-                      : "border-line bg-white text-ink",
+                      : "border-line bg-surface text-ink",
                   )}
                 >
                   <TimerIcon className="size-4" />

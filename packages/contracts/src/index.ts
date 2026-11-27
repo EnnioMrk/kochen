@@ -75,6 +75,30 @@ export type PlatformTestStatus = z.infer<typeof PlatformTestStatus>;
 export const Visibility = z.enum(["private", "friends", "members"]);
 export type Visibility = z.infer<typeof Visibility>;
 
+const HexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+
+/** The four decisions that generate a whole palette. */
+export const ThemeColors = z.object({
+  paper: HexColor,
+  ink: HexColor,
+  brand: HexColor,
+  sage: HexColor,
+});
+export type ThemeColors = z.infer<typeof ThemeColors>;
+
+export const ThemeChoice = z
+  .object({
+    preset: z.enum(["paprika", "salbei", "leinen", "safran", "espresso", "custom"]),
+    colors: ThemeColors.optional(),
+    name: z.string().trim().min(1).max(40).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.preset === "custom" && !value.colors) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "custom needs four colours", path: ["colors"] });
+    }
+  });
+export type ThemeChoice = z.infer<typeof ThemeChoice>;
+
 export const User = z.object({
   id: z.string().uuid(),
   platformSub: z.string(),

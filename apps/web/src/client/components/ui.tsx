@@ -24,11 +24,11 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const VARIANTS: Record<string, string> = {
-  primary: "bg-brand text-white hover:bg-brand-dark shadow-sm disabled:bg-brand/50",
-  secondary: "bg-white text-ink border border-line hover:border-ink/30 shadow-sm",
+  primary: "bg-brand text-on-brand hover:bg-brand-dark shadow-sm disabled:bg-brand/50",
+  secondary: "bg-surface text-ink border border-line hover:border-ink/30 shadow-sm",
   ghost: "bg-transparent text-ink-soft hover:bg-ink/5 hover:text-ink",
-  danger: "bg-danger text-white hover:bg-danger/90",
-  sage: "bg-sage text-white hover:bg-sage/90",
+  danger: "bg-danger text-on-danger hover:bg-danger/90",
+  sage: "bg-sage text-on-sage hover:bg-sage/90",
 };
 
 const SIZES: Record<string, string> = {
@@ -126,7 +126,7 @@ export function RowMenu({
         <div
           role="menu"
           aria-label={label}
-          className="absolute right-0 top-full z-20 mt-1 w-48 overflow-hidden rounded-xl border border-line bg-white py-1 shadow-lg"
+          className="absolute right-0 top-full z-20 mt-1 w-48 overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-lg"
           onClick={() => setOpen(false)}
         >
           {children}
@@ -160,7 +160,7 @@ export function RowMenuItem({
 
 export function Card({ className, children, as: As = "div" }: { className?: string; children: ReactNode; as?: "div" | "section" | "article" }) {
   return (
-    <As className={cn("rounded-[var(--radius-card)] border border-line bg-white/80 backdrop-blur-sm", className)}>
+    <As className={cn("rounded-[var(--radius-card)] border border-line bg-surface/80 backdrop-blur-sm", className)}>
       {children}
     </As>
   );
@@ -215,7 +215,7 @@ export function Field({
 }
 
 const control =
-  "w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-ink placeholder:text-ink-soft/85 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-60";
+  "w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-ink placeholder:text-ink-soft/85 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-60";
 
 export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...rest} className={cn(control, className)} />;
@@ -269,7 +269,7 @@ export function Switch({
         <span
           aria-hidden
           className={cn(
-            "pointer-events-none absolute left-0.5 top-0.5 size-6 rounded-full bg-white shadow transition-transform",
+            "pointer-events-none absolute left-0.5 top-0.5 size-6 rounded-full bg-surface shadow transition-transform",
             checked ? "translate-x-5" : "translate-x-0",
           )}
         />
@@ -302,7 +302,7 @@ export function EmptyState({
   icon?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-[var(--radius-card)] border border-dashed border-line bg-white/50 px-6 py-14 text-center">
+    <div className="flex flex-col items-center justify-center gap-3 rounded-[var(--radius-card)] border border-dashed border-line bg-surface/50 px-6 py-14 text-center">
       {icon && <div className="text-ink-soft/70">{icon}</div>}
       <h3 className="text-lg">{title}</h3>
       {body && <p className="max-w-sm text-sm leading-relaxed text-ink-soft">{body}</p>}
@@ -453,7 +453,7 @@ export function Segmented<T extends string>({
           className={cn(
             "tap tap-target shrink-0 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-sm font-medium transition md:px-3",
             fluid && "flex-1",
-            value === option.value ? "bg-white text-ink shadow-sm" : "text-ink-soft hover:text-ink",
+            value === option.value ? "bg-surface text-ink shadow-sm ring-1 ring-line/60" : "text-ink-soft hover:text-ink",
           )}
         >
           {option.shortLabel ? (
@@ -677,7 +677,7 @@ export function ImageLightbox({
         ref={closeRef}
         type="button"
         aria-label="Schließen"
-        className="absolute top-[calc(0.75rem+var(--safe-top))] right-3 z-10 flex size-11 items-center justify-center rounded-full bg-white/90 text-ink shadow-lg sm:top-6 sm:right-6"
+        className="absolute top-[calc(0.75rem+var(--safe-top))] right-3 z-10 flex size-11 items-center justify-center rounded-full bg-surface/90 text-ink shadow-lg sm:top-6 sm:right-6"
         onClick={onClose}
       >
         <X className="size-5" />
@@ -723,7 +723,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             role="status"
             className={cn(
               "pointer-events-auto flex max-w-sm items-center gap-3 rounded-xl px-4 py-2.5 text-sm shadow-lg",
-              item.tone === "error" ? "bg-danger text-white" : item.tone === "success" ? "bg-sage text-white" : "bg-ink text-white",
+              item.tone === "error" ? "bg-danger text-on-danger" : item.tone === "success" ? "bg-sage text-on-sage" : "bg-ink text-on-ink",
             )}
           >
             <span>{item.text}</span>
@@ -734,7 +734,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   item.action?.onClick();
                   setItems((list) => list.filter((entry) => entry.id !== item.id));
                 }}
-                className="tap-target shrink-0 rounded-lg px-2 py-1 font-semibold underline underline-offset-4 hover:bg-white/15"
+                className="tap-target shrink-0 rounded-lg px-2 py-1 font-semibold underline underline-offset-4 hover:bg-surface/15"
               >
                 {item.action.label}
               </button>

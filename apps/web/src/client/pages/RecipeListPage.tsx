@@ -9,7 +9,7 @@ import { Button, EmptyState, PageHeader } from "../components/ui";
 import { RecipeCard, RecipeCardSkeleton } from "../components/recipes/RecipeCard";
 
 const linkButton =
-  "tap inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-sm font-medium text-ink shadow-sm transition hover:border-ink/30";
+  "tap inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-sm font-medium text-ink shadow-sm transition hover:border-ink/30";
 
 export function RecipeListPage({ scope }: { scope: "mine" | "all" }) {
   const navigate = useNavigate();
@@ -93,8 +93,8 @@ export function RecipeListPage({ scope }: { scope: "mine" | "all" }) {
               className={cn(
                 "tap tap-target min-h-9 shrink-0 rounded-full border px-3 text-xs font-medium transition",
                 active
-                  ? "border-ink bg-ink text-white"
-                  : "border-line bg-white text-ink-soft hover:border-ink/30 hover:text-ink",
+                  ? "border-ink bg-ink text-on-ink"
+                  : "border-line bg-surface text-ink-soft hover:border-ink/30 hover:text-ink",
               )}
             >
               {tag.label}

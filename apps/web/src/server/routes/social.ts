@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import type { Profile } from "@rezeptor/contracts";
+import { ThemeChoice, type Profile } from "@rezeptor/contracts";
 import { db } from "@rezeptor/db";
 import { requireUser } from "../auth";
 import { env } from "../env";
@@ -51,9 +51,11 @@ social.patch("/me", async (c) => {
       friendListVisible: z.boolean().optional(),
       cookingView: z.enum(["steps", "overview"]).optional(),
       tutorialDone: z.boolean().optional(),
+      theme: ThemeChoice.nullable().optional(),
     }),
   );
   const sql = db();
+  const themeJson = input.theme === undefined || input.theme === null ? null : JSON.stringify(input.theme);
   await sql`
     update users set
       friend_list_visible = coalesce(${input.friendListVisible ?? null}, friend_list_visible),
@@ -62,6 +64,10 @@ social.patch("/me", async (c) => {
         when ${input.tutorialDone === undefined} then tutorial_done_at
         when ${input.tutorialDone === true} then now()
         else null
+      end,
+      theme = case
+        when ${input.theme === undefined} then theme
+        else ${themeJson}::jsonb
       end
     where id = ${user.id}
   `;

@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { ToastProvider } from "./components/ui";
+import { ThemeProvider } from "./components/ThemeProvider";
 import { RecipeListPage } from "./pages/RecipeListPage";
 import { RecipeDetailPage } from "./pages/RecipeDetailPage";
 import { RecipeEditorPage } from "./pages/RecipeEditorPage";
@@ -37,34 +38,36 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route element={<AppShell />}>
-              <Route index element={<RecipeListPage scope="mine" />} />
-              <Route path="entdecken" element={<RecipeListPage scope="all" />} />
-              <Route path="rezept/:id" element={<RecipeDetailPage />} />
-              <Route path="r/:id" element={<RecipeDetailPage />} />
-              <Route path="rezept/:id/bearbeiten" element={<RecipeEditorPage />} />
-              <Route path="neu" element={<RecipeEditorPage />} />
-              <Route path="erfassen" element={<CapturePage />} />
-              <Route path="import/:id" element={<ImportReviewPage />} />
-              <Route path="suche" element={<SearchPage />} />
-              <Route path="papierkorb" element={<TrashPage />} />
-              <Route path="einkauf" element={<ShoppingPage />} />
-              <Route path="freunde" element={<FriendsPage />} />
-              <Route path="profil/:id" element={<ProfilePage />} />
-              <Route path="benachrichtigungen" element={<NotificationsPage />} />
-              <Route path="einstellungen" element={<SettingsPage />} />
-              <Route path="verwaltung" element={<AdminPage />} />
-              <Route path="f/:token" element={<InvitePage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Route>
-            <Route path="/rezept/:id/kochen" element={<CookingPage />} />
-            <Route path="/rezept/:id/drucken" element={<PrintPage />} />
-            <Route path="/installieren" element={<InstallPage />} />
-            <Route path="/app" element={<Navigate to="/installieren" replace />} />
-          </Routes>
-        </BrowserRouter>
+        <ThemeProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route element={<AppShell />}>
+                <Route index element={<RecipeListPage scope="mine" />} />
+                <Route path="entdecken" element={<RecipeListPage scope="all" />} />
+                <Route path="rezept/:id" element={<RecipeDetailPage />} />
+                <Route path="r/:id" element={<RecipeDetailPage />} />
+                <Route path="rezept/:id/bearbeiten" element={<RecipeEditorPage />} />
+                <Route path="neu" element={<RecipeEditorPage />} />
+                <Route path="erfassen" element={<CapturePage />} />
+                <Route path="import/:id" element={<ImportReviewPage />} />
+                <Route path="suche" element={<SearchPage />} />
+                <Route path="papierkorb" element={<TrashPage />} />
+                <Route path="einkauf" element={<ShoppingPage />} />
+                <Route path="freunde" element={<FriendsPage />} />
+                <Route path="profil/:id" element={<ProfilePage />} />
+                <Route path="benachrichtigungen" element={<NotificationsPage />} />
+                <Route path="einstellungen" element={<SettingsPage />} />
+                <Route path="verwaltung" element={<AdminPage />} />
+                <Route path="f/:token" element={<InvitePage />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Route>
+              <Route path="/rezept/:id/kochen" element={<CookingPage />} />
+              <Route path="/rezept/:id/drucken" element={<PrintPage />} />
+              <Route path="/installieren" element={<InstallPage />} />
+              <Route path="/app" element={<Navigate to="/installieren" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </ThemeProvider>
       </ToastProvider>
     </QueryClientProvider>
   );

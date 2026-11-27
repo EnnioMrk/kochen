@@ -1,10 +1,31 @@
 <!doctype html>
-<html lang="de">
+<html lang="de" data-theme="paprika">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="robots" content="noindex, nofollow" />
-    <meta name="theme-color" content="#FAF7F2" />
+    <meta name="theme-color" content="#faf7f2" />
+    <!-- The cached palette paints before React loads. The account value wins later. -->
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem("rezeptor.theme.v1");
+          if (!raw) return;
+          var data = JSON.parse(raw);
+          var root = document.documentElement;
+          var vars = data.vars || {};
+          for (var name in vars) {
+            if (Object.prototype.hasOwnProperty.call(vars, name)) root.style.setProperty(name, vars[name]);
+          }
+          if (data.mode) root.style.colorScheme = data.mode;
+          if (data.id) root.setAttribute("data-theme", data.id);
+          if (vars["--color-paper"]) {
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute("content", vars["--color-paper"]);
+          }
+        } catch (error) {}
+      })();
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Rezeptor" />

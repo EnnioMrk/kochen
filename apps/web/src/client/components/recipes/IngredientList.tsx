@@ -28,7 +28,7 @@ export function ServingsStepper({
         disabled={value <= 1}
         onClick={() => onChange(clamp(value - 1))}
         className={cn(
-          "min-h-11 min-w-11 border border-line bg-white disabled:opacity-40",
+          "min-h-11 min-w-11 border border-line bg-surface disabled:opacity-40",
           compact ? "size-11" : "size-11",
         )}
       >
@@ -46,7 +46,7 @@ export function ServingsStepper({
           if (Number.isFinite(next)) onChange(clamp(next));
         }}
         className={cn(
-          "rounded-xl border border-line bg-white text-center tabular-nums outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15",
+          "rounded-xl border border-line bg-surface text-center tabular-nums outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15",
           compact ? "w-14 py-2 text-base" : "w-16 py-2.5 text-lg",
         )}
       />
@@ -54,7 +54,7 @@ export function ServingsStepper({
         label="Eine Portion mehr"
         disabled={value >= 100}
         onClick={() => onChange(clamp(value + 1))}
-        className="min-h-11 min-w-11 border border-line bg-white disabled:opacity-40"
+        className="min-h-11 min-w-11 border border-line bg-surface disabled:opacity-40"
       >
         <Plus className="size-4" />
       </IconButton>
@@ -145,7 +145,7 @@ export function IngredientRows({
                 <span
                   className={cn(
                     "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md border transition",
-                    isChecked ? "border-sage bg-sage text-white" : "border-line bg-white",
+                    isChecked ? "border-sage bg-sage text-on-sage" : "border-line bg-surface",
                   )}
                 >
                   {isChecked && <Check className="size-3.5" />}

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api, qk } from "./api";
+import type { ThemeChoice } from "./theme";
 
 export type SessionUser = {
   id: string;
@@ -11,6 +12,8 @@ export type SessionUser = {
   friendListVisible: boolean;
   cookingView: "steps" | "overview";
   tutorialDone: boolean;
+  /** null or missing means the member still uses the default palette. */
+  theme?: ThemeChoice | null;
   unreadNotifications?: number;
   friendRequests?: number;
   deletedAt: string | null;

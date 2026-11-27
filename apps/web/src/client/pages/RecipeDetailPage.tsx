@@ -315,7 +315,7 @@ export function RecipeDetailPage() {
                     </div>
                   }
                 />
-                <span className="pointer-events-none absolute right-3 bottom-3 flex items-center gap-1 rounded-full bg-ink/70 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm transition sm:opacity-0 sm:group-hover:opacity-100">
+                <span className="pointer-events-none absolute right-3 bottom-3 flex items-center gap-1 rounded-full bg-ink/70 px-2.5 py-1 text-xs font-medium text-on-ink backdrop-blur-sm transition sm:opacity-0 sm:group-hover:opacity-100">
                   <Maximize2 className="size-3.5" />
                   Vergrößern
                 </span>
@@ -663,7 +663,7 @@ export function RecipeDetailPage() {
                 </a>
               )}
               {recipe.rawText && (
-                <details className="mt-3 rounded-xl border border-line bg-white/70 px-3 py-2">
+                <details className="mt-3 rounded-xl border border-line bg-surface/70 px-3 py-2">
                   <summary className="cursor-pointer text-sm font-medium text-ink">
                     Originaltext
                   </summary>
@@ -673,7 +673,7 @@ export function RecipeDetailPage() {
                 </details>
               )}
               {recipe.transcript && (
-                <details className="mt-2 rounded-xl border border-line bg-white/70 px-3 py-2">
+                <details className="mt-2 rounded-xl border border-line bg-surface/70 px-3 py-2">
                   <summary className="cursor-pointer text-sm font-medium text-ink">
                     Transkript
                   </summary>

@@ -116,7 +116,7 @@ function ScreenshotPanel({ reason, onStarted }: { reason: string; onStarted: (id
         Import.
       </p>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-        <label className="tap flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-line bg-white/70 px-4 py-3 text-sm font-medium text-ink transition hover:border-brand/50">
+        <label className="tap flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-line bg-surface/70 px-4 py-3 text-sm font-medium text-ink transition hover:border-brand/50">
           <ImagePlus className="size-4 text-brand" />
           {file ? file.name : "Screenshot auswählen"}
           <input

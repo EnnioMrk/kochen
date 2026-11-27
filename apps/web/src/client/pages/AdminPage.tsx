@@ -304,7 +304,7 @@ export function AdminPage() {
             Cookies werden verschlüsselt gespeichert und nie wieder angezeigt.
           </p>
 
-          <details className="mt-3 rounded-xl border border-line bg-white/70 px-3 py-2">
+          <details className="mt-3 rounded-xl border border-line bg-surface/70 px-3 py-2">
             <summary className="cursor-pointer text-sm font-medium text-ink">
               Anleitung: Cookies exportieren
             </summary>

@@ -175,7 +175,7 @@ export function ShoppingPage() {
 
       {list && (
         <div className="sticky top-[calc(4rem+var(--safe-top)+0.25rem)] z-10 mb-5">
-          <Card className="border-sage/30 bg-white/95 p-4 shadow-sm backdrop-blur">
+          <Card className="border-sage/30 bg-surface/95 p-4 shadow-sm backdrop-blur">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm font-medium text-ink">
@@ -381,7 +381,7 @@ export function ShoppingPage() {
                         <span
                           className={cn(
                             "mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md border transition",
-                            isChecked ? "border-sage bg-sage text-white" : "border-line bg-white text-transparent",
+                            isChecked ? "border-sage bg-sage text-on-sage" : "border-line bg-surface text-transparent",
                           )}
                         >
                           <Check className="size-4" />

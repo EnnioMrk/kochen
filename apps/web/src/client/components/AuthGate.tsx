@@ -108,7 +108,7 @@ export function AuthGate({ code, onRetry }: { code: string | undefined; onRetry:
           <p className="mt-2 text-sm text-ink-soft">Rezepte für Familie und Freunde.</p>
         </div>
 
-        <div className="rounded-[var(--radius-card)] border border-line bg-white/85 p-6 shadow-sm">
+        <div className="rounded-[var(--radius-card)] border border-line bg-surface/85 p-6 shadow-sm">
           <h2 className="text-xl">{title}</h2>
           <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{lede}</p>
 

@@ -1,4 +1,5 @@
 import type { MiddlewareHandler } from "hono";
+import type { ThemeChoice } from "@rezeptor/contracts";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { db } from "@rezeptor/db";
 import { env } from "./env";
@@ -14,6 +15,7 @@ export type LocalUser = {
   friendListVisible: boolean;
   cookingView: "steps" | "overview";
   tutorialDone: boolean;
+  theme: ThemeChoice | null;
   deletedAt: string | null;
 };
 
@@ -103,6 +105,7 @@ export async function upsertUser(claims: TokenClaims): Promise<LocalUser> {
               friend_list_visible as "friendListVisible",
               cooking_view as "cookingView",
               (tutorial_done_at is not null) as "tutorialDone",
+              theme,
               deleted_at as "deletedAt"
   `;
   const user = rows[0];

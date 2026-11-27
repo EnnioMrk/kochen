@@ -386,7 +386,7 @@ export function CapturePage() {
                       <PhotoPreviewTile file={item.file} className="aspect-square w-full" />
                       <IconButton
                         label={`${item.file.name} entfernen`}
-                        className="absolute right-0.5 top-0.5 size-7 bg-white/90 text-ink shadow-sm"
+                        className="absolute right-0.5 top-0.5 size-7 bg-surface/90 text-ink shadow-sm"
                         onClick={() => {
                           const next = photos.filter((_, itemIndex) => itemIndex !== index);
                           setPhotos(next);

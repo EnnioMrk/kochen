@@ -972,13 +972,13 @@ export function RecipeEditorPage() {
               {selectedTags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 rounded-full bg-ink px-3 py-1 text-xs font-medium text-white"
+                  className="inline-flex items-center gap-1 rounded-full bg-ink px-3 py-1 text-xs font-medium text-on-ink"
                 >
                   {tag}
                   <button
                     type="button"
                     aria-label={`Tag ${tag} entfernen`}
-                    className="-my-1 -mr-1 ml-0.5 flex size-6 shrink-0 items-center justify-center rounded-full transition hover:bg-white/20"
+                    className="-my-1 -mr-1 ml-0.5 flex size-6 shrink-0 items-center justify-center rounded-full transition hover:bg-surface/20"
                     onClick={() =>
                       setValue(
                         "tagNames",
@@ -1035,7 +1035,7 @@ export function RecipeEditorPage() {
                       key={tag.slug}
                       type="button"
                       onClick={() => addTag(tag.label)}
-                      className="tap tap-target min-h-8 shrink-0 rounded-full border border-line bg-white px-2.5 text-xs text-ink-soft transition hover:border-ink/30 hover:text-ink"
+                      className="tap tap-target min-h-8 shrink-0 rounded-full border border-line bg-surface px-2.5 text-xs text-ink-soft transition hover:border-ink/30 hover:text-ink"
                     >
                       + {tag.label}
                     </button>
@@ -1065,8 +1065,8 @@ export function RecipeEditorPage() {
                     className={cn(
                       "tap tap-target min-h-9 rounded-full border px-3 text-xs font-medium transition",
                       active
-                        ? "border-ink bg-ink text-white"
-                        : "border-line bg-white text-ink-soft hover:border-ink/30 hover:text-ink",
+                        ? "border-ink bg-ink text-on-ink"
+                        : "border-line bg-surface text-ink-soft hover:border-ink/30 hover:text-ink",
                     )}
                   >
                     {category.name}

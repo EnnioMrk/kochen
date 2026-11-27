@@ -11,6 +11,7 @@ The app has no public page. Only approved `ennio.vip` accounts reach it.
 | Area | Behaviour |
 | --- | --- |
 | Access | Platform session + 5-minute Ed25519 project JWT. Server verifies offline and checks the `kochen` grant. A German gate talks to the platform account API; the platform overlay is not used. |
+| Appearance | Five palettes plus a custom one. A member picks paper, ink, primary and secondary; the app derives every shade, infers light or dark from the paper, and checks WCAG contrast and colour harmony before saving. The choice follows the account. |
 | Recipes | Title, description, servings, ingredients, steps, tags, categories, images, source, baking temperature and baking time (free text). Raw text and transcript stay readable. |
 | Capture | Photo, PDF, link, video, audio, text. Worker queue with visible position. JSON-LD first, Readability fallback. Audio and video speech go through Parakeet TDT 0.6B v3 (25 European languages, German included). German draft, member confirms before save. A unit stays only when the source states it; a bare count becomes `Stück`. Servings are estimated when the source names none, and the review marks the value as `geschätzt`. Ingredients follow their first mention in the steps. A duration in the step text fills the step timer. |
 | Cooking | Step-by-step or full page. Screen wake lock. One timer per step, running after reload. On a phone a check-off moves to the next step. A step with a duration starts its timer at that duration; a step without one asks for minutes. Servings scale with practical rounding (`4 ½` eggs, never `1 ⅓`). |
@@ -21,6 +22,7 @@ The app has no public page. Only approved `ennio.vip` accounts reach it.
 | Shopping | Several recipes and servings. The member's own latest variation supplies the amounts. Equal units merge; teaspoon and tablespoon stay apart. |
 | Notifications | Web Push + bell list. Comment, reply, friend request, accepted request, new variation, timer end. No email. |
 | Print and export | A4 print route, Chromium PDF in the worker, Markdown export. |
+| Theme | Five palettes and a custom one from four colours. Runtime tokens, no raw colour in a component. Dark mode follows the paper. The choice follows the account. |
 | Hardening | `noindex` on every response, `robots.txt` disallow, one visibility policy, soft delete, German only. |
 
 ## Stack

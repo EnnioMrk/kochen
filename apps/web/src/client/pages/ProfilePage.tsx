@@ -153,7 +153,7 @@ export function ProfilePage() {
                 <li key={friend.id}>
                   <Link
                     to={`/profil/${friend.id}`}
-                    className="tap tap-target inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-white px-3 text-sm text-ink transition hover:border-ink/20"
+                    className="tap tap-target inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-3 text-sm text-ink transition hover:border-ink/20"
                   >
                     <Avatar name={friend.name} url={friend.avatarUrl} size={24} />
                     {friend.deletedAt ? "gelöschtes Konto" : friend.name}

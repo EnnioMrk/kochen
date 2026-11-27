@@ -40,7 +40,7 @@ export function PrintPage() {
     : "";
 
   return (
-    <div className="min-h-dvh bg-white text-black">
+    <div className="min-h-dvh bg-surface text-ink">
       <div className="no-print mx-auto flex max-w-[210mm] flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-8">
         <Link
           to={`/rezept/${id}`}
@@ -79,35 +79,35 @@ export function PrintPage() {
 
       {recipe && (
         <article className="print-page mx-auto w-full max-w-[210mm] px-5 py-6 sm:px-9 sm:py-8">
-          <header className="border-b border-black/20 pb-4">
-            <h1 className="text-2xl font-semibold leading-tight break-words text-black sm:text-3xl">
+          <header className="border-b border-ink/20 pb-4">
+            <h1 className="text-2xl font-semibold leading-tight break-words text-ink sm:text-3xl">
               {recipe.title}
             </h1>
             {recipe.description && (
-              <p className="mt-2 max-w-[80ch] whitespace-pre-wrap text-sm leading-relaxed text-black/80">
+              <p className="mt-2 max-w-[80ch] whitespace-pre-wrap text-sm leading-relaxed text-ink/80">
                 {recipe.description}
               </p>
             )}
-            <p className="mt-3 text-sm text-black">
+            <p className="mt-3 text-sm text-ink">
               {servingsLabel(recipe.servings)} · von{" "}
               {recipe.owner.deletedAt ? "gelöschtem Konto" : recipe.owner.name}
             </p>
-            <p className="mt-0.5 text-xs text-black/60">
+            <p className="mt-0.5 text-xs text-ink/60">
               Quelle: {SOURCE_LABEL[recipe.sourceType]}
               {recipe.updatedAt ? ` · Stand ${formatDate(recipe.updatedAt)}` : ""}
             </p>
             {(recipe.tags.length > 0 || recipe.categories.length > 0) && (
-              <p className="mt-1 text-xs text-black/70">{tagLine}</p>
+              <p className="mt-1 text-xs text-ink/70">{tagLine}</p>
             )}
           </header>
 
           <section className="mt-5">
             <h2 className="text-lg font-semibold">Zutaten</h2>
             {bakingLine && (
-              <p className="mt-1 text-xs text-black/80">{bakingLine}</p>
+              <p className="mt-1 text-xs text-ink/80">{bakingLine}</p>
             )}
             {recipe.ingredients.length === 0 ? (
-              <p className="mt-1 text-sm text-black/70">Keine Zutaten eingetragen.</p>
+              <p className="mt-1 text-sm text-ink/70">Keine Zutaten eingetragen.</p>
             ) : (
               <ul className="mt-2 space-y-1">
                 {recipe.ingredients.map((item, index) => {
@@ -132,7 +132,7 @@ export function PrintPage() {
                       <span className="min-w-0 flex-1 break-words">
                         {item.name}
                         {item.note ? (
-                          <span className="text-black/60"> ({item.note})</span>
+                          <span className="text-ink/60"> ({item.note})</span>
                         ) : null}
                       </span>
                     </li>
@@ -145,7 +145,7 @@ export function PrintPage() {
           <section className="mt-5">
             <h2 className="text-lg font-semibold">Schritte</h2>
             {recipe.steps.length === 0 ? (
-              <p className="mt-1 text-sm text-black/70">Keine Schritte eingetragen.</p>
+              <p className="mt-1 text-sm text-ink/70">Keine Schritte eingetragen.</p>
             ) : (
               <ol className="mt-2 space-y-3">
                 {recipe.steps.map((step, index) => (
@@ -153,7 +153,7 @@ export function PrintPage() {
                     key={step.id ?? step.lineageKey ?? `print-step-${index}`}
                     className="print-avoid-break flex gap-3"
                   >
-                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-black/30 text-xs font-semibold">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-ink/30 text-xs font-semibold">
                       {index + 1}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -161,7 +161,7 @@ export function PrintPage() {
                         {step.text}
                       </p>
                       {step.durationS ? (
-                        <p className="mt-0.5 text-xs text-black/60">
+                        <p className="mt-0.5 text-xs text-ink/60">
                           Dauer: {durationLabel(step.durationS)}
                         </p>
                       ) : null}
@@ -172,7 +172,7 @@ export function PrintPage() {
             )}
           </section>
 
-          <footer className="mt-8 border-t border-black/20 pt-3 text-xs text-black/70">
+          <footer className="mt-8 border-t border-ink/20 pt-3 text-xs text-ink/70">
             <p>
               Von {recipe.owner.deletedAt ? "gelöschtem Konto" : recipe.owner.name} ·
               erstellt {formatDate(recipe.createdAt)}

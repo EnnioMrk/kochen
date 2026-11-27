@@ -18,21 +18,30 @@
 }
 
 @theme {
+  /* Defaults only. The theme engine writes these same properties on <html>,
+     so a member's palette can replace every one of them at runtime. */
   --color-paper: #faf7f2;
-  --color-paper-2: #f3ede3;
+  --color-paper-2: #ebe8e3;
+  --color-surface: #fdfcfa;
   --color-ink: #211c16;
-  --color-ink-soft: #5c5346;
-  --color-line: #e3d9ca;
+  --color-ink-soft: #625e58;
+  --color-line: #dedbd6;
   --color-brand: #b4552d;
-  --color-brand-dark: #8f3f1e;
-  /* Fill colours: safe behind white text. */
-  --color-sage: #63714f;
-  --color-sage-soft: #e8ecdf;
+  --color-brand-dark: #a5471e;
+  --color-brand-soft: #f3e7de;
+  --color-on-brand: #ffffff;
+  /* Fill colours: safe behind their own on-colour. */
+  --color-sage: #3f5d63;
+  --color-sage-soft: #dcdedb;
+  --color-on-sage: #ffffff;
   --color-danger: #a83232;
+  --color-on-danger: #ffffff;
   --color-gold: #c98a2b;
+  --color-knob: #ffffff;
   /* Text colours: safe on their own tint. Never use the fill ones as text. */
-  --color-sage-text: #4f5c3d;
-  --color-gold-text: #8a5a12;
+  --color-sage-text: #3f5d63;
+  --color-gold-text: #986821;
+  --color-on-ink: #ffffff;
 
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Petrona", ui-serif, Georgia, "Times New Roman", serif;
@@ -46,6 +55,11 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
+  /* Fallbacks for the values the theme engine writes. */
+  --theme-shadow: rgb(60 40 20 / 0.28);
+  --theme-grain-a: rgb(180 85 45 / 0.06);
+  --theme-grain-b: rgb(63 93 99 / 0.07);
+  --theme-selection: rgb(180 85 45 / 0.22);
 }
 
 html,
@@ -70,7 +84,7 @@ body {
 }
 
 ::selection {
-  background: color-mix(in oklab, var(--color-brand) 22%, transparent);
+  background: var(--theme-selection);
 }
 
 /* Browser surfaces belong to the palette: caret, form accents, scrollbars. */
@@ -135,7 +149,7 @@ button, input, select, textarea {
 @media (hover: hover) {
   .hover-lift:hover {
     transform: translateY(-2px);
-    box-shadow: 0 14px 30px -18px rgba(60, 40, 20, 0.4);
+    box-shadow: 0 14px 30px -18px var(--theme-shadow);
   }
 }
 
@@ -145,8 +159,8 @@ button, input, select, textarea {
 
 .paper-grain {
   background-image:
-    radial-gradient(circle at 18% 12%, rgba(180, 85, 45, 0.05), transparent 45%),
-    radial-gradient(circle at 82% 6%, rgba(111, 125, 92, 0.07), transparent 40%);
+    radial-gradient(circle at 18% 12%, var(--theme-grain-a), transparent 45%),
+    radial-gradient(circle at 82% 6%, var(--theme-grain-b), transparent 40%);
 }
 
 .tap {

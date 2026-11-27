@@ -18,7 +18,7 @@ export function Stepper({
 }) {
   const clamp = (next: number) => Math.min(max, Math.max(min, next));
   return (
-    <div className={cn("inline-flex items-center gap-1 rounded-xl border border-line bg-white p-1", className)}>
+    <div className={cn("inline-flex items-center gap-1 rounded-xl border border-line bg-surface p-1", className)}>
       <button
         type="button"
         aria-label={`${label} verringern`}

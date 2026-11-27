@@ -16,8 +16,8 @@ const HOLE_PADDING = 8;
 const SPOT_ALPHA = 0.3;
 /** Darkening for a step without a circle. */
 const PLAIN_ALPHA = 0.55;
-/** Width of the soft edge around the circle, in pixels. */
-const FEATHER = 56;
+/** Distance between the circle edge and the text card, in pixels. */
+const CARD_GAP = 28;
 const ZOOM_MS = 560;
 const FADE_MS = 420;
 const CARD_MAX_WIDTH = 380;
@@ -39,11 +39,9 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-/** A radial gradient that hides the middle and fades in towards the edge. */
+/** A radial gradient with a hard edge: nothing inside the circle, full shade outside. */
 function maskFor(cx: number, cy: number, radius: number): string {
-  const outer = radius + FEATHER;
-  const inner = Math.max(0, radius - FEATHER * 0.35);
-  return `radial-gradient(circle ${outer}px at ${cx}px ${cy}px, transparent ${inner}px, #000 ${outer}px)`;
+  return `radial-gradient(circle ${radius}px at ${cx}px ${cy}px, transparent ${radius}px, #000 ${radius + 1}px)`;
 }
 
 function setMask(element: HTMLElement, value: string | null): void {
@@ -214,10 +212,10 @@ export function TutorialOverlay({ onClose }: { onClose: () => void }) {
 
   let cardStyle: CSSProperties;
   if (spot) {
-    const below = spot.cy + spot.r + 16 + 220 < h;
+    const below = spot.cy + spot.r + CARD_GAP + 220 < h;
     cardStyle = {
       left: clamp(spot.cx - cardWidth / 2, 16, w - cardWidth - 16),
-      top: below ? spot.cy + spot.r + 16 : spot.cy - spot.r - 16,
+      top: below ? spot.cy + spot.r + CARD_GAP : spot.cy - spot.r - CARD_GAP,
       width: cardWidth,
       transform: below ? undefined : "translateY(-100%)",
     };

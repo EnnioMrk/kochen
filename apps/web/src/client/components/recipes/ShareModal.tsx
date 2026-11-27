@@ -4,6 +4,7 @@ import { Copy, Link2, QrCode, Trash2 } from "lucide-react";
 import { toDataURL } from "qrcode";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "../../lib/api";
+import { cssVar } from "../../lib/theme";
 import { errorText } from "../../lib/utils";
 import { Button, Modal, useToast } from "../ui";
 
@@ -40,7 +41,7 @@ export function ShareModal({
         image = await toDataURL(created.url, {
           margin: 1,
           width: 240,
-          color: { dark: "#211c16", light: "#ffffff" },
+          color: { dark: cssVar("--color-ink", "#211c16"), light: cssVar("--color-surface", "#fffdfa") },
         });
       } catch {
         image = null;
@@ -106,7 +107,7 @@ export function ShareModal({
         </p>
 
         {isPrivate && (
-          <p className="rounded-xl border border-line bg-white px-3 py-2 text-sm text-ink">
+          <p className="rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink">
             Private Rezepte lassen sich nicht teilen. Stelle die Sichtbarkeit
             zuerst auf Freunde oder Mitglieder.
           </p>
@@ -129,7 +130,7 @@ export function ShareModal({
               <img
                 src={qr}
                 alt="QR-Code zum Rezept"
-                className="mx-auto size-52 rounded-xl border border-line bg-white p-2"
+                className="mx-auto size-52 rounded-xl border border-line bg-surface p-2"
               />
             ) : (
               <div className="mx-auto flex size-52 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-line text-center text-xs text-ink-soft">
@@ -143,7 +144,7 @@ export function ShareModal({
                 value={link.url}
                 aria-label="Freigabelink"
                 onFocus={(event) => event.currentTarget.select()}
-                className="min-w-0 flex-1 rounded-xl border border-line bg-white px-3 py-2.5 text-sm text-ink"
+                className="min-w-0 flex-1 rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-ink"
               />
               <Button
                 variant="secondary"

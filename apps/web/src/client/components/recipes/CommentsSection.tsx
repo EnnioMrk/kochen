@@ -180,7 +180,7 @@ export function CommentsSection({
       )}
 
       {comments.isError && (
-        <div className="rounded-xl border border-line bg-white px-3 py-2 text-sm">
+        <div className="rounded-xl border border-line bg-surface px-3 py-2 text-sm">
           <p className="text-ink">Kommentare konnten nicht geladen werden.</p>
           <Button
             variant="ghost"

@@ -154,7 +154,7 @@ export function SearchPage() {
                     setText(example);
                     setParams({ q: example });
                   }}
-                  className="rounded-full border border-line bg-white px-3 py-1.5 text-sm text-ink-soft transition hover:border-ink/25 hover:text-ink"
+                  className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm text-ink-soft transition hover:border-ink/25 hover:text-ink"
                 >
                   {example}
                 </button>

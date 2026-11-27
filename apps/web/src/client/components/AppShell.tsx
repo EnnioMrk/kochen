@@ -95,7 +95,7 @@ export function AppShell() {
                   className={({ isActive }) =>
                     cn(
                       "rounded-lg px-3 py-2 text-sm font-medium transition",
-                      isActive ? "bg-white text-ink shadow-sm" : "text-ink-soft hover:bg-white/70 hover:text-ink",
+                      isActive ? "bg-surface text-ink shadow-sm" : "text-ink-soft hover:bg-surface/70 hover:text-ink",
                     )
                   }
                 >
@@ -119,7 +119,7 @@ export function AppShell() {
               >
                 <Bell className="size-5" />
                 {(me.unreadNotifications ?? 0) > 0 && (
-                  <span className="absolute right-1.5 top-1.5 flex min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-semibold text-white">
+                  <span className="absolute right-1.5 top-1.5 flex min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-semibold text-on-brand">
                     {me.unreadNotifications}
                   </span>
                 )}
@@ -172,7 +172,7 @@ export function AppShell() {
                 }
               >
                 {item.to === "/erfassen" ? (
-                  <span className="-mt-5 mb-0.5 flex size-11 items-center justify-center rounded-2xl bg-brand text-white shadow-lg shadow-brand/25">
+                  <span className="-mt-5 mb-0.5 flex size-11 items-center justify-center rounded-2xl bg-brand text-on-brand shadow-lg shadow-brand/25">
                     <item.icon className="size-5" />
                   </span>
                 ) : (
@@ -187,7 +187,7 @@ export function AppShell() {
         <Link
           to="/einstellungen"
           data-tour="settings"
-          className="fixed right-[calc(1rem+var(--safe-right))] z-30 hidden size-11 items-center justify-center rounded-full border border-line bg-white text-ink-soft shadow-md transition hover:text-ink md:flex"
+          className="fixed right-[calc(1rem+var(--safe-right))] z-30 hidden size-11 items-center justify-center rounded-full border border-line bg-surface text-ink-soft shadow-md transition hover:text-ink md:flex"
           style={{ bottom: "calc(1.25rem + var(--safe-bottom))" }}
           aria-label="Einstellungen"
         >

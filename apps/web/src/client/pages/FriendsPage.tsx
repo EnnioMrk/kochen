@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PublicUser } from "@rezeptor/contracts";
 import { Check, Copy, QrCode, RefreshCw, UserPlus, Users, X } from "lucide-react";
 import { ApiError, api, qk } from "../lib/api";
+import { cssVar } from "../lib/theme";
 import { useMe } from "../lib/session";
 import {
   Avatar,
@@ -122,7 +123,7 @@ export function FriendsPage() {
         const dataUrl = await generator(invite.url, {
           width: 220,
           margin: 1,
-          color: { dark: "#211c16", light: "#ffffff" },
+          color: { dark: cssVar("--color-ink", "#211c16"), light: cssVar("--color-surface", "#fffdfa") },
         });
         if (!cancelled) setQr(dataUrl);
       } catch {
@@ -255,7 +256,7 @@ export function FriendsPage() {
                     alt="QR-Code für den Einladungslink"
                     width={160}
                     height={160}
-                    className="size-40 shrink-0 self-center rounded-lg border border-line bg-white p-1 sm:self-start"
+                    className="size-40 shrink-0 self-center rounded-lg border border-line bg-surface p-1 sm:self-start"
                   />
                 ) : (
                   <div className="flex size-40 shrink-0 items-center justify-center self-center rounded-lg border border-dashed border-line p-3 text-center text-xs leading-relaxed text-ink-soft sm:self-start">

@@ -18,6 +18,7 @@ import {
   useToast,
 } from "../components/ui";
 import { PushControl } from "../components/social/PushControl";
+import { ThemePicker } from "../components/settings/ThemePicker";
 import { useTutorial } from "../components/tutorial/TutorialProvider";
 
 type Settings = { limits: Limits; features: Record<string, boolean>; appOrigin: string };
@@ -168,8 +169,12 @@ export function SettingsPage() {
     <div className="mx-auto max-w-2xl space-y-4">
       <PageHeader
         title="Einstellungen"
-        subtitle="Ansicht, Sichtbarkeit und Benachrichtigungen. Alles gilt nur für dich."
+        subtitle="Darstellung, Kochen, Sichtbarkeit und Benachrichtigungen. Alles gilt nur für dich."
       />
+
+      <Card className="p-4 sm:p-5">
+        <ThemePicker />
+      </Card>
 
       <Card className="p-4 sm:p-5">
         <h2 className="flex items-center gap-2 text-lg">
