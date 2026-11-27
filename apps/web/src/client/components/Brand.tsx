@@ -68,7 +68,7 @@ export function BrandMark({ className }: { className?: string }) {
 
   return (
     <svg
-      viewBox="73 94 366 324"
+      viewBox="52 52 408 408"
       className={className}
       aria-hidden="true"
       focusable="false"
